@@ -42,6 +42,7 @@ architecture rtl of axi_stream_input_frontend is
     signal lane_index  : natural range 0 to 8 := 0;
     signal current_lane : integer range -1 to 7 := -1;
     signal out_valid_int : std_logic;
+    signal final_pixel_fire : std_logic;
 
     function has_valid_lane(keep : std_logic_vector(7 downto 0)) return boolean is
     begin
@@ -98,11 +99,14 @@ begin
 
     s_axis_tready <= fifo_push_ready;
 
-    -- A FIFO word is removed only when no partially unpacked beat is active.
-    fifo_pop_ready <= not beat_active;
-
     current_lane <= first_valid_lane(beat_keep, lane_index) when beat_active = '1' else -1;
     out_valid_int <= '1' when beat_active = '1' and current_lane >= 0 else '0';
+    final_pixel_fire <= '1' when out_valid_int = '1' and out_ready = '1' and
+                                   is_final_valid_lane(beat_keep, current_lane) else '0';
+
+    -- Pop the next FIFO word on the same edge that accepts the current beat's
+    -- final valid byte. This removes the inter-beat output bubble.
+    fifo_pop_ready <= '1' when beat_active = '0' or final_pixel_fire = '1' else '0';
     out_valid <= out_valid_int;
 
     process(beat_data, current_lane, out_valid_int)
@@ -141,7 +145,7 @@ begin
                 beat_keep   <= (others => '0');
                 beat_tlast  <= '0';
                 lane_index  <= 0;
-            elsif beat_active = '0' then
+            elsif beat_active = '0' or final_pixel_fire = '1' then
                 if fifo_pop_valid = '1' then
                     beat_data  <= fifo_pop_data(72 downto 9);
                     beat_keep  <= fifo_pop_data(8 downto 1);
@@ -152,14 +156,12 @@ begin
                     else
                         beat_active <= '0';
                     end if;
-                end if;
-            elsif out_valid_int = '1' and out_ready = '1' then
-                if is_final_valid_lane(beat_keep, current_lane) then
+                elsif final_pixel_fire = '1' then
                     beat_active <= '0';
                     lane_index  <= 0;
-                else
-                    lane_index <= current_lane + 1;
                 end if;
+            elsif out_valid_int = '1' and out_ready = '1' then
+                lane_index <= current_lane + 1;
             end if;
         end if;
     end process;

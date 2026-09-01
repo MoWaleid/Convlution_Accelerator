@@ -41,9 +41,11 @@ architecture sim of tb_axi_stream_input_frontend is
     signal out_ready : std_logic;
     signal out_last  : std_logic;
 
-    signal ready_phase_a : std_logic := '1';
+    signal ready_phase_a : std_logic := '0';
     signal ready_phase_b : std_logic := '0';
     signal phase_b_mode  : std_logic := '0';
+    signal phase_a_release : std_logic := '0';
+    signal phase_a_throughput_done : std_logic := '0';
     signal phase_a_done  : std_logic := '0';
     signal phase_b_done  : std_logic := '0';
 
@@ -157,12 +159,15 @@ begin
         wait;
     end process unit_fifo_stimulus;
 
-    -- Phase A deliberately toggles out_ready so every valid pixel must hold
-    -- stable until accepted. Phase B controls ready explicitly to fill the FIFO.
+    -- Queue the initial beats before allowing output consumption. Keep ready
+    -- asserted until the first two full beats prove zero-bubble throughput,
+    -- then introduce stalls for the remaining partial beat.
     phase_a_ready_driver : process
         variable cycle_count : integer := 0;
     begin
-        wait until resetn = '1';
+        wait until phase_a_release = '1';
+        ready_phase_a <= '1';
+        wait until phase_a_throughput_done = '1';
         while phase_a_done = '0' loop
             wait until falling_edge(clk);
             if (cycle_count mod 5) = 1 or (cycle_count mod 5) = 2 then
@@ -175,6 +180,30 @@ begin
         ready_phase_a <= '1';
         wait;
     end process phase_a_ready_driver;
+
+    -- With two complete beats already buffered and out_ready held high, every
+    -- one of their sixteen pixel transfers must occur on consecutive clocks.
+    phase_a_throughput_monitor : process
+        variable pixel_count : integer := 0;
+        variable previous_handshake_time : time := 0 ns;
+    begin
+        wait until phase_a_release = '1';
+        while pixel_count < 16 loop
+            wait until rising_edge(clk);
+            if out_valid = '1' and out_ready = '1' then
+                if pixel_count > 0 then
+                    assert now - previous_handshake_time = CLK_PERIOD
+                        report "Inter-beat pixel-output bubble detected" severity failure;
+                end if;
+                assert out_last = '0'
+                    report "TLAST asserted during the queued full-beat throughput check" severity failure;
+                previous_handshake_time := now;
+                pixel_count := pixel_count + 1;
+            end if;
+        end loop;
+        phase_a_throughput_done <= '1';
+        wait;
+    end process phase_a_throughput_monitor;
 
     -- Assert data and TLAST stability through cycles in which out_ready is low.
     output_stall_monitor : process
@@ -272,10 +301,13 @@ begin
     begin
         wait until resetn = '1';
 
-        -- Frame A: two full beats followed by a contiguous five-byte final beat.
+        -- Frame A: queue two full beats and a contiguous five-byte final beat
+        -- before allowing output consumption.
         send_beat(make_beat(0),  x"FF", '0');
         send_beat(make_beat(8),  x"FF", '0');
         send_beat(make_beat(16), x"1F", '1');
+        wait until falling_edge(clk);
+        phase_a_release <= '1';
         wait until phase_a_done = '1';
 
         -- Frame B: hold output ready low, accept one active beat plus all 16
