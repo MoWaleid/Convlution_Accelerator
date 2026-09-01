@@ -50,6 +50,11 @@ create_bd_design $design_name
 current_bd_design $design_name
 
 set ps [create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:* processing_system7_0]
+source [file join $script_dir zedboard_ps_platform.tcl]
+apply_zedboard_ps_platform $ps
+
+# Preserve the accelerator-specific PS interfaces and common clock after the
+# board platform preset has configured DDR and fixed MIO peripherals.
 set_property -dict [list \
     CONFIG.PCW_USE_M_AXI_GP0 {1} \
     CONFIG.PCW_USE_S_AXI_HP0 {1} \
