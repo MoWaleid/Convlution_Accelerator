@@ -1,0 +1,10 @@
+# Test Vector Manifest
+# Generated: 2026-08-06 18:41:01
+#
+Description     : Custom demo filters: Identity, Sobel X, Sobel Y, Blur (ReLU OFF)
+Image source    : alley_cat_s_000013.png
+Image size      : 32×32
+Weights source  : custom hand-crafted filters
+Output channels : 4
+Output size     : 32×32 per channel
+Convolution     : same-mode, stride 1, zero-padded

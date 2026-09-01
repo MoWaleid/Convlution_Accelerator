@@ -1,0 +1,88 @@
+# Python virtual environments, caches, and local tooling
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+*.egg-info/
+pip-wheel-metadata/
+
+# Downloaded/raw CIFAR-10 data and the local training checkpoint
+/golden_model/cifar-10-python.tar.gz
+/golden_model/data/cifar10_raw/
+/golden_model/data/cifar10_images/
+/golden_model/data/trained_model.pth
+
+# Derived image copies used while generating test vectors. The compact
+# input/expected .hex vectors, manifests, and weight .mem files remain tracked.
+/golden_model/data/test_vectors_*/png/
+
+# Downloaded archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.bz2
+*.7z
+
+# Vivado/Xilinx generated caches, implementation products, and simulator output
+/.Xil/
+/Convlution_Accelerator.cache/
+/Convlution_Accelerator.hw/
+/Convlution_Accelerator.ip_user_files/
+/Convlution_Accelerator.sim/
+/xsim.dir/
+*.runs/
+*.gen/
+*.ip_user_files/
+*.jou
+*.log
+*.str
+*.wdb
+*.wcfg
+*.vcd
+*.vpd
+*.fst
+*.ghw
+*.dcp
+*.rpt
+*.bit
+*.bin
+*.mcs
+*.elf
+*.ltx
+*.mmi
+
+# Common RTL/simulation compilation by-products
+work/
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+vsim.wlf
+transcript
+
+# PetaLinux build outputs; project-spec configuration remains trackable
+/petalinux/build/
+/petalinux/images/
+/petalinux/components/plnx_workspace/
+
+# Operating-system and editor temporary files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~

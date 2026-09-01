@@ -1,0 +1,10 @@
+# Test Vector Manifest
+# Generated: 2026-08-06 18:41:01
+#
+Description     : Corner case: all-zero input pixels
+Image source    : synthetic all-zero image
+Image size      : 32×32
+Weights source  : weights
+Output channels : 16
+Output size     : 32×32 per channel
+Convolution     : same-mode, stride 1, zero-padded
