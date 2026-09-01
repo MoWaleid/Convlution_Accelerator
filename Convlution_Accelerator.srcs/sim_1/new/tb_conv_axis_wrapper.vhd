@@ -22,6 +22,7 @@ architecture sim of tb_conv_axis_wrapper is
     constant C_PADDED_HEIGHT  : integer := C_LOGICAL_HEIGHT + 2 * (C_N / 2);
     constant C_INPUT_PIXELS   : integer := C_PADDED_WIDTH * C_PADDED_HEIGHT;
     constant C_AXIS_BEATS     : integer := (C_INPUT_PIXELS + 7) / 8;
+    constant C_PARTIAL_BEATS  : integer := 12;
     constant C_LAST_BYTES     : integer := C_INPUT_PIXELS mod 8;
     constant C_OUTPUT_POSITIONS : integer := C_LOGICAL_WIDTH * C_LOGICAL_HEIGHT;
     constant C_OUTPUT_SCALARS : integer := C_OUTPUT_POSITIONS * C_K;
@@ -67,6 +68,8 @@ architecture sim of tb_conv_axis_wrapper is
     signal release_output        : std_logic := '0';
     signal backpressure_observed : std_logic := '0';
     signal backpressure_complete : std_logic := '0';
+    signal hold_output_for_soft_reset : std_logic := '0';
+    signal soft_reset_phase : std_logic := '0';
 
     function padded_pixel(pixel_index : natural) return std_logic_vector is
         variable row_index    : natural;
@@ -100,7 +103,7 @@ architecture sim of tb_conv_axis_wrapper is
     function expected_result(position_index : natural) return std_logic_vector is
         variable value : natural;
     begin
-        value := (position_index + 1) mod 256;
+        value := ((position_index + 1) mod 256) + 5;
         return std_logic_vector(to_signed(value, 16));
     end function expected_result;
 
@@ -119,7 +122,8 @@ architecture sim of tb_conv_axis_wrapper is
     end function last_keep;
 begin
     clk <= not clk after CLK_PERIOD / 2;
-    m_axis_tready <= '1' when stall_phase = '0' or release_output = '1' else '0';
+    m_axis_tready <= '1' when hold_output_for_soft_reset = '0' and
+                               (stall_phase = '0' or release_output = '1') else '0';
 
     dut : entity work.conv_axis_wrapper
         generic map (
@@ -167,14 +171,15 @@ begin
     stimulus : process
         procedure axi_write(
             constant address : in std_logic_vector(31 downto 0);
-            constant data    : in std_logic_vector(31 downto 0)
+            constant data    : in std_logic_vector(31 downto 0);
+            constant strb    : in std_logic_vector(3 downto 0) := "1111"
         ) is
         begin
             wait until falling_edge(clk);
             s_axi_awaddr  <= address;
             s_axi_awvalid <= '1';
             s_axi_wdata   <= data;
-            s_axi_wstrb   <= "1111";
+            s_axi_wstrb   <= strb;
             s_axi_wvalid  <= '1';
             loop
                 wait until rising_edge(clk);
@@ -229,9 +234,23 @@ begin
             axi_write(std_logic_vector(to_unsigned(base + 16#00#, 32)), x"00000000");
             axi_write(std_logic_vector(to_unsigned(base + 16#04#, 32)), x"00000001");
             axi_write(std_logic_vector(to_unsigned(base + 16#08#, 32)), x"00000000");
-            axi_write(std_logic_vector(to_unsigned(base + 16#F8#, 32)), x"00000000");
-            axi_write(std_logic_vector(to_unsigned(base + 16#FC#, 32)), x"00000000");
+            axi_write(std_logic_vector(to_unsigned(base + 16#F8#, 32)), x"00000005");
+            axi_write(std_logic_vector(to_unsigned(base + 16#FC#, 32)), x"00000100");
         end procedure configure_identity_channel;
+
+        procedure check_programmed_channel(constant channel : in natural) is
+            variable base : natural;
+        begin
+            base := channel * 16#100#;
+            axi_read(std_logic_vector(to_unsigned(base + 16#00#, 32)), x"00000000",
+                     "coefficient word 0 did not survive soft reset");
+            axi_read(std_logic_vector(to_unsigned(base + 16#04#, 32)), x"00000001",
+                     "coefficient word 1 did not survive soft reset");
+            axi_read(std_logic_vector(to_unsigned(base + 16#F8#, 32)), x"00000005",
+                     "bias did not survive soft reset");
+            axi_read(std_logic_vector(to_unsigned(base + 16#FC#, 32)), x"00000100",
+                     "control did not survive soft reset");
+        end procedure check_programmed_channel;
 
         procedure send_axis_beat(
             constant beat_index : in natural;
@@ -262,6 +281,20 @@ begin
             wait until falling_edge(clk);
             s_axis_tvalid <= '0';
         end procedure send_axis_beat;
+
+        procedure send_partial_padded_frame(constant beat_count : in positive) is
+            variable unused_busy_check : boolean := false;
+        begin
+            assert beat_count < C_AXIS_BEATS
+                report "partial-frame helper must not send a complete frame" severity failure;
+            for beat_index in 0 to beat_count - 1 loop
+                send_axis_beat(beat_index, false, unused_busy_check);
+                for idle_cycle in 1 to 6 loop
+                    wait until falling_edge(clk);
+                end loop;
+            end loop;
+            s_axis_tlast <= '0';
+        end procedure send_partial_padded_frame;
 
         procedure send_padded_frame(
             constant check_busy_after_first_transfer : in boolean;
@@ -302,7 +335,43 @@ begin
         end loop;
         wait until falling_edge(clk);
 
-        -- Frame A: uncongested AXI output must match the standalone core result.
+        -- Begin an active frame with output blocked, then prove that CONTROL
+        -- writes only reset when byte-0 strobe and bit 0 are both asserted.
+        hold_output_for_soft_reset <= '1';
+        send_partial_padded_frame(C_PARTIAL_BEATS);
+        axi_read(x"00004000", x"00000002", "STATUS was not BUSY for partial frame");
+        loop
+            wait until falling_edge(clk);
+            exit when m_axis_tvalid = '1';
+        end loop;
+        axi_write(x"00004004", x"00000000");
+        axi_read(x"00004000", x"00000002", "CONTROL bit-0-clear reset active state");
+        assert m_axis_tvalid = '1'
+            report "CONTROL bit-0-clear write discarded transient output state" severity failure;
+        axi_write(x"00004004", x"00000001", "0010");
+        axi_read(x"00004000", x"00000002", "unstrobed CONTROL byte-0 reset active state");
+        assert m_axis_tvalid = '1'
+            report "CONTROL write without WSTRB[0] discarded transient output state" severity failure;
+        axi_read(x"00004004", x"00000000", "CONTROL must read as zero");
+
+        soft_reset_phase <= '1';
+        axi_write(x"00004004", x"00000001", "0001");
+        axi_read(x"00004000", x"00000001", "STATUS did not return to IDLE after soft reset");
+        axi_read(x"00004004", x"00000000", "CONTROL did not remain write-only");
+        assert m_axis_tvalid = '0'
+            report "soft reset did not discard buffered AXI output state" severity failure;
+        for channel in 0 to C_K - 1 loop
+            check_programmed_channel(channel);
+        end loop;
+        for idle_cycle in 1 to 4 loop
+            wait until falling_edge(clk);
+            assert m_axis_tvalid = '0'
+                report "discarded pre-reset output reappeared after soft reset" severity failure;
+        end loop;
+        soft_reset_phase <= '0';
+        hold_output_for_soft_reset <= '0';
+
+        -- Frame A: run after soft reset without reprogramming the kernel.
         -- The helper also checks BUSY immediately after its first accepted beat.
         send_padded_frame(true, false);
         if frame_one_done /= '1' then
@@ -337,12 +406,16 @@ begin
         wait until resetn = '1';
         loop
             wait until falling_edge(clk);
-            if held_valid and m_axis_tready = '0' then
+                if soft_reset_phase = '1' then
+                held_valid := false;
+            elsif held_valid and m_axis_tready = '0' then
                 assert m_axis_tvalid = '1' and m_axis_tdata = held_data and
                        m_axis_tkeep = held_keep and m_axis_tlast = held_last
                     report "Wrapper AXI output changed while m_axis_tready was low" severity failure;
             end if;
-            held_valid := (m_axis_tvalid = '1' and m_axis_tready = '0');
+            if soft_reset_phase = '0' then
+                held_valid := (m_axis_tvalid = '1' and m_axis_tready = '0');
+            end if;
             if held_valid then
                 held_data := m_axis_tdata;
                 held_keep := m_axis_tkeep;

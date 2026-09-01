@@ -114,9 +114,10 @@ begin
         port map (
             clk           => clk,
             resetn        => resetn,
-            ce            => ce,
-            busy_in       => '0',
-            S_AXI_AWADDR  => s_axi_awaddr,
+            ce             => ce,
+            busy_in        => '0',
+            soft_reset_out => open,
+            S_AXI_AWADDR   => s_axi_awaddr,
             S_AXI_AWPROT  => s_axi_awprot,
             S_AXI_AWVALID => s_axi_awvalid,
             S_AXI_AWREADY => s_axi_awready,

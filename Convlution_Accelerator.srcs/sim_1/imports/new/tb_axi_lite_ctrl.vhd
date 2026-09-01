@@ -43,6 +43,7 @@ architecture sim of tb_axi_lite_ctrl is
             S_AXI_RVALID  : out std_logic;
             S_AXI_RREADY  : in std_logic;
             status_busy   : in std_logic;
+            soft_reset    : out std_logic;
             coeffs_out    : out coeff_array_t(0 to CFG_K * CFG_N * CFG_N - 1);
             bias_out      : out bias_array_t(0 to CFG_K - 1);
             shift_out     : out shift_array_t(0 to CFG_K - 1);
@@ -77,6 +78,7 @@ architecture sim of tb_axi_lite_ctrl is
     signal S_AXI_RVALID  : std_logic;
     signal S_AXI_RREADY  : std_logic := '0';
     signal status_busy   : std_logic := '0';
+    signal soft_reset    : std_logic;
 
     signal coeffs_out    : coeff_array_t(0 to CFG_K * CFG_N * CFG_N - 1);
     signal bias_out      : bias_array_t(0 to CFG_K - 1);
@@ -92,6 +94,7 @@ architecture sim of tb_axi_lite_ctrl is
     constant CH0_BIAS_ADDR   : std_logic_vector(31 downto 0) := x"000000F8";
     constant CH1_CTRL_ADDR   : std_logic_vector(31 downto 0) := x"000001FC";
     constant STATUS_ADDR       : std_logic_vector(31 downto 0) := x"00004000";
+    constant CONTROL_ADDR      : std_logic_vector(31 downto 0) := x"00004004";
     constant BUILD_CONFIG_ADDR : std_logic_vector(31 downto 0) := x"00004008";
     constant IMAGE_DIMS_ADDR   : std_logic_vector(31 downto 0) := x"0000400C";
 
@@ -282,6 +285,7 @@ begin
             S_AXI_RVALID  => S_AXI_RVALID,
             S_AXI_RREADY  => S_AXI_RREADY,
             status_busy   => status_busy,
+            soft_reset    => soft_reset,
             coeffs_out    => coeffs_out,
             bias_out      => bias_out,
             shift_out     => shift_out,
@@ -322,6 +326,42 @@ begin
         complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
                                x"00000002", 1, "busy status readback");
         status_busy <= '0';
+
+        -- CONTROL reads as zero. Bit 0 only resets with byte lane 0 enabled.
+        send_ar(S_AXI_ACLK, CONTROL_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00000000", 0, "CONTROL readback before writes");
+        write_same_cycle(S_AXI_ACLK, CONTROL_ADDR, x"00000000", "1111",
+                         S_AXI_AWADDR, S_AXI_AWVALID, S_AXI_AWREADY,
+                         S_AXI_WDATA, S_AXI_WSTRB, S_AXI_WVALID, S_AXI_WREADY);
+        wait for 1 ns;
+        assert soft_reset = '0'
+            report "CONTROL bit 0 clear unexpectedly triggered soft reset" severity error;
+        complete_write_response(S_AXI_ACLK, S_AXI_BVALID, S_AXI_BRESP, S_AXI_BREADY,
+                                0, "CONTROL bit-0-clear write response");
+        write_same_cycle(S_AXI_ACLK, CONTROL_ADDR, x"00000001", "0010",
+                         S_AXI_AWADDR, S_AXI_AWVALID, S_AXI_AWREADY,
+                         S_AXI_WDATA, S_AXI_WSTRB, S_AXI_WVALID, S_AXI_WREADY);
+        wait for 1 ns;
+        assert soft_reset = '0'
+            report "CONTROL write without WSTRB[0] unexpectedly triggered soft reset" severity error;
+        complete_write_response(S_AXI_ACLK, S_AXI_BVALID, S_AXI_BRESP, S_AXI_BREADY,
+                                0, "CONTROL unstrobed byte-0 write response");
+        write_same_cycle(S_AXI_ACLK, CONTROL_ADDR, x"00000001", "0001",
+                         S_AXI_AWADDR, S_AXI_AWVALID, S_AXI_AWREADY,
+                         S_AXI_WDATA, S_AXI_WSTRB, S_AXI_WVALID, S_AXI_WREADY);
+        wait for 1 ns;
+        assert soft_reset = '1'
+            report "CONTROL bit-0 command did not generate soft reset pulse" severity error;
+        wait until rising_edge(S_AXI_ACLK);
+        wait for 1 ns;
+        assert soft_reset = '0'
+            report "CONTROL soft reset command lasted longer than one clock" severity error;
+        complete_write_response(S_AXI_ACLK, S_AXI_BVALID, S_AXI_BRESP, S_AXI_BREADY,
+                                0, "CONTROL soft reset command response");
+        send_ar(S_AXI_ACLK, CONTROL_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00000000", 0, "CONTROL readback after writes");
 
         -- Global registers are read-only and must not alias channel 0. The
         -- reserved 0x4004 location likewise reads as zero.

@@ -70,10 +70,23 @@ architecture rtl of conv_axis_wrapper is
     signal core_ce        : std_logic;
     signal serializer_in_ready : std_logic;
     signal frame_busy     : std_logic := '0';
+    signal soft_reset     : std_logic;
+    signal stream_resetn  : std_logic;
+    signal input_axis_tready : std_logic;
+    signal serialized_tdata  : std_logic_vector(63 downto 0);
+    signal serialized_tkeep  : std_logic_vector(7 downto 0);
+    signal serialized_tvalid : std_logic;
+    signal serialized_tlast  : std_logic;
 begin
     -- Freeze only an occupied core output that the serializer cannot accept.
     -- This dependency is acyclic: serializer_in_ready is independent of core_ce.
     core_ce <= '0' when core_valid_out = '1' and serializer_in_ready = '0' else '1';
+    stream_resetn <= resetn and not soft_reset;
+    s_axis_tready <= input_axis_tready when stream_resetn = '1' else '0';
+    m_axis_tdata  <= serialized_tdata when stream_resetn = '1' else (others => '0');
+    m_axis_tkeep  <= serialized_tkeep when stream_resetn = '1' else (others => '0');
+    m_axis_tvalid <= serialized_tvalid when stream_resetn = '1' else '0';
+    m_axis_tlast  <= serialized_tlast when stream_resetn = '1' else '0';
 
     -- A frame begins with the first accepted AXI input beat and remains busy
     -- until its final serialized AXI output beat is accepted. Starting a new
@@ -81,7 +94,7 @@ begin
     frame_busy_process : process(clk)
     begin
         if rising_edge(clk) then
-            if resetn = '0' then
+            if resetn = '0' or soft_reset = '1' then
                 frame_busy <= '0';
             elsif s_axis_tvalid = '1' and s_axis_tready = '1' then
                 frame_busy <= '1';
@@ -94,11 +107,11 @@ begin
     input_frontend_inst : entity work.axi_stream_input_frontend
         port map (
             clk           => clk,
-            resetn        => resetn,
+            resetn        => stream_resetn,
             s_axis_tdata  => s_axis_tdata,
             s_axis_tkeep  => s_axis_tkeep,
             s_axis_tvalid => s_axis_tvalid,
-            s_axis_tready => s_axis_tready,
+            s_axis_tready => input_axis_tready,
             s_axis_tlast  => s_axis_tlast,
             out_pixel     => input_pixel,
             out_valid     => input_pixel_valid,
@@ -121,9 +134,10 @@ begin
         port map (
             clk           => clk,
             resetn        => resetn,
-            ce            => core_ce,
-            busy_in       => frame_busy,
-            S_AXI_AWADDR  => S_AXI_AWADDR,
+            ce             => core_ce,
+            busy_in        => frame_busy,
+            soft_reset_out => soft_reset,
+            S_AXI_AWADDR   => S_AXI_AWADDR,
             S_AXI_AWPROT  => S_AXI_AWPROT,
             S_AXI_AWVALID => S_AXI_AWVALID,
             S_AXI_AWREADY => S_AXI_AWREADY,
@@ -156,14 +170,14 @@ begin
         )
         port map (
             clk           => clk,
-            resetn        => resetn,
+            resetn        => stream_resetn,
             in_results    => core_results,
             in_valid      => core_valid_out,
             in_ready      => serializer_in_ready,
-            m_axis_tdata  => m_axis_tdata,
-            m_axis_tkeep  => m_axis_tkeep,
-            m_axis_tvalid => m_axis_tvalid,
+            m_axis_tdata  => serialized_tdata,
+            m_axis_tkeep  => serialized_tkeep,
+            m_axis_tvalid => serialized_tvalid,
             m_axis_tready => m_axis_tready,
-            m_axis_tlast  => m_axis_tlast
+            m_axis_tlast  => serialized_tlast
         );
 end architecture rtl;

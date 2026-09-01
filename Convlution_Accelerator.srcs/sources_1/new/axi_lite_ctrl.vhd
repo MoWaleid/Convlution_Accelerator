@@ -52,6 +52,7 @@ entity axi_lite_ctrl is
         -- Runtime status is supplied by the streamed wrapper, not the
         -- AXI4-Lite control plane itself.
         status_busy   : in std_logic;
+        soft_reset    : out std_logic;
         
         -- Outputs to Accelerator Datapath
         coeffs_out    : out coeff_array_t(0 to C_K * C_N * C_N - 1);
@@ -86,12 +87,14 @@ architecture rtl of axi_lite_ctrl is
     signal rf_rd_addr : std_logic_vector(31 downto 0);
     signal rf_rd_data : std_logic_vector(31 downto 0);
     signal read_data_mux : std_logic_vector(31 downto 0);
+    signal soft_reset_pulse : std_logic;
 
     -- A read address is accepted only when there is no outstanding response.
     type read_state_t is (READ_IDLE, READ_WAIT_DATA, READ_RESPONSE);
     signal read_state : read_state_t;
 
     constant C_STATUS_ADDR       : std_logic_vector(31 downto 0) := x"00004000";
+    constant C_CONTROL_ADDR      : std_logic_vector(31 downto 0) := x"00004004";
     constant C_BUILD_CONFIG_ADDR : std_logic_vector(31 downto 0) := x"00004008";
     constant C_IMAGE_DIMS_ADDR   : std_logic_vector(31 downto 0) := x"0000400C";
 
@@ -105,6 +108,7 @@ begin
     S_AXI_ARREADY <= axi_arready;
     S_AXI_RRESP   <= "00"; -- Always OKAY
     S_AXI_RVALID  <= axi_rvalid;
+    soft_reset    <= soft_reset_pulse;
 
     -- At most one write transaction may be in flight. Address and data are
     -- accepted independently until both one-entry buffers are populated.
@@ -121,7 +125,8 @@ begin
 
     -- Per-channel data is read from the register file. The global address
     -- space starts at 0x4000, beyond the 64 fixed channel blocks (0x0000-3FFF).
-    -- Unimplemented global locations, including reserved 0x4004, read as zero.
+    -- CONTROL (0x4004) is write-only; it and other unimplemented global
+    -- locations read as zero.
     read_data_mux_process : process(rf_rd_addr, rf_rd_data, status_busy)
         variable v_read_data : std_logic_vector(31 downto 0);
     begin
@@ -174,9 +179,11 @@ begin
                 rf_wr_addr  <= (others => '0');
                 rf_wr_data  <= (others => '0');
                 rf_wr_strb  <= (others => '0');
+                soft_reset_pulse <= '0';
             else
-                -- Default: de-assert write enable.
+                -- Default: de-assert write enable and command pulse.
                 rf_wr_en <= '0';
+                soft_reset_pulse <= '0';
 
                 -- Variables include the handshakes occurring on this edge, so
                 -- AW and W may arrive in either order or together.
@@ -201,6 +208,12 @@ begin
                 -- both independent channels have been captured.
                 if axi_bvalid = '0' then
                     if v_addr_pending = '1' and v_data_pending = '1' then
+                        -- CONTROL bit 0 is a one-cycle command. Byte lane 0 must
+                        -- be enabled, so other byte writes cannot trigger reset.
+                        if v_addr = C_CONTROL_ADDR and v_data(0) = '1' and
+                           v_strb(0) = '1' then
+                            soft_reset_pulse <= '1';
+                        end if;
                         -- The legacy register-file decoder uses only channel-space
                         -- bits, so writes outside 0x0000-3FFF must be filtered here
                         -- rather than aliasing channel 0. Global registers are read-only.

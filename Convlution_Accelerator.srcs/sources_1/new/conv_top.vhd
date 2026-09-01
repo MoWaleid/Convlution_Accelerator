@@ -39,6 +39,7 @@ entity conv_top is
         resetn : in  std_logic;
         ce     : in  std_logic;  -- Global streamed-datapath advance
         busy_in : in  std_logic; -- Stream-wrapper frame status for AXI-Lite reads
+        soft_reset_out : out std_logic;
 
         -- ================================================================
         -- AXI4-Lite Slave — Configuration Interface (from Zynq PS)
@@ -92,8 +93,14 @@ architecture rtl of conv_top is
     -- Internal wiring: window generator → compute engine
     signal window_wire       : pixel_array_t(0 to C_N * C_N - 1);
     signal window_valid_wire : std_logic;
+    signal soft_reset_wire   : std_logic;
+    signal datapath_resetn   : std_logic;
 
 begin
+    -- Soft reset clears streamed compute state only. The AXI-Lite controller
+    -- and its configuration register file continue to use hard resetn.
+    datapath_resetn <= resetn and not soft_reset_wire;
+    soft_reset_out <= soft_reset_wire;
 
     -- ========================================================================
     -- AXI4-Lite Controller + Register File
@@ -130,6 +137,7 @@ begin
             S_AXI_RVALID  => S_AXI_RVALID,
             S_AXI_RREADY  => S_AXI_RREADY,
             status_busy   => busy_in,
+            soft_reset    => soft_reset_wire,
             coeffs_out    => coeffs_wire,
             bias_out      => bias_wire,
             shift_out     => shift_wire,
@@ -147,7 +155,7 @@ begin
         )
         port map (
             clk        => clk,
-            resetn     => resetn,
+            resetn     => datapath_resetn,
             ce         => ce,
             pixel_in   => pixel_in,
             valid_in   => valid_in,
@@ -165,7 +173,7 @@ begin
         )
         port map (
             clk         => clk,
-            resetn      => resetn,
+            resetn      => datapath_resetn,
             ce          => ce,
             window_in   => window_wire,
             valid_in    => window_valid_wire,
