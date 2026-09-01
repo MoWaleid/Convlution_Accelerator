@@ -21,6 +21,7 @@ architecture sim of tb_window_generator is
         port (
             clk        : in std_logic;
             resetn     : in std_logic;
+            ce         : in std_logic;
             pixel_in   : in std_logic_vector(7 downto 0);
             valid_in   : in std_logic;
             window_out : out pixel_array_t(0 to CFG_N * CFG_N - 1);
@@ -35,6 +36,7 @@ architecture sim of tb_window_generator is
     -- Signals
     signal clk        : std_logic := '0';
     signal resetn     : std_logic := '0';
+    signal ce         : std_logic := '1';
     
     signal pixel_in   : std_logic_vector(7 downto 0) := (others => '0');
     signal valid_in   : std_logic := '0';
@@ -55,6 +57,7 @@ begin
         port map (
             clk        => clk,
             resetn     => resetn,
+            ce         => ce,
             pixel_in   => pixel_in,
             valid_in   => valid_in,
             window_out => window_out,

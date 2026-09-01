@@ -34,6 +34,7 @@ entity conv_top is
         -- Clock and Reset
         clk    : in  std_logic;
         resetn : in  std_logic;
+        ce     : in  std_logic;  -- Global streamed-datapath advance
 
         -- ================================================================
         -- AXI4-Lite Slave — Configuration Interface (from Zynq PS)
@@ -139,6 +140,7 @@ begin
         port map (
             clk        => clk,
             resetn     => resetn,
+            ce         => ce,
             pixel_in   => pixel_in,
             valid_in   => valid_in,
             window_out => window_wire,
@@ -156,6 +158,7 @@ begin
         port map (
             clk         => clk,
             resetn      => resetn,
+            ce          => ce,
             window_in   => window_wire,
             valid_in    => window_valid_wire,
             coeffs_all  => coeffs_wire,

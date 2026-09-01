@@ -22,6 +22,7 @@ entity conv_engine is
     port (
         clk        : in  std_logic;
         resetn     : in  std_logic;
+        ce         : in  std_logic;
 
         -- Shared pixel window (broadcast to all channels)
         window_in  : in  pixel_array_t(0 to C_N * C_N - 1);
@@ -69,6 +70,7 @@ begin
             port map (
                 clk        => clk,
                 resetn     => resetn,
+                ce         => ce,
                 window_in  => window_in,
                 coeffs_in  => ch_coeffs,
                 bias_in    => bias_all(k),

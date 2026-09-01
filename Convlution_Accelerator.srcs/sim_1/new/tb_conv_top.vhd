@@ -54,6 +54,7 @@ architecture sim of tb_conv_top is
     -- ========================================================================
     signal clk    : std_logic := '0';
     signal resetn : std_logic := '0';
+    signal ce     : std_logic := '1';
 
     -- AXI4-Lite
     signal s_axi_awaddr  : std_logic_vector(31 downto 0) := (others => '0');
@@ -113,6 +114,7 @@ begin
         port map (
             clk           => clk,
             resetn        => resetn,
+            ce            => ce,
             S_AXI_AWADDR  => s_axi_awaddr,
             S_AXI_AWPROT  => s_axi_awprot,
             S_AXI_AWVALID => s_axi_awvalid,

@@ -14,6 +14,7 @@ entity window_generator is
     port (
         clk        : in std_logic;
         resetn     : in std_logic;
+        ce         : in std_logic;
         
         -- Input Stream
         pixel_in   : in std_logic_vector(7 downto 0);
@@ -58,7 +59,7 @@ begin
                 col_cnt      <= 0;
                 row_cnt      <= 0;
                 valid_out_reg <= '0';
-            else
+            elsif ce = '1' then
                 if valid_in = '1' then
                     
                     -- Update valid_out_reg (delay by 1 cycle to match window_regs update)

@@ -28,6 +28,7 @@ entity conv_channel is
     port (
         clk        : in  std_logic;
         resetn     : in  std_logic;
+        ce         : in  std_logic;
 
         -- Pixel window (from window_generator, shared across channels)
         window_in  : in  pixel_array_t(0 to C_N * C_N - 1);
@@ -109,7 +110,7 @@ begin
                 valid_s3    <= '0';
                 result_s4   <= (others => '0');
                 valid_s4    <= '0';
-            else
+            elsif ce = '1' then
 
                 -- ==============================================================
                 -- Stage 1: MULTIPLY
