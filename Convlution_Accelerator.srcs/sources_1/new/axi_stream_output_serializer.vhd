@@ -129,10 +129,16 @@ begin
     begin
         local_take_count := min_natural(4 - packed_count, C_K - channel_index);
         next_word := packed_data;
-        for scalar_offset in 0 to local_take_count - 1 loop
-            next_word((packed_count + scalar_offset + 1) * 16 - 1 downto
-                      (packed_count + scalar_offset) * 16) :=
-                vector_data(channel_index + scalar_offset);
+        for scalar_offset in 0 to 3 loop
+            if scalar_offset < local_take_count then
+                case packed_count + scalar_offset is
+                    when 0 => next_word(15 downto 0)  := vector_data(channel_index + scalar_offset);
+                    when 1 => next_word(31 downto 16) := vector_data(channel_index + scalar_offset);
+                    when 2 => next_word(47 downto 32) := vector_data(channel_index + scalar_offset);
+                    when 3 => next_word(63 downto 48) := vector_data(channel_index + scalar_offset);
+                    when others => null;
+                end case;
+            end if;
         end loop;
         assembled_word <= next_word;
     end process;
