@@ -23,9 +23,11 @@ package config_pkg is
     constant CFG_N : integer := 3;
     
     -- Image spatial dimensions
-    constant CFG_UNPADDED_WIDTH : integer := 32; -- CIFAR-10 is 32x32
+    constant CFG_UNPADDED_WIDTH  : integer := 32; -- CIFAR-10 is 32x32
+    constant CFG_UNPADDED_HEIGHT : integer := 32;
     -- Hardware receives padded image (padding = N/2 on each side)
-    constant CFG_IMAGE_WIDTH : integer := CFG_UNPADDED_WIDTH + 2 * (CFG_N / 2);
+    constant CFG_IMAGE_WIDTH  : integer := CFG_UNPADDED_WIDTH + 2 * (CFG_N / 2);
+    constant CFG_IMAGE_HEIGHT : integer := CFG_UNPADDED_HEIGHT + 2 * (CFG_N / 2);
     
     -- Data widths
     constant CFG_PIXEL_WIDTH  : integer := 8;  -- 8-bit unsigned input pixels

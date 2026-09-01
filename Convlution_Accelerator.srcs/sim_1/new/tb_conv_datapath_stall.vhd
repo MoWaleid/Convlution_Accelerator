@@ -17,8 +17,9 @@ entity tb_conv_datapath_stall is
 end entity tb_conv_datapath_stall;
 
 architecture sim of tb_conv_datapath_stall is
-    constant C_N               : integer := 3;
-    constant C_IMAGE_WIDTH     : integer := 5;
+    constant C_N                : integer := 3;
+    constant C_IMAGE_WIDTH      : integer := 5;
+    constant C_IMAGE_HEIGHT     : integer := 5;
     constant C_K               : integer := 1;
     constant C_WINDOW_PIXELS   : integer := C_N * C_N;
     constant C_EXPECTED_OUTPUTS : integer := 9;
@@ -60,8 +61,9 @@ begin
 
     baseline_window_generator : entity work.window_generator
         generic map (
-            C_N           => C_N,
-            C_IMAGE_WIDTH => C_IMAGE_WIDTH
+            C_N            => C_N,
+            C_IMAGE_WIDTH  => C_IMAGE_WIDTH,
+            C_IMAGE_HEIGHT => C_IMAGE_HEIGHT
         )
         port map (
             clk        => clk,
@@ -94,8 +96,9 @@ begin
 
     stalled_window_generator : entity work.window_generator
         generic map (
-            C_N           => C_N,
-            C_IMAGE_WIDTH => C_IMAGE_WIDTH
+            C_N            => C_N,
+            C_IMAGE_WIDTH  => C_IMAGE_WIDTH,
+            C_IMAGE_HEIGHT => C_IMAGE_HEIGHT
         )
         port map (
             clk        => clk,
@@ -138,7 +141,7 @@ begin
     baseline_driver : process
     begin
         wait until resetn = '1';
-        for pixel_value in 1 to C_IMAGE_WIDTH * C_IMAGE_WIDTH loop
+        for pixel_value in 1 to C_IMAGE_WIDTH * C_IMAGE_HEIGHT loop
             wait until falling_edge(clk);
             pixel_baseline <= std_logic_vector(to_unsigned(pixel_value, pixel_baseline'length));
             valid_baseline <= '1';
@@ -206,7 +209,7 @@ begin
     begin
         wait until baseline_done = '1';
 
-        for pixel_value in 1 to C_IMAGE_WIDTH * C_IMAGE_WIDTH loop
+        for pixel_value in 1 to C_IMAGE_WIDTH * C_IMAGE_HEIGHT loop
             wait until falling_edge(clk);
             if pixel_value = 3 then
                 freeze_for(3, "initial window fill");

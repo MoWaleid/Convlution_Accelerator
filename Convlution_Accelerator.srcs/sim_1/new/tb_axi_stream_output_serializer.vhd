@@ -20,7 +20,10 @@ architecture sim of tb_axi_stream_output_serializer is
     constant CLK_PERIOD : time := 10 ns;
 
     constant C_K6 : integer := 6;
-    constant C_K6_POSITIONS : integer := 3;
+    constant C_K6_IMAGE_WIDTH  : integer := 5;
+    constant C_K6_IMAGE_HEIGHT : integer := 3;
+    constant C_K6_POSITIONS : integer := C_K6_IMAGE_WIDTH * C_K6_IMAGE_HEIGHT;
+    constant C_K6_FULL_BEATS : integer := (C_K6 * C_K6_POSITIONS) / 4;
     constant C_K16 : integer := 16;
     constant C_K16_POSITIONS : integer := 6;
 
@@ -83,8 +86,8 @@ begin
     dut_k6 : entity work.axi_stream_output_serializer
         generic map (
             C_K            => C_K6,
-            C_IMAGE_WIDTH  => C_K6_POSITIONS,
-            C_IMAGE_HEIGHT => 1,
+            C_IMAGE_WIDTH  => C_K6_IMAGE_WIDTH,
+            C_IMAGE_HEIGHT => C_K6_IMAGE_HEIGHT,
             C_FIFO_DEPTH   => 16
         )
         port map (
@@ -189,7 +192,7 @@ begin
                 scalar_count := scalar_count_from_keep(k6_tkeep);
                 assert scalar_count /= 0
                     report "K=6 emitted an invalid TKEEP" severity failure;
-                if beat_index < 4 then
+                if beat_index < C_K6_FULL_BEATS then
                     assert k6_tkeep = x"FF"
                         report "K=6 emitted a premature partial TKEEP" severity failure;
                 else
@@ -208,7 +211,7 @@ begin
                 if scalar_index = C_K6 * C_K6_POSITIONS then
                     assert k6_tlast = '1' and last_count = 1
                         report "K=6 frame must end with exactly one TLAST" severity failure;
-                    assert beat_index = 4
+                    assert beat_index = C_K6_FULL_BEATS
                         report "K=6 emitted an unexpected number of packed beats" severity failure;
                     k6_done <= '1';
                     exit;
@@ -329,9 +332,7 @@ begin
 
     finish_proc : process
     begin
-        wait until k6_done = '1';
-        wait until k16_input_done = '1';
-        wait until k16_done = '1';
+        wait until k6_done = '1' and k16_input_done = '1' and k16_done = '1';
         report "--- AXI4-Stream output serializer regression completed successfully ---";
         stop(0);
         wait;

@@ -12,8 +12,8 @@ use work.conv_pkg.all;
 entity axi_stream_output_serializer is
     generic (
         C_K            : positive := CFG_K;
-        C_IMAGE_WIDTH  : positive := CFG_IMAGE_WIDTH;
-        C_IMAGE_HEIGHT : positive := CFG_IMAGE_WIDTH;
+        C_IMAGE_WIDTH  : positive := CFG_UNPADDED_WIDTH;
+        C_IMAGE_HEIGHT : positive := CFG_UNPADDED_HEIGHT;
         C_FIFO_DEPTH   : positive := 16
     );
     port (

@@ -8,8 +8,9 @@ use work.config_pkg.all;
 
 entity window_generator is
     generic (
-        C_N           : integer := CFG_N;
-        C_IMAGE_WIDTH : integer := CFG_IMAGE_WIDTH
+        C_N            : integer := CFG_N;
+        C_IMAGE_WIDTH  : integer := CFG_IMAGE_WIDTH;
+        C_IMAGE_HEIGHT : integer := CFG_IMAGE_HEIGHT
     );
     port (
         clk        : in std_logic;
@@ -41,7 +42,7 @@ architecture rtl of window_generator is
     
     -- Counters to track image boundaries for valid_out generation
     signal col_cnt : integer range 0 to C_IMAGE_WIDTH - 1 := 0;
-    signal row_cnt : integer range 0 to C_IMAGE_WIDTH - 1 := 0; -- Assuming square image H=W
+    signal row_cnt : integer range 0 to C_IMAGE_HEIGHT - 1 := 0;
 
     signal valid_out_reg : std_logic := '0';
 
@@ -99,7 +100,7 @@ begin
                     -- 3. Update Image Coordinate Counters
                     if col_cnt = C_IMAGE_WIDTH - 1 then
                         col_cnt <= 0;
-                        if row_cnt = C_IMAGE_WIDTH - 1 then
+                        if row_cnt = C_IMAGE_HEIGHT - 1 then
                             row_cnt <= 0; -- End of frame
                         else
                             row_cnt <= row_cnt + 1;

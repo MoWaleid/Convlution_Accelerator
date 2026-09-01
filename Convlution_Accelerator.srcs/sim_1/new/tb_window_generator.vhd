@@ -15,8 +15,9 @@ architecture sim of tb_window_generator is
     -- Component Declaration
     component window_generator is
         generic (
-            C_N           : integer := CFG_N;
-            C_IMAGE_WIDTH : integer := CFG_IMAGE_WIDTH
+            C_N            : integer := CFG_N;
+            C_IMAGE_WIDTH  : integer := CFG_IMAGE_WIDTH;
+            C_IMAGE_HEIGHT : integer := CFG_IMAGE_HEIGHT
         );
         port (
             clk        : in std_logic;
@@ -51,8 +52,9 @@ begin
     -- Instantiate the UUT with a small 5x5 image
     uut: window_generator
         generic map (
-            C_N           => TEST_N,
-            C_IMAGE_WIDTH => TEST_IMAGE_WIDTH
+            C_N            => TEST_N,
+            C_IMAGE_WIDTH  => TEST_IMAGE_WIDTH,
+            C_IMAGE_HEIGHT => TEST_IMAGE_WIDTH
         )
         port map (
             clk        => clk,

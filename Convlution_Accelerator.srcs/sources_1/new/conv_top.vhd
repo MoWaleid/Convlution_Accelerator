@@ -27,6 +27,7 @@ entity conv_top is
         C_K                : integer := CFG_K;
         C_N                : integer := CFG_N;
         C_IMAGE_WIDTH      : integer := CFG_IMAGE_WIDTH;
+        C_IMAGE_HEIGHT     : integer := CFG_IMAGE_HEIGHT;
         C_S_AXI_DATA_WIDTH : integer := 32;
         C_S_AXI_ADDR_WIDTH : integer := 32
     );
@@ -134,8 +135,9 @@ begin
     -- ========================================================================
     wingen_inst : entity work.window_generator
         generic map (
-            C_N           => C_N,
-            C_IMAGE_WIDTH => C_IMAGE_WIDTH
+            C_N            => C_N,
+            C_IMAGE_WIDTH  => C_IMAGE_WIDTH,
+            C_IMAGE_HEIGHT => C_IMAGE_HEIGHT
         )
         port map (
             clk        => clk,
