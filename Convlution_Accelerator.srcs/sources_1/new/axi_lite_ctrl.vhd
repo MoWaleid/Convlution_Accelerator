@@ -63,17 +63,25 @@ architecture rtl of axi_lite_ctrl is
     signal axi_bvalid  : std_logic;
     signal axi_arready : std_logic;
     signal axi_rvalid  : std_logic;
-    
+
+    -- One-entry buffers decouple the AXI write address and write data channels.
+    signal write_addr_pending : std_logic;
+    signal write_data_pending : std_logic;
+    signal write_addr_reg     : std_logic_vector(31 downto 0);
+    signal write_data_reg     : std_logic_vector(31 downto 0);
+    signal write_strb_reg     : std_logic_vector(3 downto 0);
+
     -- Internal Register File Interface
     signal rf_wr_en   : std_logic;
     signal rf_wr_addr : std_logic_vector(31 downto 0);
     signal rf_wr_data : std_logic_vector(31 downto 0);
+    signal rf_wr_strb : std_logic_vector(3 downto 0);
     signal rf_rd_en   : std_logic;
     signal rf_rd_addr : std_logic_vector(31 downto 0);
     signal rf_rd_data : std_logic_vector(31 downto 0);
 
-    -- Helper state for reading
-    type read_state_t is (IDLE, WAIT_RD);
+    -- A read address is accepted only when there is no outstanding response.
+    type read_state_t is (READ_IDLE, READ_WAIT_DATA, READ_RESPONSE);
     signal read_state : read_state_t;
 
 begin
@@ -87,47 +95,87 @@ begin
     S_AXI_RRESP   <= "00"; -- Always OKAY
     S_AXI_RVALID  <= axi_rvalid;
 
+    -- At most one write transaction may be in flight. Address and data are
+    -- accepted independently until both one-entry buffers are populated.
+    axi_awready <= '1' when S_AXI_ARESETN = '1' and
+                             axi_bvalid = '0' and
+                             write_addr_pending = '0' else '0';
+    axi_wready  <= '1' when S_AXI_ARESETN = '1' and
+                             axi_bvalid = '0' and
+                             write_data_pending = '0' else '0';
+
+    -- A read address is accepted only while no read response is outstanding.
+    axi_arready <= '1' when S_AXI_ARESETN = '1' and
+                             read_state = READ_IDLE else '0';
     -- =========================================================================
     -- AXI Write Channel Logic
     -- =========================================================================
     process(S_AXI_ACLK)
+        variable v_addr_pending : std_logic;
+        variable v_data_pending : std_logic;
+        variable v_addr         : std_logic_vector(31 downto 0);
+        variable v_data         : std_logic_vector(31 downto 0);
+        variable v_strb         : std_logic_vector(3 downto 0);
     begin
         if rising_edge(S_AXI_ACLK) then
             if S_AXI_ARESETN = '0' then
-                axi_awready <= '0';
-                axi_wready  <= '0';
                 axi_bvalid  <= '0';
+                write_addr_pending <= '0';
+                write_data_pending <= '0';
+                write_addr_reg <= (others => '0');
+                write_data_reg <= (others => '0');
+                write_strb_reg <= (others => '0');
                 rf_wr_en    <= '0';
                 rf_wr_addr  <= (others => '0');
                 rf_wr_data  <= (others => '0');
+                rf_wr_strb  <= (others => '0');
             else
-                -- Default: de-assert write enable
+                -- Default: de-assert write enable.
                 rf_wr_en <= '0';
-                
-                -- Accept Address and Data simultaneously
-                if axi_awready = '0' and axi_wready = '0' and S_AXI_AWVALID = '1' and S_AXI_WVALID = '1' then
-                    axi_awready <= '1';
-                    axi_wready  <= '1';
-                    
-                    -- Trigger write to register file
-                    rf_wr_en   <= '1';
-                    rf_wr_addr <= std_logic_vector(resize(unsigned(S_AXI_AWADDR), 32));
-                    rf_wr_data <= S_AXI_WDATA;
-                else
-                    axi_awready <= '0';
-                    axi_wready  <= '0';
+
+                -- Variables include the handshakes occurring on this edge, so
+                -- AW and W may arrive in either order or together.
+                v_addr_pending := write_addr_pending;
+                v_data_pending := write_data_pending;
+                v_addr := write_addr_reg;
+                v_data := write_data_reg;
+                v_strb := write_strb_reg;
+
+                if axi_awready = '1' and S_AXI_AWVALID = '1' then
+                    v_addr_pending := '1';
+                    v_addr := std_logic_vector(resize(unsigned(S_AXI_AWADDR), 32));
                 end if;
-                
-                -- Response Channel
-                if axi_awready = '1' and S_AXI_AWVALID = '1' and axi_wready = '1' and S_AXI_WVALID = '1' and axi_bvalid = '0' then
-                    axi_bvalid <= '1';
-                elsif S_AXI_BREADY = '1' and axi_bvalid = '1' then
+
+                if axi_wready = '1' and S_AXI_WVALID = '1' then
+                    v_data_pending := '1';
+                    v_data := S_AXI_WDATA;
+                    v_strb := S_AXI_WSTRB(3 downto 0);
+                end if;
+
+                -- Generate one register-file write and one response only after
+                -- both independent channels have been captured.
+                if axi_bvalid = '0' then
+                    if v_addr_pending = '1' and v_data_pending = '1' then
+                        rf_wr_en   <= '1';
+                        rf_wr_addr <= v_addr;
+                        rf_wr_data <= v_data;
+                        rf_wr_strb <= v_strb;
+                        v_addr_pending := '0';
+                        v_data_pending := '0';
+                        axi_bvalid <= '1';
+                    end if;
+                elsif S_AXI_BREADY = '1' then
                     axi_bvalid <= '0';
                 end if;
+
+                write_addr_pending <= v_addr_pending;
+                write_data_pending <= v_data_pending;
+                write_addr_reg <= v_addr;
+                write_data_reg <= v_data;
+                write_strb_reg <= v_strb;
             end if;
         end if;
     end process;
-
     -- =========================================================================
     -- AXI Read Channel Logic
     -- =========================================================================
@@ -135,45 +183,40 @@ begin
     begin
         if rising_edge(S_AXI_ACLK) then
             if S_AXI_ARESETN = '0' then
-                axi_arready <= '0';
                 axi_rvalid  <= '0';
                 S_AXI_RDATA <= (others => '0');
                 rf_rd_en    <= '0';
                 rf_rd_addr  <= (others => '0');
-                read_state  <= IDLE;
+                read_state  <= READ_IDLE;
             else
-                -- Default: de-assert read enable
+                -- Default: de-assert read enable.
                 rf_rd_en <= '0';
-                
+
                 case read_state is
-                    when IDLE =>
-                        if S_AXI_ARVALID = '1' and axi_arready = '0' then
-                            axi_arready <= '1';
+                    when READ_IDLE =>
+                        if S_AXI_ARVALID = '1' and axi_arready = '1' then
                             rf_rd_en    <= '1';
                             rf_rd_addr  <= std_logic_vector(resize(unsigned(S_AXI_ARADDR), 32));
-                            read_state  <= WAIT_RD;
-                        else
-                            axi_arready <= '0';
+                            read_state  <= READ_WAIT_DATA;
                         end if;
-                        
-                    when WAIT_RD =>
-                        -- ARREADY is de-asserted
-                        axi_arready <= '0';
-                        
-                        -- The data from regfile is available this cycle (1 cycle latency)
+
+                    when READ_WAIT_DATA =>
+                        -- The register-file read data is captured one cycle
+                        -- after the AR handshake.
                         S_AXI_RDATA <= rf_rd_data;
                         axi_rvalid  <= '1';
-                        
-                        -- Wait for master to accept data
+                        read_state  <= READ_RESPONSE;
+
+                    when READ_RESPONSE =>
+                        -- Hold RVALID and RDATA stable until the R handshake.
                         if S_AXI_RREADY = '1' and axi_rvalid = '1' then
                             axi_rvalid <= '0';
-                            read_state <= IDLE;
+                            read_state <= READ_IDLE;
                         end if;
                 end case;
             end if;
         end if;
     end process;
-
     -- =========================================================================
     -- Instantiate Register File
     -- =========================================================================
@@ -188,6 +231,7 @@ begin
             wr_en       => rf_wr_en,
             wr_addr     => rf_wr_addr,
             wr_data     => rf_wr_data,
+            wr_strb     => rf_wr_strb,
             rd_en       => rf_rd_en,
             rd_addr     => rf_rd_addr,
             rd_data     => rf_rd_data,

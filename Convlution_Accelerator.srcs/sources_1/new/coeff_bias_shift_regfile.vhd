@@ -19,6 +19,7 @@ entity coeff_bias_shift_regfile is
         wr_en   : in std_logic;
         wr_addr : in std_logic_vector(31 downto 0);
         wr_data : in std_logic_vector(31 downto 0);
+        wr_strb : in std_logic_vector(3 downto 0);
         
         -- Simple memory-mapped read interface
         rd_en   : in std_logic;
@@ -97,27 +98,38 @@ begin
                 if wr_en = '1' then
                     if ch_idx_wr < C_K then
                         if word_offset_wr < C_COEFF_WORDS then
-                            -- Store up to C_COEFFS_PER_WORD consecutive coefficients from one write word.
+                            -- Store each packed coefficient only when its byte
+                            -- lane is enabled by WSTRB.
                             for coeff_lane in 0 to C_COEFFS_PER_WORD - 1 loop
-                                if word_offset_wr * C_COEFFS_PER_WORD + coeff_lane < C_N * C_N then
+                                if wr_strb(coeff_lane) = '1' and
+                                   word_offset_wr * C_COEFFS_PER_WORD + coeff_lane < C_N * C_N then
                                     coeffs_reg(ch_idx_wr * C_N * C_N + word_offset_wr * C_COEFFS_PER_WORD + coeff_lane) <=
                                         wr_data((coeff_lane + 1) * CFG_WEIGHT_WIDTH - 1 downto coeff_lane * CFG_WEIGHT_WIDTH);
                                 end if;
                             end loop;
                         elsif word_offset_wr = C_BIAS_WORD then
-                            -- Bias register
-                            bias_reg(ch_idx_wr) <= wr_data;
+                            -- Bias register with byte enables.
+                            for byte_lane in 0 to C_BUS_WORD_WIDTH / 8 - 1 loop
+                                if wr_strb(byte_lane) = '1' then
+                                    bias_reg(ch_idx_wr)((byte_lane + 1) * 8 - 1 downto byte_lane * 8) <=
+                                        wr_data((byte_lane + 1) * 8 - 1 downto byte_lane * 8);
+                                end if;
+                            end loop;
                         elsif word_offset_wr = C_CONTROL_WORD then
-                            -- Shift and ReLU enable register
-                            shift_reg(ch_idx_wr)   <= wr_data(CFG_SHIFT_WIDTH - 1 downto 0);
-                            relu_en_reg(ch_idx_wr) <= wr_data(8);
+                            -- Shift occupies byte 0 and ReLU enable occupies
+                            -- byte 1, so each field obeys its corresponding strobe.
+                            if wr_strb(0) = '1' then
+                                shift_reg(ch_idx_wr) <= wr_data(CFG_SHIFT_WIDTH - 1 downto 0);
+                            end if;
+                            if wr_strb(1) = '1' then
+                                relu_en_reg(ch_idx_wr) <= wr_data(8);
+                            end if;
                         end if;
                     end if;
                 end if;
             end if;
         end if;
     end process;
-
     -- Read Process (Combinatorial)
     process(rd_en, rd_addr, coeffs_reg, bias_reg, shift_reg, relu_en_reg, ch_idx_rd, word_offset_rd)
     begin

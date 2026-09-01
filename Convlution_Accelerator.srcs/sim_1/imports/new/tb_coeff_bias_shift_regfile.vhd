@@ -24,6 +24,7 @@ architecture sim of tb_coeff_bias_shift_regfile is
             wr_en       : in std_logic;
             wr_addr     : in std_logic_vector(31 downto 0);
             wr_data     : in std_logic_vector(31 downto 0);
+            wr_strb     : in std_logic_vector(3 downto 0);
             rd_en       : in std_logic;
             rd_addr     : in std_logic_vector(31 downto 0);
             rd_data     : out std_logic_vector(31 downto 0);
@@ -40,6 +41,7 @@ architecture sim of tb_coeff_bias_shift_regfile is
     signal wr_en       : std_logic := '0';
     signal wr_addr     : std_logic_vector(31 downto 0) := (others => '0');
     signal wr_data     : std_logic_vector(31 downto 0) := (others => '0');
+    signal wr_strb     : std_logic_vector(3 downto 0) := (others => '1');
     signal rd_en       : std_logic := '0';
     signal rd_addr     : std_logic_vector(31 downto 0) := (others => '0');
     signal rd_data     : std_logic_vector(31 downto 0);
@@ -104,6 +106,7 @@ begin
             wr_en       => wr_en,
             wr_addr     => wr_addr,
             wr_data     => wr_data,
+            wr_strb     => wr_strb,
             rd_en       => rd_en,
             rd_addr     => rd_addr,
             rd_data     => rd_data,
