@@ -86,3 +86,9 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Vivado block-design view and generated per-BD IP copies. The tracked .bd
+# source and scripts/create_accelerator_dma_bd.tcl recreate these deterministically.
+*.bda
+/Convlution_Accelerator.srcs/sources_1/bd/*/ip/
+dfx_runtime.txt
