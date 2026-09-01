@@ -144,6 +144,9 @@ begin
     -- Stimulus Process
     -- ========================================================================
     stim_proc : process
+        constant C_CHANNEL_STRIDE : integer := 16#100#;
+        constant C_BIAS_OFFSET    : integer := 16#F8#;
+        constant C_CONTROL_OFFSET : integer := 16#FC#;
 
         -- ----------------------------------------------------------------
         -- AXI-Lite write procedure (from tb_axi_lite_ctrl)
@@ -167,17 +170,26 @@ begin
         end procedure;
 
         -- ----------------------------------------------------------------
-        -- Write one coefficient to the register file
+        -- Write four signed int8 coefficients packed into one 32-bit word.
+        -- The first argument after word_idx becomes byte lane 0 / bits [7:0].
         -- ----------------------------------------------------------------
-        procedure write_coeff(ch : integer; idx : integer; val : integer) is
+        procedure write_coeff_word(
+            ch       : integer;
+            word_idx : integer;
+            w0       : integer range -128 to 127;
+            w1       : integer range -128 to 127;
+            w2       : integer range -128 to 127;
+            w3       : integer range -128 to 127
+        ) is
             variable addr : std_logic_vector(31 downto 0);
             variable data : std_logic_vector(31 downto 0);
         begin
-            addr := std_logic_vector(to_unsigned(ch * 256 + idx * 4, 32));
-            -- val is signed int8 (-128..127); convert via to_signed to get
-            -- correct two's complement, then zero-extend to 32 bits.
+            addr := std_logic_vector(to_unsigned(ch * C_CHANNEL_STRIDE + word_idx * 4, 32));
             data := (others => '0');
-            data(7 downto 0) := std_logic_vector(to_signed(val, 8));
+            data(7 downto 0)   := std_logic_vector(to_signed(w0, 8));
+            data(15 downto 8)  := std_logic_vector(to_signed(w1, 8));
+            data(23 downto 16) := std_logic_vector(to_signed(w2, 8));
+            data(31 downto 24) := std_logic_vector(to_signed(w3, 8));
             axi_write(addr, data);
         end procedure;
 
@@ -188,7 +200,7 @@ begin
             variable addr : std_logic_vector(31 downto 0);
             variable data : std_logic_vector(31 downto 0);
         begin
-            addr := std_logic_vector(to_unsigned(ch * 256 + 32 * 4, 32));
+            addr := std_logic_vector(to_unsigned(ch * C_CHANNEL_STRIDE + C_BIAS_OFFSET, 32));
             data := std_logic_vector(to_signed(val, 32));
             axi_write(addr, data);
         end procedure;
@@ -200,7 +212,7 @@ begin
             variable addr : std_logic_vector(31 downto 0);
             variable data : std_logic_vector(31 downto 0);
         begin
-            addr := std_logic_vector(to_unsigned(ch * 256 + 33 * 4, 32));
+            addr := std_logic_vector(to_unsigned(ch * C_CHANNEL_STRIDE + C_CONTROL_OFFSET, 32));
             data := (others => '0');
             data(4 downto 0) := std_logic_vector(to_unsigned(shift, 5));
             data(8) := '1' when relu = 1 else '0';
@@ -286,30 +298,30 @@ begin
 
         if USE_CUSTOM_FILTERS then
             -- Channel 0: Identity  [0,0,0, 0,127,0, 0,0,0]  shift=7, bias=0, relu=0
-            write_coeff(0, 0,  0); write_coeff(0, 1,  0); write_coeff(0, 2,   0);
-            write_coeff(0, 3,  0); write_coeff(0, 4,127); write_coeff(0, 5,   0);
-            write_coeff(0, 6,  0); write_coeff(0, 7,  0); write_coeff(0, 8,   0);
+            write_coeff_word(0, 0,   0,   0,  0,  0);
+            write_coeff_word(0, 1, 127,   0,  0,  0);
+            write_coeff_word(0, 2,   0,   0,  0,  0);  -- weight 8 plus harmless unused bytes
             write_bias(0, 0);
             write_shift_relu(0, 7, 0);
 
             -- Channel 1: Sobel X  [-1,0,1, -2,0,2, -1,0,1]  shift=8, bias=0, relu=0
-            write_coeff(1, 0, -1); write_coeff(1, 1,  0); write_coeff(1, 2,  1);
-            write_coeff(1, 3, -2); write_coeff(1, 4,  0); write_coeff(1, 5,  2);
-            write_coeff(1, 6, -1); write_coeff(1, 7,  0); write_coeff(1, 8,  1);
+            write_coeff_word(1, 0,  -1,   0,  1, -2);
+            write_coeff_word(1, 1,   0,   2, -1,  0);
+            write_coeff_word(1, 2,   1,   0,  0,  0);  -- weight 8 plus harmless unused bytes
             write_bias(1, 0);
             write_shift_relu(1, 8, 0);
 
             -- Channel 2: Sobel Y  [-1,-2,-1, 0,0,0, 1,2,1]  shift=8, bias=0, relu=0
-            write_coeff(2, 0, -1); write_coeff(2, 1, -2); write_coeff(2, 2, -1);
-            write_coeff(2, 3,  0); write_coeff(2, 4,  0); write_coeff(2, 5,  0);
-            write_coeff(2, 6,  1); write_coeff(2, 7,  2); write_coeff(2, 8,  1);
+            write_coeff_word(2, 0,  -1,  -2, -1,  0);
+            write_coeff_word(2, 1,   0,   0,  1,  2);
+            write_coeff_word(2, 2,   1,   0,  0,  0);  -- weight 8 plus harmless unused bytes
             write_bias(2, 0);
             write_shift_relu(2, 8, 0);
 
             -- Channel 3: Box blur [1,2,1, 2,4,2, 1,2,1]  shift=4, bias=0, relu=0
-            write_coeff(3, 0, 1); write_coeff(3, 1, 2); write_coeff(3, 2, 1);
-            write_coeff(3, 3, 2); write_coeff(3, 4, 4); write_coeff(3, 5, 2);
-            write_coeff(3, 6, 1); write_coeff(3, 7, 2); write_coeff(3, 8, 1);
+            write_coeff_word(3, 0,   1,   2,  1,  2);
+            write_coeff_word(3, 1,   4,   2,  1,  2);
+            write_coeff_word(3, 2,   1,   0,  0,  0);  -- weight 8 plus harmless unused bytes
             write_bias(3, 0);
             write_shift_relu(3, 4, 0);
         end if;
