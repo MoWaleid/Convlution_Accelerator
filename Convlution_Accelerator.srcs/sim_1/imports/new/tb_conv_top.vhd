@@ -115,6 +115,7 @@ begin
             clk           => clk,
             resetn        => resetn,
             ce            => ce,
+            busy_in       => '0',
             S_AXI_AWADDR  => s_axi_awaddr,
             S_AXI_AWPROT  => s_axi_awprot,
             S_AXI_AWVALID => s_axi_awvalid,

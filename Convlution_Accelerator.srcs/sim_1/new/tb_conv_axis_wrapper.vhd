@@ -64,7 +64,8 @@ architecture sim of tb_conv_axis_wrapper is
     signal frame_one_done       : std_logic := '0';
     signal frame_two_done       : std_logic := '0';
     signal stall_phase          : std_logic := '0';
-    signal release_output       : std_logic := '0';
+    signal release_output        : std_logic := '0';
+    signal backpressure_observed : std_logic := '0';
     signal backpressure_complete : std_logic := '0';
 
     function padded_pixel(pixel_index : natural) return std_logic_vector is
@@ -190,6 +191,37 @@ begin
                 report "AXI-Lite configuration write did not receive OKAY" severity failure;
         end procedure axi_write;
 
+        procedure axi_read(
+            constant address  : in std_logic_vector(31 downto 0);
+            constant expected : in std_logic_vector(31 downto 0);
+            constant tag      : in string
+        ) is
+        begin
+            s_axi_rready <= '0';
+            wait until falling_edge(clk);
+            s_axi_araddr  <= address;
+            s_axi_arvalid <= '1';
+            loop
+                wait until rising_edge(clk);
+                exit when s_axi_arready = '1';
+            end loop;
+            wait until falling_edge(clk);
+            s_axi_arvalid <= '0';
+            loop
+                wait until falling_edge(clk);
+                exit when s_axi_rvalid = '1';
+            end loop;
+            assert s_axi_rresp = "00" and s_axi_rdata = expected
+                report tag & ": AXI-Lite readback mismatch" severity failure;
+            s_axi_rready <= '1';
+            wait until rising_edge(clk);
+            wait for 1 ns;
+            assert s_axi_rvalid = '0'
+                report tag & ": AXI-Lite RVALID did not clear after handshake" severity failure;
+            wait until falling_edge(clk);
+            s_axi_rready <= '0';
+        end procedure axi_read;
+
         procedure configure_identity_channel(constant channel : in natural) is
             variable base : natural;
         begin
@@ -201,30 +233,57 @@ begin
             axi_write(std_logic_vector(to_unsigned(base + 16#FC#, 32)), x"00000000");
         end procedure configure_identity_channel;
 
-        procedure send_padded_frame is
+        procedure send_axis_beat(
+            constant beat_index : in natural;
+            constant check_busy_while_backpressured : in boolean;
+            variable busy_checked : inout boolean
+        ) is
+        begin
+            wait until falling_edge(clk);
+            s_axis_tdata  <= make_axis_beat(beat_index);
+            if beat_index = C_AXIS_BEATS - 1 then
+                s_axis_tkeep <= last_keep;
+                s_axis_tlast <= '1';
+            else
+                s_axis_tkeep <= x"FF";
+                s_axis_tlast <= '0';
+            end if;
+            s_axis_tvalid <= '1';
+            loop
+                wait until rising_edge(clk);
+                if check_busy_while_backpressured and
+                   backpressure_observed = '1' and not busy_checked then
+                    axi_read(x"00004000", x"00000002",
+                             "STATUS remained BUSY during output backpressure");
+                    busy_checked := true;
+                end if;
+                exit when s_axis_tready = '1';
+            end loop;
+            wait until falling_edge(clk);
+            s_axis_tvalid <= '0';
+        end procedure send_axis_beat;
+
+        procedure send_padded_frame(
+            constant check_busy_after_first_transfer : in boolean;
+            constant check_busy_while_backpressured  : in boolean
+        ) is
+            variable busy_checked : boolean := false;
         begin
             for beat_index in 0 to C_AXIS_BEATS - 1 loop
-                wait until falling_edge(clk);
-                s_axis_tdata  <= make_axis_beat(beat_index);
-                if beat_index = C_AXIS_BEATS - 1 then
-                    s_axis_tkeep <= last_keep;
-                    s_axis_tlast <= '1';
-                else
-                    s_axis_tkeep <= x"FF";
-                    s_axis_tlast <= '0';
+                send_axis_beat(beat_index, check_busy_while_backpressured, busy_checked);
+                if beat_index = 0 and check_busy_after_first_transfer then
+                    axi_read(x"00004000", x"00000002",
+                             "STATUS was not BUSY after first input transfer");
                 end if;
-                s_axis_tvalid <= '1';
-                loop
-                    wait until rising_edge(clk);
-                    exit when s_axis_tready = '1';
-                end loop;
-                wait until falling_edge(clk);
-                s_axis_tvalid <= '0';
                 -- One 64-bit beat every eight clocks matches one pixel per clock.
                 for idle_cycle in 1 to 6 loop
                     wait until falling_edge(clk);
                 end loop;
             end loop;
+            if check_busy_while_backpressured then
+                assert busy_checked
+                    report "STATUS was not sampled during the backpressure interval" severity failure;
+            end if;
             s_axis_tlast <= '0';
         end procedure send_padded_frame;
     begin
@@ -233,13 +292,19 @@ begin
         wait until falling_edge(clk);
         resetn <= '1';
 
+        -- Global registers reflect this wrapper instance's compile-time values.
+        axi_read(x"00004000", x"00000001", "STATUS was not IDLE after reset");
+        axi_read(x"00004008", x"00000403", "BUILD_CONFIG readback");
+        axi_read(x"0000400C", x"00100010", "IMAGE_DIMS readback");
+
         for channel in 0 to C_K - 1 loop
             configure_identity_channel(channel);
         end loop;
         wait until falling_edge(clk);
 
         -- Frame A: uncongested AXI output must match the standalone core result.
-        send_padded_frame;
+        -- The helper also checks BUSY immediately after its first accepted beat.
+        send_padded_frame(true, false);
         if frame_one_done /= '1' then
             wait until frame_one_done = '1';
         end if;
@@ -247,13 +312,15 @@ begin
         -- Frame B: hold downstream ready low until the complete chain stalls.
         wait until falling_edge(clk);
         stall_phase <= '1';
-        send_padded_frame;
+        send_padded_frame(false, true);
         if backpressure_complete /= '1' then
             wait until backpressure_complete = '1';
         end if;
         if frame_two_done /= '1' then
             wait until frame_two_done = '1';
         end if;
+        axi_read(x"00004000", x"00000001",
+                 "STATUS did not return to IDLE after final TLAST handshake");
 
         report "--- AXI4-Stream convolution wrapper regression completed successfully ---";
         stop(0);
@@ -295,6 +362,8 @@ begin
             exit when s_axis_tvalid = '1' and s_axis_tready = '0' and
                       m_axis_tvalid = '1' and m_axis_tready = '0';
         end loop;
+
+        backpressure_observed <= '1';
 
         -- Existing row-boundary valid bubbles may permit isolated core advances,
         -- but the preceding handshake proves that the full input FIFO blocked the

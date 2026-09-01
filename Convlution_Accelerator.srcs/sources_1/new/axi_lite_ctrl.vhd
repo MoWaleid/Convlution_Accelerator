@@ -10,8 +10,10 @@ entity axi_lite_ctrl is
     generic (
         C_S_AXI_DATA_WIDTH : integer := 32;
         C_S_AXI_ADDR_WIDTH : integer := 32;
-        C_K                : integer := CFG_K;
-        C_N                : integer := CFG_N
+        C_K                    : integer := CFG_K;
+        C_N                    : integer := CFG_N;
+        C_LOGICAL_IMAGE_WIDTH  : integer := CFG_UNPADDED_WIDTH;
+        C_LOGICAL_IMAGE_HEIGHT : integer := CFG_UNPADDED_HEIGHT
     );
     port (
         -- AXI4-Lite Interface
@@ -46,6 +48,10 @@ entity axi_lite_ctrl is
         S_AXI_RRESP   : out std_logic_vector(1 downto 0);
         S_AXI_RVALID  : out std_logic;
         S_AXI_RREADY  : in std_logic;
+
+        -- Runtime status is supplied by the streamed wrapper, not the
+        -- AXI4-Lite control plane itself.
+        status_busy   : in std_logic;
         
         -- Outputs to Accelerator Datapath
         coeffs_out    : out coeff_array_t(0 to C_K * C_N * C_N - 1);
@@ -79,10 +85,15 @@ architecture rtl of axi_lite_ctrl is
     signal rf_rd_en   : std_logic;
     signal rf_rd_addr : std_logic_vector(31 downto 0);
     signal rf_rd_data : std_logic_vector(31 downto 0);
+    signal read_data_mux : std_logic_vector(31 downto 0);
 
     -- A read address is accepted only when there is no outstanding response.
     type read_state_t is (READ_IDLE, READ_WAIT_DATA, READ_RESPONSE);
     signal read_state : read_state_t;
+
+    constant C_STATUS_ADDR       : std_logic_vector(31 downto 0) := x"00004000";
+    constant C_BUILD_CONFIG_ADDR : std_logic_vector(31 downto 0) := x"00004008";
+    constant C_IMAGE_DIMS_ADDR   : std_logic_vector(31 downto 0) := x"0000400C";
 
 begin
 
@@ -107,6 +118,40 @@ begin
     -- A read address is accepted only while no read response is outstanding.
     axi_arready <= '1' when S_AXI_ARESETN = '1' and
                              read_state = READ_IDLE else '0';
+
+    -- Per-channel data is read from the register file. The global address
+    -- space starts at 0x4000, beyond the 64 fixed channel blocks (0x0000-3FFF).
+    -- Unimplemented global locations, including reserved 0x4004, read as zero.
+    read_data_mux_process : process(rf_rd_addr, rf_rd_data, status_busy)
+        variable v_read_data : std_logic_vector(31 downto 0);
+    begin
+        if unsigned(rf_rd_addr) < to_unsigned(16#4000#, rf_rd_addr'length) then
+            v_read_data := rf_rd_data;
+        else
+            v_read_data := (others => '0');
+        end if;
+        case rf_rd_addr is
+            when C_STATUS_ADDR =>
+                v_read_data := (others => '0');
+                if status_busy = '1' then
+                    v_read_data(1) := '1';
+                else
+                    v_read_data(0) := '1';
+                end if;
+            when C_BUILD_CONFIG_ADDR =>
+                v_read_data := (others => '0');
+                v_read_data(7 downto 0)  := std_logic_vector(to_unsigned(C_N, 8));
+                v_read_data(15 downto 8) := std_logic_vector(to_unsigned(C_K, 8));
+            when C_IMAGE_DIMS_ADDR =>
+                v_read_data := (others => '0');
+                v_read_data(15 downto 0)  := std_logic_vector(to_unsigned(C_LOGICAL_IMAGE_WIDTH, 16));
+                v_read_data(31 downto 16) := std_logic_vector(to_unsigned(C_LOGICAL_IMAGE_HEIGHT, 16));
+            when others =>
+                null;
+        end case;
+        read_data_mux <= v_read_data;
+    end process read_data_mux_process;
+
     -- =========================================================================
     -- AXI Write Channel Logic
     -- =========================================================================
@@ -156,10 +201,15 @@ begin
                 -- both independent channels have been captured.
                 if axi_bvalid = '0' then
                     if v_addr_pending = '1' and v_data_pending = '1' then
-                        rf_wr_en   <= '1';
-                        rf_wr_addr <= v_addr;
-                        rf_wr_data <= v_data;
-                        rf_wr_strb <= v_strb;
+                        -- The legacy register-file decoder uses only channel-space
+                        -- bits, so writes outside 0x0000-3FFF must be filtered here
+                        -- rather than aliasing channel 0. Global registers are read-only.
+                        if unsigned(v_addr) < to_unsigned(16#4000#, v_addr'length) then
+                            rf_wr_en   <= '1';
+                            rf_wr_addr <= v_addr;
+                            rf_wr_data <= v_data;
+                            rf_wr_strb <= v_strb;
+                        end if;
                         v_addr_pending := '0';
                         v_data_pending := '0';
                         axi_bvalid <= '1';
@@ -203,7 +253,7 @@ begin
                     when READ_WAIT_DATA =>
                         -- The register-file read data is captured one cycle
                         -- after the AR handshake.
-                        S_AXI_RDATA <= rf_rd_data;
+                        S_AXI_RDATA <= read_data_mux;
                         axi_rvalid  <= '1';
                         read_state  <= READ_RESPONSE;
 

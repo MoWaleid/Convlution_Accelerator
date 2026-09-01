@@ -15,8 +15,10 @@ architecture sim of tb_axi_lite_ctrl is
         generic (
             C_S_AXI_DATA_WIDTH : integer := 32;
             C_S_AXI_ADDR_WIDTH : integer := 32;
-            C_K                : integer := CFG_K;
-            C_N                : integer := CFG_N
+            C_K                    : integer := CFG_K;
+            C_N                    : integer := CFG_N;
+            C_LOGICAL_IMAGE_WIDTH  : integer := CFG_UNPADDED_WIDTH;
+            C_LOGICAL_IMAGE_HEIGHT : integer := CFG_UNPADDED_HEIGHT
         );
         port (
             S_AXI_ACLK    : in std_logic;
@@ -40,6 +42,7 @@ architecture sim of tb_axi_lite_ctrl is
             S_AXI_RRESP   : out std_logic_vector(1 downto 0);
             S_AXI_RVALID  : out std_logic;
             S_AXI_RREADY  : in std_logic;
+            status_busy   : in std_logic;
             coeffs_out    : out coeff_array_t(0 to CFG_K * CFG_N * CFG_N - 1);
             bias_out      : out bias_array_t(0 to CFG_K - 1);
             shift_out     : out shift_array_t(0 to CFG_K - 1);
@@ -73,6 +76,7 @@ architecture sim of tb_axi_lite_ctrl is
     signal S_AXI_RRESP   : std_logic_vector(1 downto 0);
     signal S_AXI_RVALID  : std_logic;
     signal S_AXI_RREADY  : std_logic := '0';
+    signal status_busy   : std_logic := '0';
 
     signal coeffs_out    : coeff_array_t(0 to CFG_K * CFG_N * CFG_N - 1);
     signal bias_out      : bias_array_t(0 to CFG_K - 1);
@@ -87,6 +91,9 @@ architecture sim of tb_axi_lite_ctrl is
     constant CH0_COEFF1_ADDR : std_logic_vector(31 downto 0) := x"00000004";
     constant CH0_BIAS_ADDR   : std_logic_vector(31 downto 0) := x"000000F8";
     constant CH1_CTRL_ADDR   : std_logic_vector(31 downto 0) := x"000001FC";
+    constant STATUS_ADDR       : std_logic_vector(31 downto 0) := x"00004000";
+    constant BUILD_CONFIG_ADDR : std_logic_vector(31 downto 0) := x"00004008";
+    constant IMAGE_DIMS_ADDR   : std_logic_vector(31 downto 0) := x"0000400C";
 
     procedure send_aw(
         signal clk     : in std_logic;
@@ -274,6 +281,7 @@ begin
             S_AXI_RRESP   => S_AXI_RRESP,
             S_AXI_RVALID  => S_AXI_RVALID,
             S_AXI_RREADY  => S_AXI_RREADY,
+            status_busy   => status_busy,
             coeffs_out    => coeffs_out,
             bias_out      => bias_out,
             shift_out     => shift_out,
@@ -297,6 +305,39 @@ begin
         wait until falling_edge(S_AXI_ACLK);
 
         report "--- Starting AXI4-Lite protocol regression ---";
+
+        -- Global read-only registers are outside the frozen 64-channel space.
+        send_ar(S_AXI_ACLK, STATUS_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00000001", 1, "idle status readback");
+        send_ar(S_AXI_ACLK, BUILD_CONFIG_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00001003", 0, "build configuration readback");
+        send_ar(S_AXI_ACLK, IMAGE_DIMS_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00200020", 0, "logical image dimensions readback");
+        status_busy <= '1';
+        wait until falling_edge(S_AXI_ACLK);
+        send_ar(S_AXI_ACLK, STATUS_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00000002", 1, "busy status readback");
+        status_busy <= '0';
+
+        -- Global registers are read-only and must not alias channel 0. The
+        -- reserved 0x4004 location likewise reads as zero.
+        write_same_cycle(S_AXI_ACLK, STATUS_ADDR, x"DEADBEEF", "1111",
+                         S_AXI_AWADDR, S_AXI_AWVALID, S_AXI_AWREADY,
+                         S_AXI_WDATA, S_AXI_WSTRB, S_AXI_WVALID, S_AXI_WREADY);
+        complete_write_response(S_AXI_ACLK, S_AXI_BVALID, S_AXI_BRESP, S_AXI_BREADY,
+                                0, "read-only STATUS write response");
+        assert coeffs_out(0) = x"00"
+            report "global STATUS write aliased channel-0 coefficient storage" severity error;
+        send_ar(S_AXI_ACLK, STATUS_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00000001", 0, "read-only STATUS preserved");
+        send_ar(S_AXI_ACLK, x"00004004", S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
+        complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
+                               x"00000000", 0, "reserved CONTROL readback");
 
         -- 1, 4, and 7: AW/W together, full strobe, and delayed BREADY.
         write_same_cycle(S_AXI_ACLK, CH0_BIAS_ADDR, x"11223344", "1111",

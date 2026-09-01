@@ -69,10 +69,27 @@ architecture rtl of conv_axis_wrapper is
     signal core_valid_out : std_logic;
     signal core_ce        : std_logic;
     signal serializer_in_ready : std_logic;
+    signal frame_busy     : std_logic := '0';
 begin
     -- Freeze only an occupied core output that the serializer cannot accept.
     -- This dependency is acyclic: serializer_in_ready is independent of core_ce.
     core_ce <= '0' when core_valid_out = '1' and serializer_in_ready = '0' else '1';
+
+    -- A frame begins with the first accepted AXI input beat and remains busy
+    -- until its final serialized AXI output beat is accepted. Starting a new
+    -- frame as the previous frame completes keeps BUSY asserted.
+    frame_busy_process : process(clk)
+    begin
+        if rising_edge(clk) then
+            if resetn = '0' then
+                frame_busy <= '0';
+            elsif s_axis_tvalid = '1' and s_axis_tready = '1' then
+                frame_busy <= '1';
+            elsif m_axis_tvalid = '1' and m_axis_tready = '1' and m_axis_tlast = '1' then
+                frame_busy <= '0';
+            end if;
+        end if;
+    end process frame_busy_process;
 
     input_frontend_inst : entity work.axi_stream_input_frontend
         port map (
@@ -94,15 +111,18 @@ begin
         generic map (
             C_K                => C_K,
             C_N                => C_N,
-            C_IMAGE_WIDTH      => C_IMAGE_WIDTH,
-            C_IMAGE_HEIGHT     => C_IMAGE_HEIGHT,
-            C_S_AXI_DATA_WIDTH => C_S_AXI_DATA_WIDTH,
+            C_IMAGE_WIDTH          => C_IMAGE_WIDTH,
+            C_IMAGE_HEIGHT         => C_IMAGE_HEIGHT,
+            C_LOGICAL_IMAGE_WIDTH  => C_OUTPUT_IMAGE_WIDTH,
+            C_LOGICAL_IMAGE_HEIGHT => C_OUTPUT_IMAGE_HEIGHT,
+            C_S_AXI_DATA_WIDTH     => C_S_AXI_DATA_WIDTH,
             C_S_AXI_ADDR_WIDTH => C_S_AXI_ADDR_WIDTH
         )
         port map (
             clk           => clk,
             resetn        => resetn,
             ce            => core_ce,
+            busy_in       => frame_busy,
             S_AXI_AWADDR  => S_AXI_AWADDR,
             S_AXI_AWPROT  => S_AXI_AWPROT,
             S_AXI_AWVALID => S_AXI_AWVALID,

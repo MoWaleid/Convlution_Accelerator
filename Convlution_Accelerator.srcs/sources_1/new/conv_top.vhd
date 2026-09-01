@@ -26,9 +26,11 @@ entity conv_top is
     generic (
         C_K                : integer := CFG_K;
         C_N                : integer := CFG_N;
-        C_IMAGE_WIDTH      : integer := CFG_IMAGE_WIDTH;
-        C_IMAGE_HEIGHT     : integer := CFG_IMAGE_HEIGHT;
-        C_S_AXI_DATA_WIDTH : integer := 32;
+        C_IMAGE_WIDTH          : integer := CFG_IMAGE_WIDTH;
+        C_IMAGE_HEIGHT         : integer := CFG_IMAGE_HEIGHT;
+        C_LOGICAL_IMAGE_WIDTH  : integer := CFG_UNPADDED_WIDTH;
+        C_LOGICAL_IMAGE_HEIGHT : integer := CFG_UNPADDED_HEIGHT;
+        C_S_AXI_DATA_WIDTH     : integer := 32;
         C_S_AXI_ADDR_WIDTH : integer := 32
     );
     port (
@@ -36,6 +38,7 @@ entity conv_top is
         clk    : in  std_logic;
         resetn : in  std_logic;
         ce     : in  std_logic;  -- Global streamed-datapath advance
+        busy_in : in  std_logic; -- Stream-wrapper frame status for AXI-Lite reads
 
         -- ================================================================
         -- AXI4-Lite Slave — Configuration Interface (from Zynq PS)
@@ -98,9 +101,11 @@ begin
     axi_ctrl_inst : entity work.axi_lite_ctrl
         generic map (
             C_S_AXI_DATA_WIDTH => C_S_AXI_DATA_WIDTH,
-            C_S_AXI_ADDR_WIDTH => C_S_AXI_ADDR_WIDTH,
-            C_K                => C_K,
-            C_N                => C_N
+            C_S_AXI_ADDR_WIDTH     => C_S_AXI_ADDR_WIDTH,
+            C_K                    => C_K,
+            C_N                    => C_N,
+            C_LOGICAL_IMAGE_WIDTH  => C_LOGICAL_IMAGE_WIDTH,
+            C_LOGICAL_IMAGE_HEIGHT => C_LOGICAL_IMAGE_HEIGHT
         )
         port map (
             S_AXI_ACLK    => clk,
@@ -124,6 +129,7 @@ begin
             S_AXI_RRESP   => S_AXI_RRESP,
             S_AXI_RVALID  => S_AXI_RVALID,
             S_AXI_RREADY  => S_AXI_RREADY,
+            status_busy   => busy_in,
             coeffs_out    => coeffs_wire,
             bias_out      => bias_wire,
             shift_out     => shift_wire,
