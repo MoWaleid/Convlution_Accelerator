@@ -59,8 +59,8 @@ architecture rtl of axi_stream_input_frontend is
         start_lane : natural
     ) return integer is
     begin
-        for lane in start_lane to 7 loop
-            if keep(lane) = '1' then
+        for lane in 0 to 7 loop
+            if lane >= start_lane and keep(lane) = '1' then
                 return lane;
             end if;
         end loop;
@@ -72,8 +72,8 @@ architecture rtl of axi_stream_input_frontend is
         lane : integer
     ) return boolean is
     begin
-        for later_lane in lane + 1 to 7 loop
-            if keep(later_lane) = '1' then
+        for later_lane in 0 to 7 loop
+            if later_lane > lane and keep(later_lane) = '1' then
                 return false;
             end if;
         end loop;
