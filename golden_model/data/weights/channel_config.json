@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "N": 3,
-  "K": 16,
+  "K": 8,
   "boundary_mode": "same",
   "stride": 1,
   "pixel_format": "uint8_q0.8",
@@ -18,7 +18,7 @@
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": -1564,
+      "bias_quantized": -19037,
       "relu_en": 1
     },
     {
@@ -27,16 +27,16 @@
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": 1740,
+      "bias_quantized": 179,
       "relu_en": 1
     },
     {
       "channel": 2,
       "source_channel": 2,
-      "shift": 9,
-      "weight_fraction_bits": 9,
-      "bias_fraction_bits": 17,
-      "bias_quantized": 13386,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": -6388,
       "relu_en": 1
     },
     {
@@ -45,7 +45,7 @@
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": -3242,
+      "bias_quantized": -2372,
       "relu_en": 1
     },
     {
@@ -54,7 +54,7 @@
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": 380,
+      "bias_quantized": -20952,
       "relu_en": 1
     },
     {
@@ -63,7 +63,7 @@
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": 11015,
+      "bias_quantized": 90,
       "relu_en": 1
     },
     {
@@ -72,88 +72,16 @@
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": 3957,
+      "bias_quantized": -208,
       "relu_en": 1
     },
     {
       "channel": 7,
       "source_channel": 7,
-      "shift": 7,
-      "weight_fraction_bits": 7,
-      "bias_fraction_bits": 15,
-      "bias_quantized": -1367,
-      "relu_en": 1
-    },
-    {
-      "channel": 8,
-      "source_channel": 8,
       "shift": 8,
       "weight_fraction_bits": 8,
       "bias_fraction_bits": 16,
-      "bias_quantized": -4797,
-      "relu_en": 1
-    },
-    {
-      "channel": 9,
-      "source_channel": 9,
-      "shift": 8,
-      "weight_fraction_bits": 8,
-      "bias_fraction_bits": 16,
-      "bias_quantized": -1364,
-      "relu_en": 1
-    },
-    {
-      "channel": 10,
-      "source_channel": 10,
-      "shift": 8,
-      "weight_fraction_bits": 8,
-      "bias_fraction_bits": 16,
-      "bias_quantized": -873,
-      "relu_en": 1
-    },
-    {
-      "channel": 11,
-      "source_channel": 11,
-      "shift": 7,
-      "weight_fraction_bits": 7,
-      "bias_fraction_bits": 15,
-      "bias_quantized": 839,
-      "relu_en": 1
-    },
-    {
-      "channel": 12,
-      "source_channel": 12,
-      "shift": 8,
-      "weight_fraction_bits": 8,
-      "bias_fraction_bits": 16,
-      "bias_quantized": 7428,
-      "relu_en": 1
-    },
-    {
-      "channel": 13,
-      "source_channel": 13,
-      "shift": 8,
-      "weight_fraction_bits": 8,
-      "bias_fraction_bits": 16,
-      "bias_quantized": -15143,
-      "relu_en": 1
-    },
-    {
-      "channel": 14,
-      "source_channel": 14,
-      "shift": 8,
-      "weight_fraction_bits": 8,
-      "bias_fraction_bits": 16,
-      "bias_quantized": 883,
-      "relu_en": 1
-    },
-    {
-      "channel": 15,
-      "source_channel": 15,
-      "shift": 8,
-      "weight_fraction_bits": 8,
-      "bias_fraction_bits": 16,
-      "bias_quantized": -357,
+      "bias_quantized": -379,
       "relu_en": 1
     }
   ]
