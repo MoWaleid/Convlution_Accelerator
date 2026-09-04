@@ -52,6 +52,8 @@ architecture sim of tb_coeff_bias_shift_regfile is
     signal relu_en_out : std_logic_vector(0 to CFG_K - 1);
 
     constant CLK_PERIOD : time := 10 ns;
+    constant C_LAST_CHANNEL      : natural := CFG_K - 1;
+    constant C_LAST_CHANNEL_BASE : integer := C_LAST_CHANNEL * 16#100#;
 
     -- Procedure for writing to a register
     procedure write_reg(
@@ -155,12 +157,12 @@ begin
         assert bias_out(2) = x"12345678" report "Test 3 Failed: parallel bias mismatch" severity error;
         read_reg(clk, 16#200# + 16#F8#, rd_en, rd_addr, rd_data, x"12345678", "Test 3 Failed: bias readback mismatch");
 
-        -- Test Case 4: Channel 15 control is located at word 63 (byte offset 0xFC).
-        -- Shift = 12 in bits 4:0; ReLU enable = 1 in bit 8.
-        write_reg(clk, 16#F00# + 16#FC#, x"0000010C", wr_en, wr_addr, wr_data);
-        assert shift_out(15) = "01100" report "Test 4 Failed: parallel shift mismatch" severity error;
-        assert relu_en_out(15) = '1' report "Test 4 Failed: parallel ReLU mismatch" severity error;
-        read_reg(clk, 16#F00# + 16#FC#, rd_en, rd_addr, rd_data, x"0000010C", "Test 4 Failed: shift/ReLU readback mismatch");
+        -- Test Case 4: The final configured channel control is located at
+        -- word 63 (byte offset 0xFC). Shift = 12 in bits 4:0; ReLU = 1 in bit 8.
+        write_reg(clk, C_LAST_CHANNEL_BASE + 16#FC#, x"0000010C", wr_en, wr_addr, wr_data);
+        assert shift_out(C_LAST_CHANNEL) = "01100" report "Test 4 Failed: parallel shift mismatch" severity error;
+        assert relu_en_out(C_LAST_CHANNEL) = '1' report "Test 4 Failed: parallel ReLU mismatch" severity error;
+        read_reg(clk, C_LAST_CHANNEL_BASE + 16#FC#, rd_en, rd_addr, rd_data, x"0000010C", "Test 4 Failed: shift/ReLU readback mismatch");
 
         report "--- All tests completed successfully ---";
         wait;

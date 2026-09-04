@@ -32,12 +32,12 @@ architecture sim of tb_conv_top is
     -- ========================================================================
     -- Test Configuration
     -- ========================================================================
-    -- Set USE_CUSTOM_FILTERS = true for the 4-channel custom demo,
-    -- or false to load trained weights from .mem files (16 channels).
+    -- This focused regression intentionally uses the independent 4-channel
+    -- custom fixture. Regenerated K=8 trained artifacts are not consumed here.
     constant USE_CUSTOM_FILTERS : boolean := true;
 
     constant TEST_N          : integer := 3;
-    constant TEST_K          : integer := 4;  -- 4 for custom, 16 for trained
+    constant TEST_K          : integer := 4;  -- independent custom fixture
     constant TEST_IMG_W      : integer := 32;
     constant TEST_PADDED_W   : integer := TEST_IMG_W + 2 * (TEST_N / 2);  -- 34
     constant TEST_NUM_PIXELS : integer := TEST_IMG_W * TEST_IMG_W;        -- 1024

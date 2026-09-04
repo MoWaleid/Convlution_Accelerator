@@ -97,6 +97,10 @@ architecture sim of tb_axi_lite_ctrl is
     constant CONTROL_ADDR      : std_logic_vector(31 downto 0) := x"00004004";
     constant BUILD_CONFIG_ADDR : std_logic_vector(31 downto 0) := x"00004008";
     constant IMAGE_DIMS_ADDR   : std_logic_vector(31 downto 0) := x"0000400C";
+    constant BUILD_CONFIG_EXPECTED : std_logic_vector(31 downto 0) :=
+        std_logic_vector(to_unsigned(0, 16)) &
+        std_logic_vector(to_unsigned(CFG_K, 8)) &
+        std_logic_vector(to_unsigned(CFG_N, 8));
 
     procedure send_aw(
         signal clk     : in std_logic;
@@ -316,7 +320,7 @@ begin
                                x"00000001", 1, "idle status readback");
         send_ar(S_AXI_ACLK, BUILD_CONFIG_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
         complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
-                               x"00001003", 0, "build configuration readback");
+                               BUILD_CONFIG_EXPECTED, 0, "build configuration readback");
         send_ar(S_AXI_ACLK, IMAGE_DIMS_ADDR, S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_ARREADY);
         complete_read_response(S_AXI_ACLK, S_AXI_RVALID, S_AXI_RRESP, S_AXI_RDATA, S_AXI_RREADY,
                                x"00200020", 0, "logical image dimensions readback");

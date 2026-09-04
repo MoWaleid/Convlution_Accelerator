@@ -16,7 +16,7 @@ package config_pkg is
     -- ========================================================================
     
     -- Number of parallel output channels (K). 
-    constant CFG_K : integer := 16;
+    constant CFG_K : integer := 8;
     
     -- Kernel spatial dimension (N x N).
     -- Standard small-image convolution kernel size is 3x3.

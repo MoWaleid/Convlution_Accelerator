@@ -35,7 +35,7 @@ EPOCHS         = 50     # Total training epochs (may stop earlier via PATIENCE)
 LEARNING_RATE  = 1e-3   # Initial Adam optimizer learning rate (halved every 10 epochs)
 BATCH_SIZE     = 128    # Number of images per training mini-batch
 KERNEL_SIZE    = 3      # Spatial size of Conv1 filter (N×N); must be odd and >= 3
-NUM_CHANNELS   = 16     # Number of Conv1 output channels (K) — deployed to FPGA
+NUM_CHANNELS   = 8      # Number of Conv1 output channels (K) — deployed to FPGA
 SEED           = 2026   # RNG seed for reproducible training (locks random, numpy, torch)
 NUM_WORKERS    = 0      # DataLoader worker threads (0 = load in main thread)
 DOWNLOAD       = False  # Set True to auto-download CIFAR-10 if not already extracted
@@ -83,7 +83,7 @@ class CIFAR10GrayCNN(nn.Module):
     provide a training signal for Conv1's weights.
     """
 
-    def __init__(self, kernel_size: int = 3, num_channels: int = 16,
+    def __init__(self, kernel_size: int = 3, num_channels: int = NUM_CHANNELS,
                  input_size: int = 32):
         super().__init__()
         if kernel_size < 3 or kernel_size % 2 == 0:

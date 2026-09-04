@@ -9,12 +9,15 @@ use IEEE.NUMERIC_STD.ALL;
 library STD;
 use STD.ENV.ALL;
 
+library work;
+use work.config_pkg.all;
+
 entity tb_conv_axis_wrapper is
 end entity tb_conv_axis_wrapper;
 
 architecture sim of tb_conv_axis_wrapper is
     constant CLK_PERIOD       : time := 10 ns;
-    constant C_K              : integer := 4;
+    constant C_K              : integer := CFG_K;
     constant C_N              : integer := 3;
     constant C_LOGICAL_WIDTH  : integer := 16;
     constant C_LOGICAL_HEIGHT : integer := 16;
@@ -26,6 +29,11 @@ architecture sim of tb_conv_axis_wrapper is
     constant C_LAST_BYTES     : integer := C_INPUT_PIXELS mod 8;
     constant C_OUTPUT_POSITIONS : integer := C_LOGICAL_WIDTH * C_LOGICAL_HEIGHT;
     constant C_OUTPUT_SCALARS : integer := C_OUTPUT_POSITIONS * C_K;
+    constant C_OUTPUT_BEATS_PER_POSITION : integer := C_K / 4;
+    constant C_BUILD_CONFIG : std_logic_vector(31 downto 0) :=
+        std_logic_vector(to_unsigned(0, 16)) &
+        std_logic_vector(to_unsigned(C_K, 8)) &
+        std_logic_vector(to_unsigned(C_N, 8));
 
     signal clk    : std_logic := '0';
     signal resetn : std_logic := '0';
@@ -121,6 +129,11 @@ architecture sim of tb_conv_axis_wrapper is
         end case;
     end function last_keep;
 begin
+    assert C_K = 8
+        report "Product wrapper regression expects CFG_K = 8" severity failure;
+    assert C_OUTPUT_BEATS_PER_POSITION = 2
+        report "K=8 must serialize as two AXIS64 beats per output position" severity failure;
+
     clk <= not clk after CLK_PERIOD / 2;
     m_axis_tready <= '1' when hold_output_for_soft_reset = '0' and
                                (stall_phase = '0' or release_output = '1') else '0';
@@ -327,7 +340,7 @@ begin
 
         -- Global registers reflect this wrapper instance's compile-time values.
         axi_read(x"00004000", x"00000001", "STATUS was not IDLE after reset");
-        axi_read(x"00004008", x"00000403", "BUILD_CONFIG readback");
+        axi_read(x"00004008", C_BUILD_CONFIG, "BUILD_CONFIG readback");
         axi_read(x"0000400C", x"00100010", "IMAGE_DIMS readback");
 
         for channel in 0 to C_K - 1 loop
@@ -464,8 +477,8 @@ begin
             wait until rising_edge(clk);
             if m_axis_tvalid = '1' and m_axis_tready = '1' then
                 assert m_axis_tkeep = x"FF"
-                    report "K=4 wrapper output must contain four int16 scalars per beat" severity failure;
-                for lane in 0 to C_K - 1 loop
+                    report "K=8 wrapper output beat must contain four int16 scalars" severity failure;
+                for lane in 0 to 3 loop
                     position_index := scalar_index / C_K;
                     expected := expected_result(position_index);
                     assert m_axis_tdata((lane + 1) * 16 - 1 downto lane * 16) = expected
