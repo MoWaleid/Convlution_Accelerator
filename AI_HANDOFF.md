@@ -2,7 +2,9 @@
 
 **Purpose:** This is the single self-contained briefing for any AI assistant or engineer
 continuing this project. If you have this file plus repository access, you need nothing
-else to work effectively. Every claim below was verified first-hand as of **2026-09-11**.
+else to work effectively — it covers the system, the history, the workflow, and **how to
+talk to the user** (§15). Every claim below was verified first-hand; state as of
+**2026-09-12**, HEAD commit `5d7e416` ("M4: integrate CVH1 hybrid accelerator").
 
 ---
 
@@ -34,7 +36,9 @@ teammate with a parallel implementation (see §11).
 
 ## 2. Repository map (D:\MyProjects\Convlution_Accelerator)
 
-Git branch `v1-bringup`; M3 baseline commit `f711631` ("finalized M3 officially", 2026-09-11). This handoff describes the M4 closeout state prepared on 2026-09-11.
+Git branch `v1-bringup`; HEAD `5d7e416` ("M4: integrate CVH1 hybrid accelerator",
+2026-09-12). Prior key commits: `f711631` M3 closeout, `172a691` first handoff,
+`267c1c4` K8 bring-up config. Working tree clean.
 
 | Path | What it is |
 |---|---|
@@ -53,7 +57,9 @@ Git branch `v1-bringup`; M3 baseline commit `f711631` ("finalized M3 officially"
 | `AI_HANDOFF.md` | This file |
 
 Untracked but present on disk: `.venv/` (Python 3.13 env with torch/numpy/Pillow/pypdf),
-`checkpoints/k8_100mhz_postroute_physopt_met.dcp` (golden post-route snapshot),
+`checkpoints/k8_100mhz_postroute_physopt_met.dcp` (M3-era golden post-route snapshot),
+`m4_final_utilization.rpt` (hierarchical M4 utilization; gitignored `*.rpt`),
+root `m4_accelerator_dma.xsa` (scratch copy of the qualified M4 XSA),
 Vivado generated dirs (`.gen/`, `.runs/`, `.sim/`, `.cache/`, `.ip_user_files/`, `xsim.dir/`),
 `golden_model.zip` (~494 MB snapshot).
 
@@ -81,12 +87,35 @@ is the milestone table — read it before doing milestone work).
 | M8 reproducible operation and demo | CLI/API, run archive, previews, measurement harness | demo core exists (m3_demo.py); formal M8 pending |
 | M9 freeze pre-research release | release tag, qualification matrix, 1000-frame soak | pending |
 
+### Condensed history (the story so far)
+
+- **Jul–Aug 2026:** spec decisions, original master plan, RTL built module-by-module
+  (regfile → window gen → compute → streaming wrapper), golden model + trained model
+  (68.15%), four test-vector sets. Teammate builds the K=16 variant in parallel.
+- **Sep 1:** block design scripted (`scripts/*.tcl`), addresses frozen.
+- **Sep 4–6 (bring-up war):** first bitstream → GP0/DMA **hang** (ILA: `arvalid` stuck) →
+  reset fix → **addrfix** (BD adapter masks AXI addresses to the 64-KiB aperture) →
+  **len16** (DMA length width) → trained-CIFAR board run PASS. Five bitstreams document it.
+- **Sep 7:** M0 frozen (recovery + qualification PASS); teammate comparison audit
+  (keep our repo as baseline; merge decision deferred).
+- **Sep 8–10:** M1 contracts approved; M2 conv_lab written + host-tested (Win + Linux);
+  PetaLinux pack staged → applied on Ubuntu → rootfs rebuilt → checker repaired twice
+  (`petalinux-image-minimal` target, then `zynq-generic-7z020` machine) → M2P WIC built;
+  ARM qualification tarball (A/B/C PASS) returned 2026-09-11.
+- **Sep 11 (M3 day, 61 board frames, 0 mismatches):** proven M0 runners re-run on the
+  new image → file-driven backend written and validated locally first, then pushed over
+  serial (base64 chunk protocol with per-chunk md5) → demo runner: 9 images ×
+  trained+custom configs, Sobel maps rendered **on the board**. Committed `f711631`.
+  Same day/night: **M4 implemented** — full CVH1 ABI in RTL (~10.5 k lines), ILA removed,
+  22-bit DMA lengths, integration sim A–H PASS, routed **WNS +0.066**, XSA exported,
+  M4 WIC built, board run PASS via `m4_filebackend.py` (counters exact). Committed `5d7e416`.
+
 ---
 
 ## 4. Hardware design essentials
 
-- **Numeric contract:** uint8 Q0.8 pixels (value/256), int8 weights, per-channel int32
-  bias (contract default moving to signed-24, sign-extended), 5-bit shift, per-channel
+- **Numeric contract:** uint8 Q0.8 pixels (value/256), int8 weights, per-channel
+  signed-24 bias (sign-extended into the 32-bit register word), 5-bit shift, per-channel
   ReLU. Arithmetic: `acc = bias + Σ pixel·weight`; `if shift: acc = (acc + 2^(shift-1)) >> shift`
   (round-half-up); saturate to int16; ReLU clamps negatives to 0. **Bit-exact** against
   `golden_model/golden_conv.py`.
@@ -256,7 +285,7 @@ transcription errors in chat are the main corruption source — always verify ch
 
 ---
 
-## 10. Verification evidence ledger (hardware, all 2026-09-11 unless noted)
+## 10. Verification evidence ledger (hardware, 2026-09-11/12)
 
 | Run | Frames | Result |
 |---|---|---|
@@ -338,7 +367,58 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
 
 ---
 
-## 15. Next steps (as of this writing)
+## 15. How to work with the user (conversation style & collaboration protocol)
+
+The user is an Egyptian undergrad competitor; casual register, occasionally profane,
+zero patience for fluff. What works and what doesn't, learned the hard way:
+
+**Style**
+- **Be concise.** The user explicitly asked for short responses. Lead with the outcome
+  ("PASS — 36 frames, 0 mismatches"), then detail only as needed. No filler, no restating
+  their words back at them.
+- Direct and honest beats diplomatic. Own your bugs immediately and precisely (see the
+  bug-history below) — the user respects "my bug, here's the one-line fix" and distrusts hedging.
+- When the user says **"GO"**, that's approval to execute the proposed plan without
+  further check-ins. When they say "identify/describe X" they mean read-only — **do not
+  change anything** until explicitly told ("don't change a fucking thing" is a real quote).
+- Don't ask the user questions you can answer yourself from the repo/evidence. The one
+  strategic question that mattered (competition vs research focus) was asked once and
+  answered: **Branch B (research/demo) is the priority; the report is packaging** and is
+  only assembled when the user says so (due 2026-09-15).
+
+**The relay workflow (critical — you have no direct access to VM or board)**
+- You hand the user **one short, self-contained command block at a time** for Ubuntu
+  (VM) or the ZedBoard (PuTTY serial). They paste it and return the output verbatim.
+  Multi-line heredocs for file pushes; single-line commands pasted **separately** to
+  avoid terminal line-garbling.
+- Board pushes use the base64-chunk protocol in §9, **always with per-chunk md5
+  verification**. When a chunk mismatches: compute reference chunk hashes locally,
+  have the user hash theirs, re-emit or `sed`-patch only the bad chunk.
+- VM (builds, PetaLinux) and board (runtime) are separate worlds; the SD card moves
+  between them via `C:\VMShare` and Raspberry Pi Imager on Windows.
+
+**Working rhythm that has proven effective**
+1. Propose the next plan step (tied to the milestone gates, §3) — get "GO".
+2. Do everything possible locally first (validate scripts against golden anchors on
+   Windows before ever pushing). The user values this: zero board time wasted on
+   avoidable bugs.
+3. Execute through the relay; verify every result against expected hashes.
+4. Record evidence (hashes, transcripts, artifacts) and prompt the user to commit
+   with a milestone message; they do the committing.
+5. Keep `AI_HANDOFF.md` current as state changes — it is the continuity contract.
+
+**Known failure modes of this collaboration (avoid repeating)**
+- Transcription errors when re-typing payloads into chat (one flipped char cost an
+  hour) → never retype; emit from files, verify by hash.
+- Argument-order bugs in board scripts (`os.pread(fd, count, offset)`) and success
+  messages printed unconditionally in `finally` blocks → validate locally, structure
+  scripts so PASS is only printed on real success.
+- Assuming tools exist on the board (`base64`, `/tmp` persistence, correct clock) — §9
+  lists the real quirks; read it before board work.
+
+---
+
+## 16. Next steps (as of this writing)
 
 1. **M5 — qualify one hybrid build end to end:** matched software/backend lifecycle, live identity
    validation, at least 100 frames without inter-frame RESET, zero mismatches/guard errors,
