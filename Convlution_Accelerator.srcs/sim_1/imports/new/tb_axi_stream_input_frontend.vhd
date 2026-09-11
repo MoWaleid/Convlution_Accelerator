@@ -177,16 +177,16 @@ begin
                 out_last,
 
             accept_valid =>
-                input_accept_valid,
+    input_accept_valid,
 
-            accept_bytes =>
-                input_accept_bytes,
+accept_bytes =>
+    input_accept_bytes,
 
-            frame_error =>
-                input_frame_error,
+frame_error =>
+    input_frame_error,
 
-            consumed_pulse =>
-                input_consumed_pulse
+consumed_pulse =>
+    input_consumed_pulse
         );
 
 
@@ -749,14 +749,18 @@ begin
         end loop;
 
 
+       -- Release the already-visible stalled pixel 32.
         out_ready <= '1';
 
-        consume_pixels(
-            32,
-            8,
-            false
-        );
+wait until rising_edge(clk);
+wait for 1 ns;
 
+-- Pixel 32 has now handshaken; verify the remaining seven bytes.
+consume_pixels(
+    33,
+    7,
+    false
+);
 
         settle_events;
 

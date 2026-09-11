@@ -34,18 +34,18 @@ teammate with a parallel implementation (see §11).
 
 ## 2. Repository map (D:\MyProjects\Convlution_Accelerator)
 
-Git branch `v1-bringup`; HEAD `f711631` "finalized M3 officially" (2026-09-11); working tree clean; 245 tracked files.
+Git branch `v1-bringup`; M3 baseline commit `f711631` ("finalized M3 officially", 2026-09-11). This handoff describes the M4 closeout state prepared on 2026-09-11.
 
 | Path | What it is |
 |---|---|
 | `Convlution_Accelerator.srcs/sources_1/new/` | **The RTL** (VHDL-2008): `config_pkg.vhd` (K=8, N=3, widths), `conv_pkg.vhd` (array types), `window_generator.vhd` (SRL line buffers, zero BRAM), `conv_channel.vhd` (4-stage pipeline: multiply → add-tree L1 → add-tree L2+bias → round-half-up/saturate/ReLU; `use_dsp="no"`), `conv_engine.vhd` (K channels sharing one window), `conv_top.vhd` (AXI-Lite + datapath), `axi_lite_ctrl.vhd` (AXI4-Lite slave + globals), `coeff_bias_shift_regfile.vhd` (per-channel storage), `sync_fifo.vhd`, `axi_stream_input_frontend.vhd` (64-bit AXIS → byte lanes), `axi_stream_output_serializer.vhd` (K×int16 → 64-bit beats, TLAST framing), `conv_axis_wrapper.vhd` (top wrapper: frame-busy, backpressure freeze, soft reset), `conv_axis_wrapper_bd.v` (Verilog BD adapter; **masks AXI addresses to lower 16 bits** — the "addrfix") |
-| `Convlution_Accelerator.srcs/sources_1/bd/accelerator_dma/` | The tracked block design `accelerator_dma.bd` (includes the debug `system_ila_0` on GP0) |
-| `Convlution_Accelerator.srcs/sim_1/new/` | 10 unique testbenches (`tb_conv_top` custom K=4 bit-exact; `tb_conv_top_trained_k8` 8192-comparison trained regression; `tb_conv_axis_wrapper` streaming+backpressure+soft-reset; `tb_axi_lite_ctrl` 10-scenario AXI protocol; `tb_conv_datapath_stall`; frontend/serializer/window/regfile TBs). `sim_1/imports/new/` holds 4 byte-identical duplicates of sim_1/new TBs |
-| `scripts/` | `create_accelerator_dma_bd.tcl` (rebuilds the BD deterministically) + `zedboard_ps_platform.tcl` (ZedBoard PS7 preset). **Note:** the tcl does not yet instantiate system_ila or set DMA `c_sg_length_width=16` (added by hand in the BD; tracked in `.bd`) |
-| `software/` | `conv_lab/` (M2 PS software: strict validation, DMA layout math, sandboxed decoder, mock admission, independent integer reference), `tests/` (Groups A/B/C; B = 1000 seeded differential cases), `reports/` (host evidence JSONs + md), `m3_filebackend.py`, `m3_demo.py` (board scripts — **repo is the source of truth** for the on-board copies) |
+| `Convlution_Accelerator.srcs/sources_1/bd/accelerator_dma/` | The tracked final M4 block design `accelerator_dma.bd`: no System ILA, AXI DMA simple-mode length width = 22, ZedBoard PS/HP0 platform |
+| `Convlution_Accelerator.srcs/sim_1/new/` | RTL testbenches including `tb_conv_top`, `tb_conv_axis_wrapper`, AXI-Lite, AXI-stream frontend/serializer, datapath, window and regfile regressions. `sim_1/imports/new/` contains Vivado-imported copies registered in the project fileset |
+| `scripts/` | `create_accelerator_dma_bd.tcl` + `zedboard_ps_platform.tcl` (ZedBoard PS7 preset). **Note:** the BD creation script has not yet been reconciled with the final M4 tracked BD setting `c_sg_length_width=22`; the tracked `.bd` is authoritative for M4 |
+| `software/` | `conv_lab/` (M2 PS software), `tests/`, `reports/`, `m3_filebackend.py`, `m3_demo.py`, and `m4_filebackend.py` (CVH1 live-discovery/BUILD_ID validation, parameter admission, repeated-frame DMA inference, final counter checks, guard verification and cleanup RESET). **Repo is the source of truth** for board-script copies |
 | `deploy/petalinux/` | Finalized PetaLinux application pack: 3 recipes (conv-lab, conv-lab-starter, conv-lab-validation), rootfs configs, apply/preflight scripts, `SHA256SUMS.txt` (76 entries), `check_build_settings.sh` + `check_settings.py` (six-recipe `bitbake -e` evaluated-settings checker; **image target = `petalinux-image-minimal`, MACHINE = `zynq-generic-7z020`**) |
-| `platform/accelerator_dma.xsa` | **Older** hardware handoff (no bitstream). The current tested XSA is `bitstreams/k8_gp0_ila_len16_2026-09-06.xsa` |
-| `bitstreams/` (mostly gitignored) | 5 tested bitstreams, Sep 4→6: bringup → +ILA → resetfix → addrfix → **len16 (current tested build)**, each with `.ltx`; len16 `.xsa` |
+| `platform/accelerator_dma.xsa` | **Older** hardware handoff. The current qualified M4 XSA is `bitstreams/k8_gp0_noila_len22_2026-09-11.xsa`, SHA-256 `47a53884ff7529d3979a40d58418b837166c2ebd80bf93d32477a4f2824a503d` |
+| `bitstreams/` (mostly gitignored) | Historical bring-up snapshots plus the qualified M4 no-ILA/len22 XSA `k8_gp0_noila_len22_2026-09-11.xsa`. Final M4 bitstream SHA-256: `8bc60890250bd34311f67fc9e66ce842abb9813f6053b116d254b059e80b67fd` |
 | `debug_captures/` | ILA captures telling the bring-up story (GP0 AR deadlock → fixes), plus 2 board-rendered demo PNGs (`m3_demo_sobel_mag_*.png`) |
 | `golden_model/` | Training + quantization + golden model + test vectors (see §6) |
 | `verification/axi_address_normalization/` | SystemVerilog regression of the BD adapter + full RTL + `run_xsim.ps1` driver |
@@ -74,7 +74,7 @@ is the milestone table — read it before doing milestone work).
 | M2 certify reference/library | ≥1000 seeded differential cases; host tests | **Complete** (Win + Linux x86_64 + **ARM**) |
 | M2-P qualify embedded platform | offline boot, codecs, hashes, UIO/DMA regression | **Complete** (first ARM acceptance 2026-09-10/11; DMA proven 2026-09-11) |
 | **M3 file-driven inference on existing build** | file-driven runs, ≥20 frames, zero mismatches, guards intact | **PASS** (2026-09-11, commit `f711631`) |
-| M4 integrate the exact hybrid incrementally | CVH1 ABI per contract; regression per subsystem; clean 100 MHz build | **NEXT — scoped in §9/§15** |
+| **M4 integrate the exact hybrid incrementally** | CVH1 ABI per contract; regression per subsystem; clean 100 MHz build | **PASS** (2026-09-11; exact hybrid integration and live board proof complete) |
 | M5 qualify one hybrid build end-to-end | ≥100 frames, lifecycle tests | pending |
 | M6 same-image full reload | 20× A32→A32 via exclusive-owner lifecycle (FPGA Manager) | pending |
 | M7 required profiles + model switching | A=N3/K8, B=N3/K16, C=N5/K8, D=N3/K4, D@640×480; switching matrix | pending |
@@ -92,41 +92,49 @@ is the milestone table — read it before doing milestone work).
   `golden_model/golden_conv.py`.
 - **Geometry:** logical 32×32, padded 34×34 (zero border), TX frame = 1156 bytes,
   output = 32×32×K int16 little-endian, order **y,x,channel** (channel-fastest) = 16384 bytes at K=8.
-- **AXI-Lite register map (CURRENT legacy hardware):** accelerator base `0x43C00000`.
-  Channel k at `k*0x100`: packed coefficient words `+0x00/+0x04/+0x08` (4×int8, coefficient 0 in bits 7:0),
-  bias `+0xF8` (int32), control `+0xFC` (shift bits 4:0, relu_en bit 8).
-  Globals: `0x4000` STATUS (bit0 idle, bit1 busy), `0x4004` CONTROL (write bit0=1 with
-  WSTRB[0] → one-cycle soft-reset pulse; write-only; never reads nonzero),
-  `0x4008` BUILD_CONFIG (N | K<<8 = `0x00000803`), `0x400C` IMAGE_DIMS (`0x00200020`).
-  The BD adapter masks addresses to the 64 KiB aperture (lower 16 bits).
+- **AXI-Lite register map (M4 CVH1):** accelerator base `0x43C00000`.
+  Channel slots occupy `0x0000–0x3FFF` in 0x100-byte strides; only channels `0..K-1` are active.
+  Per channel: packed coefficients at `+0x00`, signed-24 bias at `+0xF8`, shift/ReLU control at `+0xFC`.
+  Globals start at `0x4100`: MAGIC `0x43564831`, ABI_VERSION `0x00010000`,
+  CAPABILITIES `0x000001FF`, STATUS `0x410C`, COMMAND `0x4110`, EVENT_CLEAR `0x4114`,
+  ERROR_FLAGS `0x4118`, geometry/configuration discovery `0x4120–0x413C`, live counters
+  `0x4140–0x414C`, BUILD_ID `0x4150–0x415C`, DMA_LENGTH_WIDTH `0x4160`.
+  Frozen M4 BUILD_ID = `4d344e334b385733322d323630393131` (`M4N3K8W32-260911`).
+  Legacy global space `0x4000–0x40FF` is decommissioned under CVH1 and must not control the datapath.
 - **Block design:** PS7 (ZedBoard preset: DDR533, QSPI, SD, UART1, ENET0, USB0) +
-  AXI DMA (simple mode, no SG, 64-bit both directions, `c_sg_length_width=16`,
-  no DRE) + 2 SmartConnects + proc_sys_reset + module-ref accelerator + system_ila on
-  GP0. Addresses: **DMA `0x40400000`/64K, accelerator `0x43C00000`/64K, HP0→DDR `0x0`/512M**.
+  AXI DMA (simple mode, no SG, 64-bit both directions, `c_sg_length_width=22`, no DRE) +
+  2 SmartConnects + proc_sys_reset + module-ref accelerator. **System ILA was removed for M4.**
+  Addresses: DMA `0x40400000`/64K, accelerator `0x43C00000`/64K, HP0→DDR `0x0`/512M.
   One 100 MHz clock domain, FCLK_RESET0_N → peripheral resets.
-- **Build results (len16 build):** LUT 14,731 (27.7%), FF 14,092 (13.2%), BRAM 10.5
-  tiles (7.5%), **DSP 0**, **WNS 0.000 / TNS 0.000 met — zero margin**, WHS +0.029,
-  power est. 1.859 W, DRC clean. ⚠️ New RTL (M4.2+) may break 100 MHz; a pipelining pass is budgeted.
-- **Bring-up history (Sep 4–6):** GP0 AR deadlock (ILA captured) → resetfix →
-  addrfix (address normalization) → **len16** (DMA length width) → trained-CIFAR board
-  run Sep 6. The five bitstreams in `bitstreams/` document this; **len16 is the tested
-  build**. Boot-artifact gate: never program `images/linux/system.bit`; the tested
-  bitstream is
-  `D:\MyProjects\release_checkpoints\M0_k8_len16_20260907_052648_358\current_project\bitstreams\k8_gp0_ila_len16_2026-09-06.bit`
-  (SHA256 `22097a5e3a1640fdc2505821c800c4df363d5e3390df02ee27d7b079ccdec80d`).
-  The deployed `zedboard_M2P_2026-09-10.wic` reuses the identical len16 boot chain
-  (BOOT.BIN md5 `aba9fc907db28329…`) with the new conv-lab rootfs — verified byte-identical boot partitions.
+- **Final M4 routed build:** full system = 12,362 LUTs, 9,787 FFs, 2 RAMB36 + 2 RAMB18,
+  **0 DSPs**. The accelerator wrapper itself uses 7,967 LUTs, 3,541 FFs, **0 BRAM, 0 DSP**;
+  the reported system BRAM belongs to AXI DMA.
+  Timing at 100 MHz: **WNS +0.066 ns, TNS 0, WHS +0.022 ns, THS 0**.
+  `check_timing` is clean. Final DRC has only reviewed RTSTAT-10/REQP-165/REQP-181
+  warning/advisory messages; no dbg_hub warning and no failing DRC errors.
+- **Bring-up history:** the Sep 4–6 sequence was GP0 AR deadlock → resetfix → addrfix →
+  len16 DMA → trained-CIFAR board run. Those artifacts remain historical recovery evidence.
+  M4 supersedes that runtime build with **no System ILA**, **22-bit DMA lengths**, CVH1 control,
+  signed-24 bias handling, coherent discovery/counters, and the 4-MiB u-dma-buf platform.
+  Final routed bitstream:
+  `Convlution_Accelerator.runs/impl_1/accelerator_dma_wrapper.bit`,
+  SHA-256 `8bc60890250bd34311f67fc9e66ce842abb9813f6053b116d254b059e80b67fd`.
+  Qualified XSA: `bitstreams/k8_gp0_noila_len22_2026-09-11.xsa`,
+  SHA-256 `47a53884ff7529d3979a40d58418b837166c2ebd80bf93d32477a4f2824a503d`.
+  The bitstream embedded in the exported XSA hashes identically to the final routed `.bit`.
+  Current SD image: `C:\VMShare\zedboard_M4_2026-09-11.wic`,
+  SHA-256 `2579e8bedc38fb1630ac0e0b67b13540d049c7aa9d4d294a88f7a44aee2a0499`.
 
 ---
 
-## 5. The CVH1 target ABI (what M4 builds toward)
+## 5. The CVH1 ABI (implemented in M4)
 
-Approved contract: `contracts/M1_REGISTER_STREAM_ABI.md` (Codex archive, §13). Highlights:
+Approved contract: `contracts/M1_REGISTER_STREAM_ABI.md` (Codex archive, §13). M4 implements the CVH1 hardware/runtime ABI; full manifest/platform-digest lifecycle integration remains an M5 concern. Highlights:
 
 - New global block at **0x4100+** (independent of K): MAGIC `0x43564831` ("CVH1"),
   ABI_VERSION `0x00010000`, CAPABILITIES `0x000001FF`, STATUS (reset `0x00000101`),
   COMMAND (WO: 1=START, 2=RESET, 4=ABORT), counters, and a **nonzero 128-bit BUILD_ID**
-  (assigned before synthesis, recorded in `hardware.json`, never self-referential).
+  (assigned before synthesis; frozen M4 value `4d344e334b385733322d323630393131`). Full `hardware.json`/platform binding is deferred to M5.
 - Legacy space `0x4000–0x40FF` becomes SLVERR — **writing 1 to 0x4004 must never start a frame**.
 - Channel slots keep the 0x100 layout; reserved offsets in a slot → SLVERR.
 - Software must read MAGIC/ABI_VERSION/BUILD_ID and reject mismatch **before any writes**.
@@ -191,10 +199,9 @@ The user relays every command between the assistant and the VM/board. **User pre
 keep responses short; evidence-first; do not work on the competition report unless told
 (deadline 2026-09-15); Branch B (plan/demo) is the priority.**
 
-`C:\VMShare` holds the transfer artifacts: tested `.bit`s, len16 `.xsa`, both `.wic`s
-(`zedboard_gp0_ila_len16_2026-09-06.wic` legacy, `zedboard_M2P_2026-09-10.wic` current),
-M2 evidence zips, settings-check packs (`M2P_settings_repaired3_…zip` contains the
-fixed checker bytes), and the ARM qualification tarball.
+`C:\VMShare` holds the transfer artifacts: historical len16 `.bit`/`.xsa`/`.wic` recovery
+assets, the current M4 `m4_accelerator_dma.xsa` and `zedboard_M4_2026-09-11.wic`, M2 evidence
+zips, settings-check packs, and the ARM qualification tarball.
 
 ---
 
@@ -206,7 +213,7 @@ fixed checker bytes), and the ARM qualification tarball.
 |---|---|---|
 | `/dev/uio0` | DMA @ `0x40400000`, 64 KiB | root:root 0600 |
 | `/dev/uio1` | accelerator @ `0x43C00000`, 64 KiB | root:root 0600 |
-| `/dev/udmabuf0` | u-dma-buf 5.5.0, phys `0x1F100000`, 1 MiB, sync_mode 1 (noncached) | O_SYNC pwrite/pread are cache-coherent |
+| `/dev/udmabuf0` | u-dma-buf 5.5.0, phys `0x1F100000`, **4 MiB**, sync_mode 1 (noncached) | current M4 DMA buffer |
 
 Board: kernel `6.12.40-xilinx-g31626ef92ff1`, armv7l, Python **3.12.11**, Pillow **10.3.0**
 (JPEG 6.2, zlib 1.3.1), 508 MB RAM, ~2.1 GB free disk. **Quirks:** board clock resets to
@@ -215,26 +222,29 @@ once Ethernet exists); `/tmp` is wiped on reboot (use `/home/petalinux/`); no `b
 applet (use `python3 -c "import base64,..."`); devices are root-only → run inference
 with `sudo`; Ethernet interface `enx000a35001e53` exists but no cable (sshd present).
 
-**Persistent on-board artifacts:** `/home/petalinux/m3_filebackend.py` (file-driven
-inference; loads `/opt/conv-lab/library/models/N3_K8/m0-trained-cifar-k8/converted-1/`
-— format-3 config, `weights/kernel_ch*.mem` — and
-`/opt/conv-lab/library/datasets/m0-cifar-cat/converted-1/`), `/home/petalinux/m3_demo.py`
-(9 images × trained+custom configs → `/home/petalinux/demo_out/`, 135 PNGs incl. Sobel
-magnitude maps), `/home/petalinux/demo_images/` (8 grayscale CIFAR test images).
+**Persistent on-board artifacts:** `/home/petalinux/m4_filebackend.py` is the current M4
+file-driven hardware backend. It validates DMA state, CVH1 MAGIC/ABI/CAPABILITIES, frozen
+BUILD_ID, geometry, widths and byte counts **before accelerator writes**, programs and
+readback-verifies parameters, performs repeated STARTs without inter-frame RESET, checks
+final CVH1 counters/output/guards, then returns the accelerator to a clean retained-parameter
+state with local RESET. The earlier `/home/petalinux/m3_filebackend.py`, `m3_demo.py`,
+`/home/petalinux/demo_out/` and `/home/petalinux/demo_images/` remain as M3/demo evidence.
 
-**Proven DMA register sequence** (from the M0 runner; do not improvise):
-DMA regs via uio0 mmap: `0x00/0x30` DMACR (bit0 RS, bit2 reset), `0x04/0x34` SR,
-`0x18` MM2S_SA, `0x28` MM2S_LENGTH (write triggers), `0x48` S2MM_DA, `0x58` S2MM_LENGTH
-(write arms); error mask `0x4770`. Sequence: reset both channels (write 4 to 0x00, wait
-both DMACRs bit2 clear, expect SR==1) → program all parameters via accel MMIO **with
-readback verify** → soft reset (`0x4004=1`, expect STATUS==1) → **arm S2MM first**
-(`0x30=1`, then `0x48=phys+RX`, `0x58=0x8000`) → arm MM2S (`0x00=1`, `0x18=phys+TX`) →
-trigger (`0x28=1156`) → poll both SR until `0x1002` (halted+IOC, ≤5 s) → received length
-(`0x58`) must equal 16384 → verify guards (0xA5 around RX region) and outputs. Buffer
-layout: TX @ +0x1000, RX @ +0x10000, RX_CAP 0x8000, 64-byte 0xA5 guards. Start state
-contract: parameters must be all-zero (fresh boot) before a run; restore zeros when done.
-**Latency measured: ~0.135–0.157 ms/frame wall-clock from Python (≈7,000 frames/s);
-hardware datapath is 1024 cycles = 1 output pixel/cycle @ 100 MHz.**
+**Current M4 execution sequence** (`m4_filebackend.py`; do not replace with the old M0 soft-reset flow):
+1. Verify both DMA channels are halted/simple-mode/error-free.
+2. Read and validate CVH1 MAGIC, ABI_VERSION, CAPABILITIES, DMA_LENGTH_WIDTH=22, BUILD_ID,
+   IMAGE_W/H, KERNEL_N, CHANNEL_K, WIDTHS_0/1 and expected input/output byte counts.
+3. Admit local accelerator RESET only from IDLE/FAULT while QUIESCENT; accepted clean states are
+   `IDLE|QUIESCENT = 0x101` or retained-parameter `IDLE|PARAM_COMPLETE|QUIESCENT = 0x181`.
+4. Program channel parameters with readback verification and require PARAM_COMPLETE.
+5. Per frame: prepare/arm S2MM first, prepare MM2S, issue CVH1 START, observe BUSY, then release
+   the MM2S length. **Do not RESET between successful frames.**
+6. Require DMA completion plus accelerator DONE, OUTPUT_DRAINED and QUIESCENT.
+7. Before cleanup RESET, verify final counters: input_accept=1156, input_consumed=1156,
+   core_accept=1024, output_accept=16384; then verify bit-exact output and RX guards.
+8. Halt DMA channels, issue local CVH1 RESET, and require clean retained-parameter state `0x181`.
+Measured M4 Python wall-clock latency on the qualified run was about 0.230–0.261 ms/frame;
+the datapath still sustains one output pixel/cycle at 100 MHz.
 
 **Serial file-transfer protocol** (no network on board): gzip -9 → `base64 -w 76` →
 paste in ≤24-line chunks into `cat > file << 'XEOF'` heredocs → **verify per-chunk md5**
@@ -255,9 +265,9 @@ transcription errors in chat are the main corruption source — always verify ch
 | `dma_len16_golden.py` (custom filters, saturation extremes) | 1 | PASS |
 | `m3_filebackend.py` (file-driven, format-3 library) | 3 | PASS, ~0.14 ms/frame |
 | `m3_demo.py` (9 images × trained+custom ×2) | 36 | PASS, 135 PNGs, manifest `96b01a0f416893c7acb2df32b02a54d5712e1283b6debc5cf11686c1e21a4828` |
+| `m4_filebackend.py` (CVH1 hybrid build) | 3 | PASS; repeated START/no inter-frame RESET; counters exact; guards intact; output SHA `cb397559…` |
 
-Total: **61 board frames, 0 mismatches**, guards intact every run. Both M2-P's
-"UIO/DMA/buffer regression" gate item and all of M3 are closed. A known-good visual:
+Total recorded board evidence: **64 frames, 0 mismatches**, guards intact every run. M2-P and M3 remain closed; the focused M4 live hardware/software integration proof also passes.
 `debug_captures/m3_demo_sobel_mag_aeroplane_view.png` (Sobel magnitude through real
 silicon); `…_board.png` (alley cat — correctly near-empty: that image's golden Sobel
 max magnitude is 3).
@@ -285,14 +295,15 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
 
 ## 12. Known issues / quirks register
 
-1. **Timing margin is zero** (WNS 0.000) — M4 RTL must be built with timing in mind.
+1. **Timing margin is small but positive on the final M4 build:** WNS +0.066 ns, WHS +0.022 ns at 100 MHz. Preserve this margin in later changes.
 2. `Important documents/Architecture_Mapping.html` is **stale** (claims K=16, "pending
    RTL" for things that exist). `golden_model/verify_by_hand.ipynb` is broken (imports
    removed functions). `golden_model/data/test_vectors_*/png/` contain stale K=16-era
-   previews. `CFG_ACCUM_WIDTH` in config_pkg.vhd is a dead constant.
-3. `scripts/create_accelerator_dma_bd.tcl` does not yet reproduce system_ila_0 or the
-   DMA `c_sg_length_width=16` (both live in the tracked `.bd`).
-4. `platform/accelerator_dma.xsa` is the older handoff; the len16 XSA lives in `bitstreams/`.
+   previews.
+3. `scripts/create_accelerator_dma_bd.tcl` has not yet been reconciled with the final
+   M4 tracked-BD DMA setting `c_sg_length_width=22`; the tracked `.bd` is authoritative.
+4. `platform/accelerator_dma.xsa` is the older handoff; the qualified M4 XSA is
+   `bitstreams/k8_gp0_noila_len22_2026-09-11.xsa`.
 5. `deploy/petalinux/README.md` references `deploy/petalinux_snapshots/…` which does not
    exist in the repo (snapshot lives outside).
 6. Board clock resets every boot; UIO/udmabuf are root-only; no RTC battery.
@@ -318,8 +329,8 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
 - Everything is **evidence-gated**: a milestone is done only with recorded artifacts
   (hashes, transcripts); a failed gate blocks promotion, never gets relabeled PASS.
 - All numeric changes must remain **bit-exact** against `golden_conv.py`.
-- The legacy 1-MiB u-dma-buf / len16 build is the **qualified profile**; the approved
-  4-MiB/22-bit new family is scheduled but not yet integrated.
+- The **qualified M4 profile** is the 4-MiB u-dma-buf / 22-bit DMA / no-ILA CVH1 build.
+  The older 1-MiB/len16 image remains historical recovery evidence, not the current profile.
 - Exclusive-ownership lifecycle (§5 of `M1_ACTIVATION_LIFECYCLE.md`) governs all future
   backend work: UNVERIFIED at start → identity/capability validation → READY.
 - When transferring files to the board: chunked base64 with per-chunk md5 verification
@@ -329,16 +340,11 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
 
 ## 15. Next steps (as of this writing)
 
-1. **M4.1 — CVH1 identity block** (0x4100+ read-only MAGIC/ABI_VERSION/CAPABILITIES/
-   STATUS + 128-bit BUILD_ID with `hardware.json`), plus TB; no behavior change elsewhere.
-   Read the full ABI contract first. Keep legacy behavior intact during M4.1.
-2. M4.2 — COMMAND/STATUS lifecycle + counters (the FSM; simulate tails/stalls/reset/
-   write-protection). Watch timing (zero WNS margin).
-3. M4.3 — legacy decommission (0x4000–0x40FF → SLVERR) + tightened slot decode.
-4. M4.4 — bias signed-24 default alignment.
-5. Then M5 (≥100-frame soak + lifecycle on the hybrid build) → M6 (full-PL reload ×20)
-   → M7 (profiles A–D; teammate merge decision) → M8 (demo CLI/harness) → M9 (freeze).
-6. Parallel cheap win: 100-frame soak + latency histogram on the current build
-   (`m3_filebackend.py` with `FRAMES = 100`) — M5-style evidence and Table 1 data.
-7. Competition report (due 2026-09-15): ~90% of evidence exists; assemble only when the
-   user says so.
+1. **M5 — qualify one hybrid build end to end:** matched software/backend lifecycle, live identity
+   validation, at least 100 frames without inter-frame RESET, zero mismatches/guard errors,
+   numerical-extreme/custom/trained coverage, and complete/halt/restart/failure-path testing.
+2. Freeze the full `hardware.json` / platform identity and exclusive-owner lifecycle machinery
+   as part of M5; do not retrofit that scope back into the already-qualified M4 hardware gate.
+3. Then M6 (full-PL reload ×20) → M7 (profiles A–D; teammate merge decision) →
+   M8 (demo CLI/harness) → M9 (pre-research release freeze).
+4. Competition report is due 2026-09-15; assemble it when the user explicitly switches focus to it.
