@@ -1,0 +1,587 @@
+{
+  "group": "C",
+  "started_utc": "2026-09-09T05:47:50.988176+00:00",
+  "finished_utc": "2026-09-09T05:47:53.999432+00:00",
+  "status": "SKIPPED",
+  "interrupted": false,
+  "environment": {
+    "python": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Users\\moham\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "pillow": "12.2.0",
+    "decoder_versions": {
+      "jpg": "8.0",
+      "zlib": "1.3.1.zlib-ng"
+    },
+    "software_only": true,
+    "board_qualification": "NOT RUN"
+  },
+  "source_observation": {
+    "recorded_utc": "2026-09-09T05:47:54.380178+00:00",
+    "files": {
+      "__init__.py": "ea9cca2efb4a6f9e74c8f9849b9e1d61bbfc4c97b9649718dbb82cb657fc61f1",
+      "_decoder_worker.py": "0ccd1de3e55b3437ee6acf62e0fa21a69f0a7768752000d04625c2480c98fd29",
+      "admission.py": "7d66fa962028779ab764f58c7f8f79614e87b4f32e368aeddb5187a3a1e163a5",
+      "bundles.py": "b2878de9ea6ba7eecb173c680f9a57cc86487c63c51e9f7723fe9634d21ecaa7",
+      "convert_legacy.py": "992064e55daa3645f3b8337a1cb6f19396265100392b3cc030cf270d5da5d981",
+      "dma.py": "26fe9c3177d2a8651487007d6498370f98942abf5b35c8494a605ac6e15d09a9",
+      "errors.py": "7afdc2dead21b8273672f3de1dd12226209d65b82ccc8693de7ca26805de04c5",
+      "legacy.py": "73b7eba7304ad4c4b50bce89c4152326523df2a3f7790c08b00de94c888f8b11",
+      "offline.py": "b40445999fc7e04be0155ae02ecb6b5809e3e08e5c1e81720246cf3e39aa152f",
+      "preprocessing.py": "c749fd176e401258018ea5ea97697aa9c52eed748435e0daa05fc4213cc9891e",
+      "reference.py": "5172c6d424bf7aa90a54846889cb2cec460f3103ce2590d96baac65529c433b6",
+      "release_io.py": "957431e5d61774b103c58749986a42b1845c5fe769215b402d80a4c9a57ceacb",
+      "schemas.py": "b4636e79ecac3af7c026b600c922b88e42f8ad961f2bf09d54d50d0886fdfb4a",
+      "storage.py": "11f0179c3eb9cf5c3550df679c88ec458b3b3c65424d7ce08f84249e9b40b35e",
+      "strict.py": "88ea75f06a1f37dab4314552183f18d6cb91057521982fbd7b3b0fd540f14a9e",
+      "types.py": "72ffdb46d49663d16d6d95bb1c7a81ae5fcf1ef47b4be331989f5f12e4ceca90"
+    },
+    "scope": "Source files observed by this invocation; not authenticated execution attestation.",
+    "test_files": {
+      "__init__.py": "48f84099f201e6d149da554583c403efc694d0cfd01eb8243d496eb9587759fc",
+      "fault_worker.py": "311fafd1030223dab678ad01b5c0dffe4c29cf3f1cedbdf4872526730f3e8432",
+      "fixtures.py": "b5814e043ab7db4a787b112a7c0caf381346dd1c589038226f9842e9d5d2d7ae",
+      "oracle.py": "b855b5b7179ad18da402b8c27c7f5056e654e23c7bc7799308118822c289c6ba",
+      "run_group.py": "a636125f664e975c88ff28c6323508e2be0b9c34e6a29dfe074b8eb0ebf36417",
+      "test_a_admission.py": "1e5c7790d866239f7a3f615cf1db25fc0632b7944a9e53c1642ad83b63d3fc1d",
+      "test_a_grammar.py": "2dec7d61840a6d2f4b6d1dec468b0118ccc8fdddcb357dee945bd452a765ea1d",
+      "test_a_storage.py": "7025505a0334d2c4edb4a739eee99c23e324acce81a3003a9db02bf483537ee4",
+      "test_a_worker.py": "034d2d3afba39a8985f6d518aa6da40dcada6039fcae3b4d1be981747b6cf0ff",
+      "test_b_integration.py": "94d12ffdc2c1f2c8f7d47e9671ac0a2522e216c4d63d1a2e995f32607cb04331",
+      "test_b_reference.py": "2173ee38b89a56ac30ee302d4ea2ad4403615ad18b67c987edf3b7fb25d445fb",
+      "test_c_conversion.py": "d5c0c3be13f541cd4f3b0ac12fa40818de0b5aec02037932419079883c6b958a",
+      "test_c_offline.py": "7b4db59b0285df29b3f14e0d44bccc14fbad1d2de2f0b13b9ec2e06ffe7ab10e"
+    }
+  },
+  "linux_worker_enforcement": "SKIPPED",
+  "actual_test_methods_started": 14,
+  "status_counts": {
+    "PASS": 13,
+    "SKIPPED": 1
+  },
+  "actual_subcases": 78,
+  "subcase_counts": {
+    "PASS": 78
+  },
+  "differential": {
+    "planned": 0,
+    "started": 0,
+    "seeds": [],
+    "statuses": {}
+  },
+  "tests": [
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_checkpoint_and_audit_association",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_cli_conversion_existing_output_and_manifest",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_lossless_values_mapping_scales_and_bytes",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_no_output_on_rejected_input_or_headroom",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_scales_derived_per_channel_not_fixed_eight",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_offline.LinuxOfflineIntegration.test_actual_worker_converter_cli_reference_and_report",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_c_offline.OfflineIntegration.test_cli_has_no_decoder_injection_and_no_production_bypass",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_offline.OfflineIntegration.test_hash_failure_geometry_failure_and_no_decode",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_c_offline.OfflineIntegration.test_one_canonical_no_hardware_identity_and_independent_oracle",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    }
+  ],
+  "subcases": [
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (value=-8388608)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (value=8388607)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (rejected=-8388609)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (rejected=8388608)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (rejected=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (rejected=1.0)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping",
+      "case": "test_bias_endpoints_no_clipping (tests.test_c_conversion.LosslessConversion.test_bias_endpoints_no_clipping) (rejected='1')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='channel', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='channel', value=1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='channel', value=-1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='channel', value=8)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='source_channel', value=1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='source_channel', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='shift', value=7)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='shift', value=-1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='shift', value=32)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='shift', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='weight_fraction_bits', value=7)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='weight_fraction_bits', value=-1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='weight_fraction_bits', value=39)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='weight_fraction_bits', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='bias_fraction_bits', value=15)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='bias_fraction_bits', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='relu_en', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='relu_en', value=False)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='relu_en', value=2)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='relu_en', value='1')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='relu_en', value=None)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='extra', value=0)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies",
+      "case": "test_channel_types_mapping_and_scale_inconsistencies (tests.test_c_conversion.LosslessConversion.test_channel_types_mapping_and_scale_inconsistencies) (key='extensions', value={})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='format_version', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='format_version', value=3)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='format_version', value=2.0)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='N', value=5)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='N', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='K', value=4)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='K', value=9)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='boundary_mode', value='valid')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='stride', value=2)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='stride', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='pixel_format', value='uint8')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='input_scale_divisor', value=255)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='input_scale_divisor', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='coefficient_format', value='q8')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='bias_bits', value=24)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='bias_bits', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='output_format', value='int16_q7')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='output_fraction_bits', value=-1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='output_fraction_bits', value=16)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='output_fraction_bits', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='accumulator_width_min', value=20)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='accumulator_width_min', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='extra', value=1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (key='extensions', value={})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='format_version')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='N')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='K')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='boundary_mode')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='stride')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='pixel_format')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='input_scale_divisor')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='coefficient_format')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='bias_bits')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='output_format')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='output_fraction_bits')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='accumulator_width_min')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields",
+      "case": "test_malformed_legacy_root_fields (tests.test_c_conversion.LosslessConversion.test_malformed_legacy_root_fields) (missing='channels')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (data=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (data=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (data=b' 00\\n 00\\n 00\\n 00\\n 00\\n 00\\n 00\\n 00\\n 00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (data=b'# comment\\n80\\r\\nff\\r\\n01\\r\\n02\\r\\n03\\r\\n04\\r\\n05\\r\\n06\\r\\n7f')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (image_length=7)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (image_length=350)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (image_length=74)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections",
+      "case": "test_weights_and_png_rejections (tests.test_c_conversion.LosslessConversion.test_weights_and_png_rejections) (image_length=89)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only",
+      "case": "test_historical_hash_domains_are_distinct_regression_only (tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only) (field='input_sha256')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only",
+      "case": "test_historical_hash_domains_are_distinct_regression_only (tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only) (field='padded_input_sha256')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only",
+      "case": "test_historical_hash_domains_are_distinct_regression_only (tests.test_c_offline.OfflineIntegration.test_historical_hash_domains_are_distinct_regression_only) (field='expected_output_sha256')",
+      "status": "PASS"
+    }
+  ],
+  "M1_complete": false,
+  "M2_complete": false,
+  "limitations": [
+    "Software evidence only; no board qualification.",
+    "Fixture decoder records are not Linux enforcement evidence.",
+    "Reference computation has no decoder deadline."
+  ]
+}

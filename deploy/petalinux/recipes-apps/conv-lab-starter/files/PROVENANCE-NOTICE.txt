@@ -1,0 +1,22 @@
+Conv Lab preserved starter candidate: provenance notice, not a license grant.
+
+This package contains the already converted m0-trained-cifar-k8/converted-1
+model and m0-cifar-cat/converted-1 dataset (one CIFAR PNG). Their bytes and
+identities are unchanged from the verified transfer and historical audit.
+It is staged solely for the user's existing internal project validation.
+
+The user approved CLOSED classification for team-owned application and test
+code. That approval is NOT applied to this starter package or its third-party
+image. The original dataset/image license and redistribution clearance, and
+full training provenance, remain unresolved. No rights are granted here.
+Do not redistribute this candidate as a cleared starter release.
+
+LicenseRef-ConvLab-Starter-Provenance-Unresolved is an explicit local recipe
+identifier for this unresolved status, not an assertion of a third-party
+license. It must remain visible in build/license records. This notice and its
+checksum are packaging provenance metadata, not a substitute for permission.
+
+Existing model/dataset manifests, candidate CONVERSION.json and the historical
+audit remain the underlying provenance record. Additional packaging records
+are installed outside the immutable bundles. Vendor Python/Pillow/codec
+notices remain owned by their upstream recipes.

@@ -1,0 +1,97 @@
+{
+  "format_version": 3,
+  "input_scale": {
+    "numerator": 1,
+    "denominator": 256
+  },
+  "channels": [
+    {
+      "channel": 0,
+      "weights_file": "weights/kernel_ch0.mem",
+      "bias_quantized": -19037,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 1,
+      "weights_file": "weights/kernel_ch1.mem",
+      "bias_quantized": 179,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 2,
+      "weights_file": "weights/kernel_ch2.mem",
+      "bias_quantized": -6388,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 3,
+      "weights_file": "weights/kernel_ch3.mem",
+      "bias_quantized": -2372,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 4,
+      "weights_file": "weights/kernel_ch4.mem",
+      "bias_quantized": -20952,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 5,
+      "weights_file": "weights/kernel_ch5.mem",
+      "bias_quantized": 90,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 6,
+      "weights_file": "weights/kernel_ch6.mem",
+      "bias_quantized": -208,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 7,
+      "weights_file": "weights/kernel_ch7.mem",
+      "bias_quantized": -379,
+      "shift": 8,
+      "relu_en": true,
+      "weight_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    }
+  ]
+}

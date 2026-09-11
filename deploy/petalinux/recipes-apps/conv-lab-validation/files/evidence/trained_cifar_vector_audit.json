@@ -1,0 +1,218 @@
+{
+  "status": "PASS",
+  "image_name": "alley_cat_s_000013.png",
+  "configs": [
+    [
+      [
+        -59,
+        -42,
+        39,
+        -74,
+        -82,
+        -1,
+        44,
+        -85,
+        34
+      ],
+      -19037,
+      8,
+      true
+    ],
+    [
+      [
+        -105,
+        13,
+        -86,
+        56,
+        26,
+        -21,
+        0,
+        92,
+        53
+      ],
+      179,
+      8,
+      true
+    ],
+    [
+      [
+        -5,
+        68,
+        -10,
+        45,
+        44,
+        18,
+        50,
+        -28,
+        73
+      ],
+      -6388,
+      8,
+      true
+    ],
+    [
+      [
+        -41,
+        -38,
+        -76,
+        94,
+        15,
+        88,
+        21,
+        -56,
+        17
+      ],
+      -2372,
+      8,
+      true
+    ],
+    [
+      [
+        47,
+        -12,
+        -23,
+        -23,
+        54,
+        18,
+        -72,
+        -16,
+        -23
+      ],
+      -20952,
+      8,
+      true
+    ],
+    [
+      [
+        -80,
+        14,
+        65,
+        -28,
+        40,
+        -5,
+        63,
+        -60,
+        -10
+      ],
+      90,
+      8,
+      true
+    ],
+    [
+      [
+        -111,
+        -12,
+        -4,
+        -15,
+        41,
+        56,
+        -63,
+        85,
+        63
+      ],
+      -208,
+      8,
+      true
+    ],
+    [
+      [
+        30,
+        -79,
+        31,
+        51,
+        -104,
+        73,
+        50,
+        -78,
+        28
+      ],
+      -379,
+      8,
+      true
+    ]
+  ],
+  "padded_input_sha256": "967c1c7687d3775d4512bd30eaa7f07fc8e1956145ed82326b35eb8cff28f74e",
+  "input_sha256": "a240bb760e2a85951f5c4e27c95041e98d4919c5cc32114cc4f5191f6ffb6771",
+  "expected_output_sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+  "channels": [
+    {
+      "channel": 0,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 0,
+      "nonzero": 0
+    },
+    {
+      "channel": 1,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 150,
+      "nonzero": 827
+    },
+    {
+      "channel": 2,
+      "matches": 1024,
+      "minimum": 7,
+      "maximum": 180,
+      "nonzero": 1024
+    },
+    {
+      "channel": 3,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 123,
+      "nonzero": 665
+    },
+    {
+      "channel": 4,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 0,
+      "nonzero": 0
+    },
+    {
+      "channel": 5,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 41,
+      "nonzero": 497
+    },
+    {
+      "channel": 6,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 126,
+      "nonzero": 847
+    },
+    {
+      "channel": 7,
+      "matches": 1024,
+      "minimum": 0,
+      "maximum": 50,
+      "nonzero": 399
+    }
+  ],
+  "source_sha256": {
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\golden_conv.py": "3b572d08be4a7c5bacf03dcd8423437f9f6625220630add122136cd88a6bbfe0",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\channel_config.json": "4133b3b68ed52fdd643297a6549417277c7344ed74a8572877eef50df64776a5",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\cifar10_images\\test\\cat\\alley_cat_s_000013.png": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\input.hex": "fb02ab4490675078fa4ecf0845ca720641c03d27ac58e8adecf0136047d9f37f",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\manifest.txt": "8ee7f50fa68a14e8a0ee363f941bb1696170d1a310a09325ae23a03b1693a28b",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch0.mem": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch1.mem": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch2.mem": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch3.mem": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch4.mem": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch5.mem": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch6.mem": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\weights\\kernel_ch7.mem": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch0.hex": "bfa075ee316db78c20350b5a65ae0e5acdea90449455593dbc78671c13137d65",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch1.hex": "befe56e92ecff35619196558f4c02a6f82a9627ded919ee3045e75573131ca3f",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch2.hex": "0b161d30f9374af015b2bbe0113fe027a7ae15e6c42a85e55c3e37badba7503e",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch3.hex": "381a141017f323b24c727b06f16eba59ec2b9320dca78120747eb77f7cef1275",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch4.hex": "bfa075ee316db78c20350b5a65ae0e5acdea90449455593dbc78671c13137d65",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch5.hex": "e32f28e08bb7ea32d0468fb69ca3f93c3524513d7538df1957def4c2bb9cb198",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch6.hex": "2b0c756a437bef705803b48503c28b29160d8ebeebc22c33adcaf3e19bd90d90",
+    "D:\\MyProjects\\Convlution_Accelerator\\golden_model\\data\\test_vectors_trained\\expected_ch7.hex": "e8b807c344d847f69b4f849615fe3982aceba50844d613283fcb06340df7cd9b"
+  }
+}

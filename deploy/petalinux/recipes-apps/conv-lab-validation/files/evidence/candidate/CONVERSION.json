@@ -1,0 +1,386 @@
+{
+  "adapter": "known-format2-n3-k8-v1",
+  "legacy_configuration": {
+    "format_version": 2,
+    "N": 3,
+    "K": 8,
+    "boundary_mode": "same",
+    "stride": 1,
+    "pixel_format": "uint8_q0.8",
+    "input_scale_divisor": 256,
+    "coefficient_format": "int8_raw",
+    "bias_bits": 32,
+    "output_format": "int16_q8",
+    "output_fraction_bits": 8,
+    "accumulator_width_min": 21,
+    "channels": [
+      {
+        "channel": 0,
+        "source_channel": 0,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": -19037,
+        "relu_en": 1
+      },
+      {
+        "channel": 1,
+        "source_channel": 1,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": 179,
+        "relu_en": 1
+      },
+      {
+        "channel": 2,
+        "source_channel": 2,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": -6388,
+        "relu_en": 1
+      },
+      {
+        "channel": 3,
+        "source_channel": 3,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": -2372,
+        "relu_en": 1
+      },
+      {
+        "channel": 4,
+        "source_channel": 4,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": -20952,
+        "relu_en": 1
+      },
+      {
+        "channel": 5,
+        "source_channel": 5,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": 90,
+        "relu_en": 1
+      },
+      {
+        "channel": 6,
+        "source_channel": 6,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": -208,
+        "relu_en": 1
+      },
+      {
+        "channel": 7,
+        "source_channel": 7,
+        "shift": 8,
+        "weight_fraction_bits": 8,
+        "bias_fraction_bits": 16,
+        "bias_quantized": -379,
+        "relu_en": 1
+      }
+    ]
+  },
+  "source_config_sha256": "4133b3b68ed52fdd643297a6549417277c7344ed74a8572877eef50df64776a5",
+  "source_png_sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+  "channel_mapping": [
+    {
+      "channel": 0,
+      "source_channel": 0,
+      "source_sha256": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86",
+      "converted_sha256": "90bae8227b6bae935e66d911eccafb27d5eb8f0c0f83dc65a02811960bc3ec41",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 1,
+      "source_channel": 1,
+      "source_sha256": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405",
+      "converted_sha256": "5ace95166473451bf233917acf5c40624ab8c85fd0f8bf5144297999152de33f",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 2,
+      "source_channel": 2,
+      "source_sha256": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc",
+      "converted_sha256": "d5195d96382e6bc7a7d222dd79c3a1758f74dc0d9a5a3ce3d5bc7351006a8a40",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 3,
+      "source_channel": 3,
+      "source_sha256": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e",
+      "converted_sha256": "2501495a73231f2a903a6030c03240e08a0ec96d602a3e7d69171fd6dd7d7232",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 4,
+      "source_channel": 4,
+      "source_sha256": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181",
+      "converted_sha256": "e15dfdcf627ae3dc0e6815a0e02fb6929741d873b7cfc9717f70cb189e74e9bf",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 5,
+      "source_channel": 5,
+      "source_sha256": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914",
+      "converted_sha256": "f0d53ec29f3d2ea06ec28a8dcd6e4b4973a8e459a0a410b1e0defb6169d9dad5",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 6,
+      "source_channel": 6,
+      "source_sha256": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31",
+      "converted_sha256": "55ecadfd91a0c9d4831c77a12f8cfc9eb50478da8869a0764a44f9ab99fc74ab",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    },
+    {
+      "channel": 7,
+      "source_channel": 7,
+      "source_sha256": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f",
+      "converted_sha256": "c219c18aef40bee21d788b82ca7bac9ba2d678976287dcea4bf755e4395af187",
+      "numerical_values_unchanged": true,
+      "bias_scale": {
+        "numerator": 1,
+        "denominator": 65536
+      },
+      "output_scale": {
+        "numerator": 1,
+        "denominator": 256
+      }
+    }
+  ],
+  "numerical_target": {
+    "W": 32,
+    "H": 32,
+    "N": 3,
+    "K": 8,
+    "bias_width": 24
+  },
+  "input_scale": {
+    "numerator": 1,
+    "denominator": 256
+  },
+  "png_copied_unchanged": true,
+  "normalization": "MEM uppercase two-digit bytes, LF and one terminal newline only",
+  "excluded": [
+    "expected .hex",
+    "optional .pth"
+  ],
+  "requantization": "NONE",
+  "image_decoding": "NOT RUN by converter; Linux offline validation required",
+  "qualification": "NOT RUN",
+  "licensing": "UNRESOLVED; no permission inferred",
+  "training_provenance": "Legacy quantized snapshot only; complete training provenance unproven",
+  "provenance": {
+    "status": "CHECKPOINT_AND_AUDIT_HASH_MATCH",
+    "sources": [
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\channel_config.json",
+        "sha256": "4133b3b68ed52fdd643297a6549417277c7344ed74a8572877eef50df64776a5"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\cifar10_images\\test\\cat\\alley_cat_s_000013.png",
+        "sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch0.mem",
+        "sha256": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch1.mem",
+        "sha256": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch2.mem",
+        "sha256": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch3.mem",
+        "sha256": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch4.mem",
+        "sha256": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch5.mem",
+        "sha256": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch6.mem",
+        "sha256": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31"
+      },
+      {
+        "path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch7.mem",
+        "sha256": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f"
+      }
+    ],
+    "checkpoint_root": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358",
+    "checkpoint_manifest_sha256": "80afbe2b0c819212beae208c60600560a32d8b8a1cd742470b86707ac195cf2c",
+    "audit_sha256": "31ff39dc84828e4fa7e72bd1b80c5df45dcf4306496224f2f61cc4b8c449ac43",
+    "mapping": [
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\channel_config.json",
+        "checkpoint_path": "current_project/golden_model/data/weights/channel_config.json",
+        "sha256": "4133b3b68ed52fdd643297a6549417277c7344ed74a8572877eef50df64776a5"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\cifar10_images\\test\\cat\\alley_cat_s_000013.png",
+        "checkpoint_path": "current_project/golden_model/data/cifar10_images/test/cat/alley_cat_s_000013.png",
+        "sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch0.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch0.mem",
+        "sha256": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch1.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch1.mem",
+        "sha256": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch2.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch2.mem",
+        "sha256": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch3.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch3.mem",
+        "sha256": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch4.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch4.mem",
+        "sha256": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch5.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch5.mem",
+        "sha256": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch6.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch6.mem",
+        "sha256": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\current_project\\golden_model\\data\\weights\\kernel_ch7.mem",
+        "checkpoint_path": "current_project/golden_model/data/weights/kernel_ch7.mem",
+        "sha256": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f"
+      },
+      {
+        "original_path": "D:\\MyProjects\\release_checkpoints\\M0_k8_len16_20260907_052648_358\\external\\planning_workspace\\trained_cifar_vector_audit.json",
+        "checkpoint_path": "external/planning_workspace/trained_cifar_vector_audit.json",
+        "sha256": "31ff39dc84828e4fa7e72bd1b80c5df45dcf4306496224f2f61cc4b8c449ac43"
+      }
+    ],
+    "scope": "Byte identity only; historical PASS is not a fresh execution or licensing grant"
+  },
+  "software": {
+    "recorded_utc": "2026-09-09T09:43:06.005944+00:00",
+    "files": {
+      "__init__.py": "ea9cca2efb4a6f9e74c8f9849b9e1d61bbfc4c97b9649718dbb82cb657fc61f1",
+      "_decoder_worker.py": "0ccd1de3e55b3437ee6acf62e0fa21a69f0a7768752000d04625c2480c98fd29",
+      "admission.py": "7d66fa962028779ab764f58c7f8f79614e87b4f32e368aeddb5187a3a1e163a5",
+      "bundles.py": "b2878de9ea6ba7eecb173c680f9a57cc86487c63c51e9f7723fe9634d21ecaa7",
+      "convert_legacy.py": "992064e55daa3645f3b8337a1cb6f19396265100392b3cc030cf270d5da5d981",
+      "dma.py": "26fe9c3177d2a8651487007d6498370f98942abf5b35c8494a605ac6e15d09a9",
+      "errors.py": "7afdc2dead21b8273672f3de1dd12226209d65b82ccc8693de7ca26805de04c5",
+      "legacy.py": "73b7eba7304ad4c4b50bce89c4152326523df2a3f7790c08b00de94c888f8b11",
+      "offline.py": "b40445999fc7e04be0155ae02ecb6b5809e3e08e5c1e81720246cf3e39aa152f",
+      "preprocessing.py": "c749fd176e401258018ea5ea97697aa9c52eed748435e0daa05fc4213cc9891e",
+      "reference.py": "5172c6d424bf7aa90a54846889cb2cec460f3103ce2590d96baac65529c433b6",
+      "release_io.py": "957431e5d61774b103c58749986a42b1845c5fe769215b402d80a4c9a57ceacb",
+      "schemas.py": "b4636e79ecac3af7c026b600c922b88e42f8ad961f2bf09d54d50d0886fdfb4a",
+      "storage.py": "11f0179c3eb9cf5c3550df679c88ec458b3b3c65424d7ce08f84249e9b40b35e",
+      "strict.py": "88ea75f06a1f37dab4314552183f18d6cb91057521982fbd7b3b0fd540f14a9e",
+      "types.py": "72ffdb46d49663d16d6d95bb1c7a81ae5fcf1ef47b4be331989f5f12e4ceca90"
+    },
+    "scope": "Source files observed by this invocation; not authenticated execution attestation."
+  },
+  "outputs": {
+    "model/weights/kernel_ch0.mem": "90bae8227b6bae935e66d911eccafb27d5eb8f0c0f83dc65a02811960bc3ec41",
+    "model/weights/kernel_ch1.mem": "5ace95166473451bf233917acf5c40624ab8c85fd0f8bf5144297999152de33f",
+    "model/weights/kernel_ch2.mem": "d5195d96382e6bc7a7d222dd79c3a1758f74dc0d9a5a3ce3d5bc7351006a8a40",
+    "model/weights/kernel_ch3.mem": "2501495a73231f2a903a6030c03240e08a0ec96d602a3e7d69171fd6dd7d7232",
+    "model/weights/kernel_ch4.mem": "e15dfdcf627ae3dc0e6815a0e02fb6929741d873b7cfc9717f70cb189e74e9bf",
+    "model/weights/kernel_ch5.mem": "f0d53ec29f3d2ea06ec28a8dcd6e4b4973a8e459a0a410b1e0defb6169d9dad5",
+    "model/weights/kernel_ch6.mem": "55ecadfd91a0c9d4831c77a12f8cfc9eb50478da8869a0764a44f9ab99fc74ab",
+    "model/weights/kernel_ch7.mem": "c219c18aef40bee21d788b82ca7bac9ba2d678976287dcea4bf755e4395af187",
+    "model/channel_config.json": "07865765193ab6cccac6743c9c72721ba5a3209cf455c04a49cbe70ddd75f744",
+    "model/model.json": "ef70eddb9152b1adacd917f31144314291339dba0893b7e6e314fa5e31d40e60",
+    "dataset/images/alley_cat_s_000013.png": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+    "dataset/dataset.json": "13dfb4e9f8bafe5123eb1cf3abc75ee866f58002def78d9867ac839c32a53ad5"
+  },
+  "identities": {
+    "model_id": "m0-trained-cifar-k8",
+    "model_release": "converted-1",
+    "dataset_id": "m0-cifar-cat",
+    "dataset_release": "converted-1",
+    "image_id": "alley_cat_s_000013"
+  }
+}

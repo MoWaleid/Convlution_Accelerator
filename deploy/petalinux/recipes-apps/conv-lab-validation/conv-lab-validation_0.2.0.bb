@@ -1,0 +1,18 @@
+# Finalized for user-run PetaLinux 2025.2 application/build; not executed.
+SUMMARY = "Conv Lab user-invoked validation tests and historical regression evidence"
+LICENSE = "CLOSED"
+SRC_URI = "file://tests/ file://evidence/ file://conv-lab-tests file://INSTALLED_SHA256SUMS.txt"
+S = "${WORKDIR}"
+inherit allarch
+RDEPENDS:${PN} = "conv-lab conv-lab-starter python3-modules"
+do_configure[noexec] = "1"
+do_compile[noexec] = "1"
+do_install() {
+    install -d ${D}/opt/conv-lab/app/tests ${D}/opt/conv-lab/validation/evidence/candidate ${D}${bindir}
+    install -m 0644 ${S}/INSTALLED_SHA256SUMS.txt ${D}/opt/conv-lab/validation/evidence/INSTALLED_SHA256SUMS.txt
+    install -m 0644 ${S}/tests/*.py ${D}/opt/conv-lab/app/tests/
+    install -m 0644 ${S}/evidence/trained_cifar_vector_audit.json ${D}/opt/conv-lab/validation/evidence/
+    install -m 0644 ${S}/evidence/candidate/* ${D}/opt/conv-lab/validation/evidence/candidate/
+    install -m 0755 ${S}/conv-lab-tests ${D}${bindir}/conv-lab-tests
+}
+FILES:${PN} = "/opt/conv-lab/app/tests /opt/conv-lab/validation ${bindir}/conv-lab-tests"

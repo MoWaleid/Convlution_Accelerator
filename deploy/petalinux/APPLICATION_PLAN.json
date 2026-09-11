@@ -1,0 +1,384 @@
+{
+  "status": "READY FOR USER APPLICATION; BUILD AND ARM VALIDATION NOT RUN",
+  "ubuntu_project": "/home/walid/projects/zedboard_linux",
+  "configuration": [
+    {
+      "path": "project-spec/configs/rootfs_config",
+      "original_sha256": "b08f990653d97dbef8661431908b67dc8df2771bbf6654d8c9ebe2f446196ab7",
+      "proposed_change": "Append exactly CONFIG_conv-lab-validation=y; preserve every original byte.",
+      "original": "configuration/original/rootfs_config",
+      "replacement": "configuration/updated/rootfs_config",
+      "result_sha256": "8a69ee2b3d8c3ba30db4a1de557e76121a45dbe0e1dc17aeeea24848aba14c53"
+    },
+    {
+      "path": "project-spec/meta-user/conf/user-rootfsconfig",
+      "original_sha256": "7ff419f1049650e5628f14e2827592a23392a1540e8b6833b302dcbfcd0b154a",
+      "proposed_change": "Append exactly CONFIG_conv-lab-validation; preserve every original byte.",
+      "original": "configuration/original/user-rootfsconfig",
+      "replacement": "configuration/updated/user-rootfsconfig",
+      "result_sha256": "5a582fc65701cce3660d53b2d93662a8966e3a3e56f0d753ddc594b39146ef3f"
+    }
+  ],
+  "untouched_observation": {
+    "path": "project-spec/configs/rootfsconfigs/user-rootfsconfig",
+    "sha256": "7ff419f1049650e5628f14e2827592a23392a1540e8b6833b302dcbfcd0b154a",
+    "reason": "Archived generated/menu copy; not assumed to be the authoritative file to edit."
+  },
+  "new_destinations": [
+    "project-spec/meta-user/recipes-apps/conv-lab",
+    "project-spec/meta-user/recipes-apps/conv-lab-starter",
+    "project-spec/meta-user/recipes-apps/conv-lab-validation"
+  ],
+  "blockers": [],
+  "preserve": [
+    "hardware/XSA/bitstream",
+    "device tree/UIO/IRQ/kernel module",
+    "legacy 1-MiB DMA allocation",
+    "approved later 4-MiB/22-bit integration"
+  ],
+  "no_apply_command": false,
+  "pending_execution": [
+    "Regenerate rootfs configuration; verify evaluated Python/Pillow/dependencies and image selection before building.",
+    "User-run recipe/image build and installed ARM offline qualification.",
+    "Explicit tested len16 boot-artifact selection and reviewed media deployment."
+  ],
+  "installed_files": [
+    {
+      "staged": "recipes-apps/conv-lab/conv-lab_0.2.0.bb",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/conv-lab_0.2.0.bb",
+      "sha256": "c27e8c188d1d82aeb661309139fa82abd14e5bc1ac01c860660da8c1e93b1529",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv-lab-offline",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv-lab-offline",
+      "sha256": "86ce223687c98172ad5373c92d0769511cdd74217537005fe965fecae31337bb",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv-lab-prepare-output",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv-lab-prepare-output",
+      "sha256": "2df9cb271536a6e89c38f94c4c132c7f7f1e92b46783822e8adbfab15a9573c2",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/__init__.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/__init__.py",
+      "sha256": "ea9cca2efb4a6f9e74c8f9849b9e1d61bbfc4c97b9649718dbb82cb657fc61f1",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/_decoder_worker.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/_decoder_worker.py",
+      "sha256": "0ccd1de3e55b3437ee6acf62e0fa21a69f0a7768752000d04625c2480c98fd29",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/admission.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/admission.py",
+      "sha256": "7d66fa962028779ab764f58c7f8f79614e87b4f32e368aeddb5187a3a1e163a5",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/bundles.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/bundles.py",
+      "sha256": "b2878de9ea6ba7eecb173c680f9a57cc86487c63c51e9f7723fe9634d21ecaa7",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/convert_legacy.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/convert_legacy.py",
+      "sha256": "992064e55daa3645f3b8337a1cb6f19396265100392b3cc030cf270d5da5d981",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/dma.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/dma.py",
+      "sha256": "26fe9c3177d2a8651487007d6498370f98942abf5b35c8494a605ac6e15d09a9",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/errors.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/errors.py",
+      "sha256": "7afdc2dead21b8273672f3de1dd12226209d65b82ccc8693de7ca26805de04c5",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/legacy.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/legacy.py",
+      "sha256": "73b7eba7304ad4c4b50bce89c4152326523df2a3f7790c08b00de94c888f8b11",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/offline.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/offline.py",
+      "sha256": "b40445999fc7e04be0155ae02ecb6b5809e3e08e5c1e81720246cf3e39aa152f",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/preprocessing.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/preprocessing.py",
+      "sha256": "c749fd176e401258018ea5ea97697aa9c52eed748435e0daa05fc4213cc9891e",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/reference.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/reference.py",
+      "sha256": "5172c6d424bf7aa90a54846889cb2cec460f3103ce2590d96baac65529c433b6",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/release_io.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/release_io.py",
+      "sha256": "957431e5d61774b103c58749986a42b1845c5fe769215b402d80a4c9a57ceacb",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/schemas.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/schemas.py",
+      "sha256": "b4636e79ecac3af7c026b600c922b88e42f8ad961f2bf09d54d50d0886fdfb4a",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/storage.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/storage.py",
+      "sha256": "11f0179c3eb9cf5c3550df679c88ec458b3b3c65424d7ce08f84249e9b40b35e",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/strict.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/strict.py",
+      "sha256": "88ea75f06a1f37dab4314552183f18d6cb91057521982fbd7b3b0fd540f14a9e",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/conv_lab/types.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/conv_lab/types.py",
+      "sha256": "72ffdb46d49663d16d6d95bb1c7a81ae5fcf1ef47b4be331989f5f12e4ceca90",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/documentation/CONVERSION.md",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/documentation/CONVERSION.md",
+      "sha256": "7c0160725b5913c42093e2b9eb546bf29f829b9b101c2d7367e6c01ac0764aa8",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/documentation/README.md",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/documentation/README.md",
+      "sha256": "4a6331a8afe3c35ecb6d78e663e897caa2b9d192b746fc9e56cdbbc4ec9d5836",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab/files/launch.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab/files/launch.py",
+      "sha256": "53dd4a4b2d735a2b3ba8f583c165917b46187e1a956825b98260909abd08b9a9",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/conv-lab-starter_1.0.bb",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/conv-lab-starter_1.0.bb",
+      "sha256": "af3dbf8061c9709cae46a8ea01afba59d4ee7cc60464a4843f965f5a80c1569d",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/dataset/dataset.json",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/dataset/dataset.json",
+      "sha256": "13dfb4e9f8bafe5123eb1cf3abc75ee866f58002def78d9867ac839c32a53ad5",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/dataset/images/alley_cat_s_000013.png",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/dataset/images/alley_cat_s_000013.png",
+      "sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/channel_config.json",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/channel_config.json",
+      "sha256": "07865765193ab6cccac6743c9c72721ba5a3209cf455c04a49cbe70ddd75f744",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/model.json",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/model.json",
+      "sha256": "ef70eddb9152b1adacd917f31144314291339dba0893b7e6e314fa5e31d40e60",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch0.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch0.mem",
+      "sha256": "90bae8227b6bae935e66d911eccafb27d5eb8f0c0f83dc65a02811960bc3ec41",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch1.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch1.mem",
+      "sha256": "5ace95166473451bf233917acf5c40624ab8c85fd0f8bf5144297999152de33f",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch2.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch2.mem",
+      "sha256": "d5195d96382e6bc7a7d222dd79c3a1758f74dc0d9a5a3ce3d5bc7351006a8a40",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch3.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch3.mem",
+      "sha256": "2501495a73231f2a903a6030c03240e08a0ec96d602a3e7d69171fd6dd7d7232",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch4.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch4.mem",
+      "sha256": "e15dfdcf627ae3dc0e6815a0e02fb6929741d873b7cfc9717f70cb189e74e9bf",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch5.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch5.mem",
+      "sha256": "f0d53ec29f3d2ea06ec28a8dcd6e4b4973a8e459a0a410b1e0defb6169d9dad5",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch6.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch6.mem",
+      "sha256": "55ecadfd91a0c9d4831c77a12f8cfc9eb50478da8869a0764a44f9ab99fc74ab",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/model/weights/kernel_ch7.mem",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/model/weights/kernel_ch7.mem",
+      "sha256": "c219c18aef40bee21d788b82ca7bac9ba2d678976287dcea4bf755e4395af187",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-starter/files/PROVENANCE-NOTICE.txt",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-starter/files/PROVENANCE-NOTICE.txt",
+      "sha256": "152d1fdec545c0d6eaebeadf1618303417e5bb888e47c670cbce1d25c95f5f01",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/conv-lab-validation_0.2.0.bb",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/conv-lab-validation_0.2.0.bb",
+      "sha256": "46b2358ed8c63474dd81a55f59e591120b30bcbe2dc7bce22d3018c30ca8a3f4",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/conv-lab-tests",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/conv-lab-tests",
+      "sha256": "edb60cf0b1d1d7fb573ff32e75457183acfbf16c7d70dd74741c73bda96941d7",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/evidence/candidate/COMPLETE.json",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/evidence/candidate/COMPLETE.json",
+      "sha256": "4787d0266e2c704333bb844344953cc8d23a31258fb84f504abe4a60197f2370",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/evidence/candidate/CONVERSION.json",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/evidence/candidate/CONVERSION.json",
+      "sha256": "40070db2323e6cb06e5a7e16e148f3ea4d808ade0dd962b7564e3a133887ddc0",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/evidence/candidate/SHA256SUMS.txt",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/evidence/candidate/SHA256SUMS.txt",
+      "sha256": "c9d4cf1e40f5b820cdb30e2f60a944cc40bcfc602e9d3b99f7184a70dd9c48c8",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/evidence/trained_cifar_vector_audit.json",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/evidence/trained_cifar_vector_audit.json",
+      "sha256": "31ff39dc84828e4fa7e72bd1b80c5df45dcf4306496224f2f61cc4b8c449ac43",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/INSTALLED_SHA256SUMS.txt",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/INSTALLED_SHA256SUMS.txt",
+      "sha256": "f0452c1f867ccf9fc9b2fb7ce9354931c78e269849820152128f5ed019a08b53",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/__init__.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/__init__.py",
+      "sha256": "48f84099f201e6d149da554583c403efc694d0cfd01eb8243d496eb9587759fc",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/fault_worker.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/fault_worker.py",
+      "sha256": "311fafd1030223dab678ad01b5c0dffe4c29cf3f1cedbdf4872526730f3e8432",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/fixtures.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/fixtures.py",
+      "sha256": "b5814e043ab7db4a787b112a7c0caf381346dd1c589038226f9842e9d5d2d7ae",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/oracle.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/oracle.py",
+      "sha256": "b855b5b7179ad18da402b8c27c7f5056e654e23c7bc7799308118822c289c6ba",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/run_group.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/run_group.py",
+      "sha256": "a636125f664e975c88ff28c6323508e2be0b9c34e6a29dfe074b8eb0ebf36417",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_a_admission.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_a_admission.py",
+      "sha256": "1e5c7790d866239f7a3f615cf1db25fc0632b7944a9e53c1642ad83b63d3fc1d",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_a_grammar.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_a_grammar.py",
+      "sha256": "2dec7d61840a6d2f4b6d1dec468b0118ccc8fdddcb357dee945bd452a765ea1d",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_a_storage.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_a_storage.py",
+      "sha256": "7025505a0334d2c4edb4a739eee99c23e324acce81a3003a9db02bf483537ee4",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_a_worker.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_a_worker.py",
+      "sha256": "034d2d3afba39a8985f6d518aa6da40dcada6039fcae3b4d1be981747b6cf0ff",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_b_integration.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_b_integration.py",
+      "sha256": "94d12ffdc2c1f2c8f7d47e9671ac0a2522e216c4d63d1a2e995f32607cb04331",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_b_reference.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_b_reference.py",
+      "sha256": "2173ee38b89a56ac30ee302d4ea2ad4403615ad18b67c987edf3b7fb25d445fb",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_c_conversion.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_c_conversion.py",
+      "sha256": "d5c0c3be13f541cd4f3b0ac12fa40818de0b5aec02037932419079883c6b958a",
+      "mode": 420
+    },
+    {
+      "staged": "recipes-apps/conv-lab-validation/files/tests/test_c_offline.py",
+      "destination": "project-spec/meta-user/recipes-apps/conv-lab-validation/files/tests/test_c_offline.py",
+      "sha256": "7b4db59b0285df29b3f14e0d44bccc14fbad1d2de2f0b13b9ec2e06ffe7ab10e",
+      "mode": 420
+    }
+  ],
+  "discovery_sha256": "618b951d9f4e5c1acb73a270f63b16af617de4b863151e3012e3dac6ea1a5bfd"
+}

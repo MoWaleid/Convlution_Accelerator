@@ -1,0 +1,19 @@
+{
+  "status": "COMPLETE",
+  "files": [
+    "CONVERSION.json",
+    "dataset/dataset.json",
+    "dataset/images/alley_cat_s_000013.png",
+    "model/channel_config.json",
+    "model/model.json",
+    "model/weights/kernel_ch0.mem",
+    "model/weights/kernel_ch1.mem",
+    "model/weights/kernel_ch2.mem",
+    "model/weights/kernel_ch3.mem",
+    "model/weights/kernel_ch4.mem",
+    "model/weights/kernel_ch5.mem",
+    "model/weights/kernel_ch6.mem",
+    "model/weights/kernel_ch7.mem"
+  ],
+  "meaning": "Output write complete, not qualification."
+}

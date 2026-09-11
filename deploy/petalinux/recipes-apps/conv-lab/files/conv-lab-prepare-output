@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/python3 -I -B /opt/conv-lab/app/launch.py prepare-output "$@"

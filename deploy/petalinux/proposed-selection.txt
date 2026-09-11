@@ -1,0 +1,6 @@
+# Finalized exact additions; apply.py owns hash-checked application.
+# project-spec/meta-user/conf/user-rootfsconfig
+CONFIG_conv-lab-validation
+# project-spec/configs/rootfs_config
+CONFIG_conv-lab-validation=y
+# Dependencies are declared in the concrete recipe RDEPENDS.

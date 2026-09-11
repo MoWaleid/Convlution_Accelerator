@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "model_id": "m0-trained-cifar-k8",
+  "release_version": "converted-1",
+  "kind": "trained",
+  "compatibility": {
+    "N": 3,
+    "K": 8,
+    "geometry": [
+      {
+        "W": 32,
+        "H": 32
+      }
+    ],
+    "geometry_policies": [
+      "exact"
+    ],
+    "numerical": {
+      "pixel_width": 8,
+      "weight_width": 8,
+      "output_width": 16,
+      "min_bias_width": 24,
+      "relu_required": true
+    },
+    "abi": {
+      "magic": "43564831",
+      "versions": [
+        {
+          "major": 1,
+          "minor": 0
+        }
+      ]
+    }
+  },
+  "channel_config": {
+    "path": "channel_config.json",
+    "sha256": "07865765193ab6cccac6743c9c72721ba5a3209cf455c04a49cbe70ddd75f744"
+  },
+  "weights": [
+    {
+      "path": "weights/kernel_ch0.mem",
+      "sha256": "90bae8227b6bae935e66d911eccafb27d5eb8f0c0f83dc65a02811960bc3ec41"
+    },
+    {
+      "path": "weights/kernel_ch1.mem",
+      "sha256": "5ace95166473451bf233917acf5c40624ab8c85fd0f8bf5144297999152de33f"
+    },
+    {
+      "path": "weights/kernel_ch2.mem",
+      "sha256": "d5195d96382e6bc7a7d222dd79c3a1758f74dc0d9a5a3ce3d5bc7351006a8a40"
+    },
+    {
+      "path": "weights/kernel_ch3.mem",
+      "sha256": "2501495a73231f2a903a6030c03240e08a0ec96d602a3e7d69171fd6dd7d7232"
+    },
+    {
+      "path": "weights/kernel_ch4.mem",
+      "sha256": "e15dfdcf627ae3dc0e6815a0e02fb6929741d873b7cfc9717f70cb189e74e9bf"
+    },
+    {
+      "path": "weights/kernel_ch5.mem",
+      "sha256": "f0d53ec29f3d2ea06ec28a8dcd6e4b4973a8e459a0a410b1e0defb6169d9dad5"
+    },
+    {
+      "path": "weights/kernel_ch6.mem",
+      "sha256": "55ecadfd91a0c9d4831c77a12f8cfc9eb50478da8869a0764a44f9ab99fc74ab"
+    },
+    {
+      "path": "weights/kernel_ch7.mem",
+      "sha256": "c219c18aef40bee21d788b82ca7bac9ba2d678976287dcea4bf755e4395af187"
+    }
+  ],
+  "optional_assets": []
+}

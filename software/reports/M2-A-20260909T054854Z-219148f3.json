@@ -1,0 +1,906 @@
+{
+  "group": "A",
+  "started_utc": "2026-09-09T05:48:48.274470+00:00",
+  "finished_utc": "2026-09-09T05:48:54.224430+00:00",
+  "status": "SKIPPED",
+  "interrupted": false,
+  "environment": {
+    "python": "3.13.14 (tags/v3.13.14:fd17997, Jun 10 2026, 13:03:48) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Users\\moham\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "pillow": "12.2.0",
+    "decoder_versions": {
+      "jpg": "8.0",
+      "zlib": "1.3.1.zlib-ng"
+    },
+    "software_only": true,
+    "board_qualification": "NOT RUN"
+  },
+  "source_observation": {
+    "recorded_utc": "2026-09-09T05:48:54.323083+00:00",
+    "files": {
+      "__init__.py": "ea9cca2efb4a6f9e74c8f9849b9e1d61bbfc4c97b9649718dbb82cb657fc61f1",
+      "_decoder_worker.py": "0ccd1de3e55b3437ee6acf62e0fa21a69f0a7768752000d04625c2480c98fd29",
+      "admission.py": "7d66fa962028779ab764f58c7f8f79614e87b4f32e368aeddb5187a3a1e163a5",
+      "bundles.py": "b2878de9ea6ba7eecb173c680f9a57cc86487c63c51e9f7723fe9634d21ecaa7",
+      "convert_legacy.py": "992064e55daa3645f3b8337a1cb6f19396265100392b3cc030cf270d5da5d981",
+      "dma.py": "26fe9c3177d2a8651487007d6498370f98942abf5b35c8494a605ac6e15d09a9",
+      "errors.py": "7afdc2dead21b8273672f3de1dd12226209d65b82ccc8693de7ca26805de04c5",
+      "legacy.py": "73b7eba7304ad4c4b50bce89c4152326523df2a3f7790c08b00de94c888f8b11",
+      "offline.py": "b40445999fc7e04be0155ae02ecb6b5809e3e08e5c1e81720246cf3e39aa152f",
+      "preprocessing.py": "c749fd176e401258018ea5ea97697aa9c52eed748435e0daa05fc4213cc9891e",
+      "reference.py": "5172c6d424bf7aa90a54846889cb2cec460f3103ce2590d96baac65529c433b6",
+      "release_io.py": "957431e5d61774b103c58749986a42b1845c5fe769215b402d80a4c9a57ceacb",
+      "schemas.py": "b4636e79ecac3af7c026b600c922b88e42f8ad961f2bf09d54d50d0886fdfb4a",
+      "storage.py": "11f0179c3eb9cf5c3550df679c88ec458b3b3c65424d7ce08f84249e9b40b35e",
+      "strict.py": "88ea75f06a1f37dab4314552183f18d6cb91057521982fbd7b3b0fd540f14a9e",
+      "types.py": "72ffdb46d49663d16d6d95bb1c7a81ae5fcf1ef47b4be331989f5f12e4ceca90"
+    },
+    "scope": "Source files observed by this invocation; not authenticated execution attestation.",
+    "test_files": {
+      "__init__.py": "48f84099f201e6d149da554583c403efc694d0cfd01eb8243d496eb9587759fc",
+      "fault_worker.py": "311fafd1030223dab678ad01b5c0dffe4c29cf3f1cedbdf4872526730f3e8432",
+      "fixtures.py": "b5814e043ab7db4a787b112a7c0caf381346dd1c589038226f9842e9d5d2d7ae",
+      "oracle.py": "b855b5b7179ad18da402b8c27c7f5056e654e23c7bc7799308118822c289c6ba",
+      "run_group.py": "a636125f664e975c88ff28c6323508e2be0b9c34e6a29dfe074b8eb0ebf36417",
+      "test_a_admission.py": "1e5c7790d866239f7a3f615cf1db25fc0632b7944a9e53c1642ad83b63d3fc1d",
+      "test_a_grammar.py": "2dec7d61840a6d2f4b6d1dec468b0118ccc8fdddcb357dee945bd452a765ea1d",
+      "test_a_storage.py": "7025505a0334d2c4edb4a739eee99c23e324acce81a3003a9db02bf483537ee4",
+      "test_a_worker.py": "034d2d3afba39a8985f6d518aa6da40dcada6039fcae3b4d1be981747b6cf0ff",
+      "test_b_integration.py": "94d12ffdc2c1f2c8f7d47e9671ac0a2522e216c4d63d1a2e995f32607cb04331",
+      "test_b_reference.py": "2173ee38b89a56ac30ee302d4ea2ad4403615ad18b67c987edf3b7fb25d445fb",
+      "test_c_conversion.py": "d5c0c3be13f541cd4f3b0ac12fa40818de0b5aec02037932419079883c6b958a",
+      "test_c_offline.py": "7b4db59b0285df29b3f14e0d44bccc14fbad1d2de2f0b13b9ec2e06ffe7ab10e"
+    }
+  },
+  "linux_worker_enforcement": "SKIPPED",
+  "actual_test_methods_started": 35,
+  "status_counts": {
+    "PASS": 26,
+    "SKIPPED": 9
+  },
+  "actual_subcases": 105,
+  "subcase_counts": {
+    "PASS": 105
+  },
+  "differential": {
+    "planned": 0,
+    "started": 0,
+    "seeds": [],
+    "statuses": {}
+  },
+  "tests": [
+    {
+      "id": "tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_bias_extrema_duplicate_json",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_collision_across_origins",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_configurable_bias_width_declared_and_validated",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_forged_copy_stale_and_production_rejected",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_last_weight_corruption",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_late_decoder_failure_invalid_result_generation_change",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_missing_root_and_model_geometry_rejection",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_mock_parameter_word_representation",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_shuffled_channels",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_success_deep_freeze_and_post_validation_file_mutation",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_traversal_and_symlink_escape",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_undeclared_and_missing_optional_payload",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_storage.StorageTests.test_archive_budget_hash_paths_and_inventory",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_storage.StorageTests.test_atomic_publication_and_identity",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_storage.StorageTests.test_failure_staging_retained",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_storage.StorageTests.test_peak_reservation_actual_growth_and_concurrency",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_worker.HostRejectionTests.test_nonlinux_fails_closed",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_worker.HostRejectionTests.test_root_fails_closed_no_invented_user",
+      "status": "PASS",
+      "started": true,
+      "domain": "desktop_software",
+      "seed": null,
+      "details": []
+    },
+    {
+      "id": "tests.test_a_worker.LinuxDecoderTests.test_approved_source_pixel_boundary",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxDecoderTests.test_exif_orientation_before_geometry_and_explicit_resize",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxDecoderTests.test_gray_preservation_descriptor_exclusion_and_record",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxDecoderTests.test_rgb_to_grayscale_png_and_static_jpeg",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxDecoderTests.test_unsupported_modes_transparency_animation_and_corruption",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxMechanismTests.test_address_space_actually_rejects_allocation",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxMechanismTests.test_partial_and_late_result_not_admitted",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxMechanismTests.test_single_worker_slot",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    },
+    {
+      "id": "tests.test_a_worker.LinuxMechanismTests.test_timeout_oversized_output_errors_and_reaping",
+      "status": "SKIPPED",
+      "started": true,
+      "domain": "linux_worker_enforcement",
+      "seed": null,
+      "details": [
+        "Linux worker enforcement required; no desktop fallback"
+      ]
+    }
+  ],
+  "subcases": [
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection",
+      "case": "test_all_five_layouts_and_boundary_rejection (tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection) (shape=(32, 32, 3, 8))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection",
+      "case": "test_all_five_layouts_and_boundary_rejection (tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection) (shape=(32, 32, 3, 16))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection",
+      "case": "test_all_five_layouts_and_boundary_rejection (tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection) (shape=(32, 32, 5, 8))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection",
+      "case": "test_all_five_layouts_and_boundary_rejection (tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection) (shape=(32, 32, 3, 4))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection",
+      "case": "test_all_five_layouts_and_boundary_rejection (tests.test_a_grammar.GrammarTests.test_all_five_layouts_and_boundary_rejection) (shape=(640, 480, 3, 4))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'{\"a\":1,\"a\":2}')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'{\"a\":{\"b\":1,\"b\":2}}')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'{\"x\":NaN}')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'\\xef\\xbb\\xbf{}')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'[]')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'{')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (raw=b'{\"x\":Infinity}')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value=False)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value=1.0)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value='1')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value=None)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value={'numerator': 2, 'denominator': 512})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value={'numerator': True, 'denominator': 256})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value={'numerator': 1, 'denominator': 0})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value={'numerator': -1, 'denominator': 2})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value={'numerator': 1.0, 'denominator': 2})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios",
+      "case": "test_duplicate_json_types_and_ratios (tests.test_a_grammar.GrammarTests.test_duplicate_json_types_and_ratios) (value={'numerator': 1, 'denominator': 2, 'Q8': True})",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(8388609, 1, 1))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(1, 4097, 1))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(1, 1, 4097))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(1, 4096, 4096))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(True, 1, 1))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(1, 0, 1))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_joint_source_limits",
+      "case": "test_joint_source_limits (tests.test_a_grammar.GrammarTests.test_joint_source_limits) (values=(1, 2049, 1024))",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'\\xef\\xbb\\xbf00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00\\r00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'0x00\\n00\\n00\\n00\\n00\\n00\\n00\\n0')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b' 00\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00 \\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'0\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n0')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'000\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'-1\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'gg\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00\\t\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'# comment\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=3, bad=b'00,00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'\\xef\\xbb\\xbf00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00\\r00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'0x00\\n00\\n00\\n00\\n00\\n00\\n00\\n0')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b' 00\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00 \\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'0\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n0')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'000\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'-1\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'gg\\n00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00\\t\\n00\\n00\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'# comment\\n00\\n00\\n00\\n00\\n00')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections",
+      "case": "test_mem_accepted_forms_and_rejections (tests.test_a_grammar.GrammarTests.test_mem_accepted_forms_and_rejections) (n=5, bad=b'00,00\\n00\\n00\\n00\\n00\\n00\\n00\\n')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='../x')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='/tmp/x')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='C:/x')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='C:x')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='\\\\\\\\host\\\\x')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='a/../../x')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='a\\\\b')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='a/./b')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='a//b')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='a/')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='CON')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='nul.txt')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='name.')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_grammar.GrammarTests.test_portable_path_rejection",
+      "case": "test_portable_path_rejection (tests.test_a_grammar.GrammarTests.test_portable_path_rejection) (path='name ')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=0)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=1)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=2)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=3)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=4)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=5)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=6)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=7)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=8)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=9)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=10)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=11)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=12)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=13)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=14)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection",
+      "case": "test_invalid_configuration_and_signed24_rejection (tests.test_a_admission.AdmissionTests.test_invalid_configuration_and_signed24_rejection) (edit=15)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='schema_version', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='schema_version', value=2)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='W', value=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='capabilities', value=510)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='build_id', value='00000000000000000000000000000000')",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='N', value=5)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override",
+      "case": "test_wrong_hardware_fields_and_no_extension_override (tests.test_a_admission.AdmissionTests.test_wrong_hardware_fields_and_no_extension_override) (key='K', value=16)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "case": "test_retention_protection_and_oldest_first (tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first) (kind='qualification', pinned=False)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "case": "test_retention_protection_and_oldest_first (tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first) (kind='failure', pinned=False)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "case": "test_retention_protection_and_oldest_first (tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first) (kind='bundle', pinned=False)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "case": "test_retention_protection_and_oldest_first (tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first) (kind='recovery', pinned=False)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "case": "test_retention_protection_and_oldest_first (tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first) (kind='run_payload', pinned=True)",
+      "status": "PASS"
+    },
+    {
+      "parent": "tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first",
+      "case": "test_retention_protection_and_oldest_first (tests.test_a_storage.StorageTests.test_retention_protection_and_oldest_first) (kind='run_payload', pinned=False)",
+      "status": "PASS"
+    }
+  ],
+  "M1_complete": false,
+  "M2_complete": false,
+  "limitations": [
+    "Software evidence only; no board qualification.",
+    "Fixture decoder records are not Linux enforcement evidence.",
+    "Reference computation has no decoder deadline."
+  ]
+}

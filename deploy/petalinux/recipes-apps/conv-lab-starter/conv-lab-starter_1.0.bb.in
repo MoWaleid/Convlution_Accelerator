@@ -1,0 +1,19 @@
+# STAGED TEMPLATE. CLOSED is not an inferred license grant.
+SUMMARY = "Preserved converted trained model and single-image dataset"
+LICENSE = "@STARTER_LICENSE@"
+LIC_FILES_CHKSUM = "@STARTER_LICENSE_CHECKSUM@"
+SRC_URI = "file://model/ file://dataset/"
+S = "@VERIFIED_UNPACK_ROOT@"
+inherit allarch
+do_configure[noexec] = "1"
+do_compile[noexec] = "1"
+do_install() {
+    model=${D}/opt/conv-lab/library/models/N3_K8/m0-trained-cifar-k8/converted-1
+    dataset=${D}/opt/conv-lab/library/datasets/m0-cifar-cat/converted-1
+    install -d $model/weights $dataset/images
+    install -m 0644 ${S}/model/model.json ${S}/model/channel_config.json $model/
+    install -m 0644 ${S}/model/weights/*.mem $model/weights/
+    install -m 0644 ${S}/dataset/dataset.json $dataset/
+    install -m 0644 ${S}/dataset/images/*.png $dataset/images/
+}
+FILES:${PN} = "/opt/conv-lab/library/models/N3_K8/m0-trained-cifar-k8/converted-1 /opt/conv-lab/library/datasets/m0-cifar-cat/converted-1"

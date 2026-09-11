@@ -1,0 +1,7 @@
+# Real-bundle host evidence and staged ARM integration
+
+Recorded 2026-09-10. [Evidence checkpoint](C:/Users/moham/Documents/Codex/2026-09-05/referenced-chatgpt-conversation-this-is-an/M2_real_platform_evidence_20260910_000410_452784_6a3a26b8/ACCEPTANCE.md) verifies supplied archives, source associations and stored outputs. Linux C: 14 PASS/78 passing subcases, worker PASS. Linux A: 35 PASS/122 passing subcases, worker PASS. Linux B: 1008 PASS/706 passing subcases, including the same 1000 seeds. Python 3.13.15/Pillow 12.2.0/JPEG 6.2/zlib 1.2.11 on x86_64 Ubuntu are reported execution, not ARM/PetaLinux evidence.
+
+The real N3/K8/32x32 example reports 8192 values/16384 bytes and all four historical hash domains matching. Model/dataset hashes, candidate/output manifests and source observations match the preserved transfer. The assistant did not execute tests/reference/conversion. Earlier NOT_RUN handoffs remain historical, superseded only for this supplied host revision/scope.
+
+[Finalized PetaLinux package](D:/MyProjects/Convlution_Accelerator/deploy/petalinux/README.md) is READY FOR USER APPLICATION after verified recipe/configuration discovery and approved team-code CLOSED classification. Evaluated settings, recipe/image builds and ARM qualification remain NOT RUN; starter provenance/redistribution limitations remain explicit. Application/test/asset bytes are unchanged; old PASS does not qualify installed launchers or target dependencies. No full M1/M2/library/board completion.

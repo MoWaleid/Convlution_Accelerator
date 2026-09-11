@@ -1,6 +1,6 @@
 // Vivado IP Integrator module-reference adapter for the VHDL-2008 wrapper.
-// The adapter adds standard AXI interface metadata only; all accelerator
-// behavior remains in conv_axis_wrapper.vhd.
+// The adapter adds standard AXI interface metadata and normalizes physical
+// addresses to local 64 KiB offsets for conv_axis_wrapper.vhd.
 `timescale 1 ns / 1 ps
 
 module conv_axis_wrapper_bd (
@@ -11,7 +11,7 @@ module conv_axis_wrapper_bd (
     (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME resetn, POLARITY ACTIVE_LOW" *)
     input wire resetn,
 
-    // The BD address map constrains this slave to a 64 KiB aperture covering
+    // The BD address map constrains this slave to an aligned 64 KiB aperture covering
     // the frozen local offsets through 0x400C. Keep the native 32-bit AXI
     // address ports so Vivado's AXI interface metadata matches the core.
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI AWADDR" *) input wire [31:0] S_AXI_AWADDR,
@@ -50,7 +50,7 @@ module conv_axis_wrapper_bd (
     conv_axis_wrapper accelerator_i (
         .clk(clk),
         .resetn(resetn),
-        .S_AXI_AWADDR(S_AXI_AWADDR),
+        .S_AXI_AWADDR({16'h0000, S_AXI_AWADDR[15:0]}),
         .S_AXI_AWPROT(S_AXI_AWPROT),
         .S_AXI_AWVALID(S_AXI_AWVALID),
         .S_AXI_AWREADY(S_AXI_AWREADY),
@@ -61,7 +61,7 @@ module conv_axis_wrapper_bd (
         .S_AXI_BRESP(S_AXI_BRESP),
         .S_AXI_BVALID(S_AXI_BVALID),
         .S_AXI_BREADY(S_AXI_BREADY),
-        .S_AXI_ARADDR(S_AXI_ARADDR),
+        .S_AXI_ARADDR({16'h0000, S_AXI_ARADDR[15:0]}),
         .S_AXI_ARPROT(S_AXI_ARPROT),
         .S_AXI_ARVALID(S_AXI_ARVALID),
         .S_AXI_ARREADY(S_AXI_ARREADY),

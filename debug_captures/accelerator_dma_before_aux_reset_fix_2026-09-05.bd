@@ -1169,9 +1169,6 @@
           },
           "c_s_axis_s2mm_tdata_width": {
             "value": "64"
-          },
-          "c_sg_length_width": {
-            "value": "16"
           }
         },
         "interface_ports": {
@@ -2014,13 +2011,13 @@
       "const_one_dout": {
         "ports": [
           "const_one/dout",
-          "rst_100m/dcm_locked",
-          "rst_100m/aux_reset_in"
+          "rst_100m/dcm_locked"
         ]
       },
       "const_zero_dout": {
         "ports": [
           "const_zero/dout",
+          "rst_100m/aux_reset_in",
           "rst_100m/mb_debug_sys_rst"
         ]
       },
@@ -2035,8 +2032,8 @@
           "axi_dma_0/m_axi_mm2s_aclk",
           "axi_dma_0/m_axi_s2mm_aclk",
           "axi_dma_0/s_axi_lite_aclk",
-          "system_ila_0/clk",
-          "conv_axis_wrapper_bd_0/clk"
+          "conv_axis_wrapper_bd_0/clk",
+          "system_ila_0/clk"
         ]
       },
       "processing_system7_0_FCLK_RESET0_N": {
@@ -2051,8 +2048,8 @@
           "axi_lite_smartconnect/aresetn",
           "hp0_smartconnect/aresetn",
           "axi_dma_0/axi_resetn",
-          "system_ila_0/resetn",
-          "conv_axis_wrapper_bd_0/resetn"
+          "conv_axis_wrapper_bd_0/resetn",
+          "system_ila_0/resetn"
         ]
       }
     },

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "dataset_id": "m0-cifar-cat",
+  "release_version": "converted-1",
+  "images": [
+    {
+      "image_id": "alley_cat_s_000013",
+      "source": {
+        "path": "images/alley_cat_s_000013.png",
+        "sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0"
+      },
+      "preprocessing": {
+        "geometry_policy": "exact",
+        "resize_filter": "NONE"
+      }
+    }
+  ]
+}
