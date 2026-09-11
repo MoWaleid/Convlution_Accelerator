@@ -38,7 +38,8 @@ teammate with a parallel implementation (see §11).
 
 Git branch `v1-bringup`; HEAD `5d7e416` ("M4: integrate CVH1 hybrid accelerator",
 2026-09-12). Prior key commits: `f711631` M3 closeout, `172a691` first handoff,
-`267c1c4` K8 bring-up config. Working tree clean.
+`267c1c4` K8 bring-up config. M5+M6 delivered 2026-09-12 (`software/m5_qualify.py`,
+`software/hardware.json`, `software/m6_reload.py`) — commit pending at handoff-refresh time.
 
 | Path | What it is |
 |---|---|
@@ -82,7 +83,7 @@ is the milestone table — read it before doing milestone work).
 | **M3 file-driven inference on existing build** | file-driven runs, ≥20 frames, zero mismatches, guards intact | **PASS** (2026-09-11, commit `f711631`) |
 | **M4 integrate the exact hybrid incrementally** | CVH1 ABI per contract; regression per subsystem; clean 100 MHz build | **PASS** (2026-09-11; exact hybrid integration and live board proof complete) |
 | **M5 qualify one hybrid build end-to-end** | ≥100 frames no inter-frame RESET, extremes, lifecycle, bounded-failure, identity/platform freeze | **PASS** (2026-09-12; `software/m5_qualify.py` + `software/hardware.json`) |
-| M6 same-image full reload | 20× A32→A32 via exclusive-owner lifecycle (FPGA Manager) | pending |
+| **M6 same-image full reload** | 20× A32→A32 via approved lifecycle + cold-boot sample; activation validation per load; no stale state | **PASS** (2026-09-12; `software/m6_reload.py`, FPGA Manager + `m4_accelerator_dma.bin`) |
 | M7 required profiles + model switching | A=N3/K8, B=N3/K16, C=N5/K8, D=N3/K4, D@640×480; switching matrix | pending |
 | M8 reproducible operation and demo | CLI/API, run archive, previews, measurement harness | demo core exists (m3_demo.py); formal M8 pending |
 | M9 freeze pre-research release | release tag, qualification matrix, 1000-frame soak | pending |
@@ -279,9 +280,24 @@ the datapath still sustains one output pixel/cycle at 100 MHz.
 paste in ≤24-line chunks into `cat > file << 'XEOF'` heredocs → **verify per-chunk md5**
 against assistant-provided references before decoding (corrupted chunks are re-emitted
 individually; `sed -i 'Ns/a/b/'` for single-character repairs) → decode with
-`python3 -c "import base64,gzip;..."`. **Lessons: there is no `base64` applet (use
+`python3 -c "import base64,gzip,..."`. **Lessons: there is no `base64` applet (use
 python3); never double-gunzip (`.tgz` payloads decode with `base64.b64decode` only);
-transcription errors in chat are the main corruption source — always verify chunk hashes.**
+transcription errors in chat are the main corruption source — always verify chunk hashes.
+Large files (>100 KB): don't serial-push at all — sneakernet them through the SD's FAT
+boot partition (`/dev/mmcblk0p1`, mountable read/write from the board).**
+
+**Runtime PL reprogramming (M6, proven):** Zynq FPGA Manager is in the running kernel
+(`fpga0`, "Xilinx Zynq FPGA Manager"); the consumers-format image is generated on
+Windows from the routed `.bit` with
+`bootgen -image m4_pl.bif -arch zynq -process_bitstream bin` (BIF = plain path, no
+`[destination_device]` attribute on zynq arch; output lands next to the `.bit` as
+`*.bit.bin`). Staged at `/lib/firmware/m4_accelerator_dma.bin` (persists on ext4
+rootfs; also on SD p1). SHA256 `b59378e4918f3c128d0d787546981e58b7508085c916780a21fef5db3a04130b`,
+4,045,568 bytes. Programming: write `0` to `fpga0/flags`, write firmware name to
+`fpga0/firmware`, poll `fpga0/state` == `operating` (~183 ms). After reload the PL is
+factory-fresh: STATUS `0x101`, params/admission wiped, identity registers re-readable
+— the seven-phase lifecycle in `m6_reload.py` implements it (handles closed before
+programming, brand-new handles after).
 
 ---
 
@@ -296,8 +312,9 @@ transcription errors in chat are the main corruption source — always verify ch
 | `m3_demo.py` (9 images × trained+custom ×2) | 36 | PASS, 135 PNGs, manifest `96b01a0f416893c7acb2df32b02a54d5712e1283b6debc5cf11686c1e21a4828` |
 | `m4_filebackend.py` (CVH1 hybrid build) | 3 | PASS; repeated START/no inter-frame RESET; counters exact; guards intact; output SHA `cb397559…` |
 | `m5_qualify.py` (M5 qualification) | 103 | **PASS** — 100-frame no-reset soak (alternating images) + saturation/all-zero/all-255 extremes + ABORT→FAULT→recovery, ABORT-race, poisoned-expectation tests; median 0.076 ms/frame; final retained state `0x181` |
+| `m6_reload.py` (same-image full reload) | 21 frames / 21 reloads | **PASS** — 20 consecutive + 1 post-cold-boot A32→A32 full-PL reloads via FPGA Manager (`m4_accelerator_dma.bin` from `/lib/firmware`); per-cycle: identity re-validated, stale-state proof (STATUS==`0x101`), full re-installation, bit-exact frame; ~183 ms/reload |
 
-Total recorded board evidence: **167+ frames, 0 mismatches**, guards intact every run. M2-P, M3, M4 and M5 are closed. Board-side copies: `/home/petalinux/{m4_filebackend,m5_qualify,hardware.json}`.
+Total recorded board evidence: **188+ frames, 0 mismatches**, guards intact every run; 21 verified full-PL reconfigurations. M2-P, M3, M4, M5 and M6 are closed. Board-side copies: `/home/petalinux/{m4_filebackend,m5_qualify,m6_reload,hardware.json}`.
 `debug_captures/m3_demo_sobel_mag_aeroplane_view.png` (Sobel magnitude through real
 silicon); `…_board.png` (alley cat — correctly near-empty: that image's golden Sobel
 max magnitude is 3).
@@ -429,11 +446,14 @@ zero patience for fluff. What works and what doesn't, learned the hard way:
 
 ## 16. Next steps (as of this writing)
 
-1. **M6 — same-image full reload:** 20× A32→A32 reloads through the approved
-   exclusive-owner lifecycle (FPGA Manager programming the M4 bitstream from Linux),
-   plus a cold boot and repeat sample; no normal-path reboot; activation validation after
-   every load. Note the M4 boot chain is already proven; M6 adds the *runtime* reload path.
-2. Then M7 (profiles A–D; teammate merge decision) → M8 (demo CLI/harness) →
-   M9 (pre-research release freeze).
+1. **M7 — required profiles + model switching** (the big one): profiles
+   A=N3/K8 (current), B=N3/K16, C=N5/K8, D=N3/K4, plus D at W=640×H=480;
+   each compiled, timed, and switch-qualified through the M6 lifecycle machinery
+   (A32→B32→A32 ≥20 cycles + every ordered source→destination pair once).
+   **This is where the teammate merge decision becomes unavoidable** (profile B is
+   N3/K16 — see §11), and where the RTL must generalize (C=N5 exercises the regfile's
+   25-coefficient layout; D exercises compile-time geometry alternatives).
+2. Then M8 (demo CLI/harness — the live-switching demo) → M9 (release freeze).
 3. Competition report due 2026-09-15 — assemble when the user switches focus; the
-   evidence base (167+ bit-exact frames, timing/utilization/power, ARM qualification) is ready.
+   evidence base (188+ bit-exact frames, 21 verified full-PL reloads, timing/utilization/
+   power, ARM qualification) is ready.
