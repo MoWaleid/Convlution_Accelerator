@@ -81,7 +81,7 @@ is the milestone table — read it before doing milestone work).
 | M2-P qualify embedded platform | offline boot, codecs, hashes, UIO/DMA regression | **Complete** (first ARM acceptance 2026-09-10/11; DMA proven 2026-09-11) |
 | **M3 file-driven inference on existing build** | file-driven runs, ≥20 frames, zero mismatches, guards intact | **PASS** (2026-09-11, commit `f711631`) |
 | **M4 integrate the exact hybrid incrementally** | CVH1 ABI per contract; regression per subsystem; clean 100 MHz build | **PASS** (2026-09-11; exact hybrid integration and live board proof complete) |
-| M5 qualify one hybrid build end-to-end | ≥100 frames, lifecycle tests | pending |
+| **M5 qualify one hybrid build end-to-end** | ≥100 frames no inter-frame RESET, extremes, lifecycle, bounded-failure, identity/platform freeze | **PASS** (2026-09-12; `software/m5_qualify.py` + `software/hardware.json`) |
 | M6 same-image full reload | 20× A32→A32 via exclusive-owner lifecycle (FPGA Manager) | pending |
 | M7 required profiles + model switching | A=N3/K8, B=N3/K16, C=N5/K8, D=N3/K4, D@640×480; switching matrix | pending |
 | M8 reproducible operation and demo | CLI/API, run archive, previews, measurement harness | demo core exists (m3_demo.py); formal M8 pending |
@@ -295,8 +295,9 @@ transcription errors in chat are the main corruption source — always verify ch
 | `m3_filebackend.py` (file-driven, format-3 library) | 3 | PASS, ~0.14 ms/frame |
 | `m3_demo.py` (9 images × trained+custom ×2) | 36 | PASS, 135 PNGs, manifest `96b01a0f416893c7acb2df32b02a54d5712e1283b6debc5cf11686c1e21a4828` |
 | `m4_filebackend.py` (CVH1 hybrid build) | 3 | PASS; repeated START/no inter-frame RESET; counters exact; guards intact; output SHA `cb397559…` |
+| `m5_qualify.py` (M5 qualification) | 103 | **PASS** — 100-frame no-reset soak (alternating images) + saturation/all-zero/all-255 extremes + ABORT→FAULT→recovery, ABORT-race, poisoned-expectation tests; median 0.076 ms/frame; final retained state `0x181` |
 
-Total recorded board evidence: **64 frames, 0 mismatches**, guards intact every run. M2-P and M3 remain closed; the focused M4 live hardware/software integration proof also passes.
+Total recorded board evidence: **167+ frames, 0 mismatches**, guards intact every run. M2-P, M3, M4 and M5 are closed. Board-side copies: `/home/petalinux/{m4_filebackend,m5_qualify,hardware.json}`.
 `debug_captures/m3_demo_sobel_mag_aeroplane_view.png` (Sobel magnitude through real
 silicon); `…_board.png` (alley cat — correctly near-empty: that image's golden Sobel
 max magnitude is 3).
@@ -336,6 +337,14 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
 5. `deploy/petalinux/README.md` references `deploy/petalinux_snapshots/…` which does not
    exist in the repo (snapshot lives outside).
 6. Board clock resets every boot; UIO/udmabuf are root-only; no RTC battery.
+8. **PLATFORM FINDING (2026-09-12):** deliberately provoking SLVERR from userspace
+   (illegal command values, reserved-address accesses) escalates on the Zynq GP path to
+   `Unhandled fault: external abort on non-linefetch (0x1818)` → SIGBUS, killing the
+   process. The platform enforces the validate-before-write backend contract **fail-stop**;
+   SLVERR decode is qualified in simulation (`tb_axi_lite_ctrl`). Backends must never
+   probe error paths with live MMIO writes. Also: post-frame sticky event bits
+   (DONE/CORE_COMPLETE/OUTPUT_DRAINED) persist until CVH1 RESET — a healthy post-frame
+   STATUS reads `0x19D`; only after RESET does it read `0x181`.
 7. `.bit/.ltx/.dcp` files are gitignored — `bitstreams/*.bit` and `checkpoints/*.dcp`
    exist only on disk (the tested-bitstream hash gate in §4 covers this).
 
@@ -420,11 +429,11 @@ zero patience for fluff. What works and what doesn't, learned the hard way:
 
 ## 16. Next steps (as of this writing)
 
-1. **M5 — qualify one hybrid build end to end:** matched software/backend lifecycle, live identity
-   validation, at least 100 frames without inter-frame RESET, zero mismatches/guard errors,
-   numerical-extreme/custom/trained coverage, and complete/halt/restart/failure-path testing.
-2. Freeze the full `hardware.json` / platform identity and exclusive-owner lifecycle machinery
-   as part of M5; do not retrofit that scope back into the already-qualified M4 hardware gate.
-3. Then M6 (full-PL reload ×20) → M7 (profiles A–D; teammate merge decision) →
-   M8 (demo CLI/harness) → M9 (pre-research release freeze).
-4. Competition report is due 2026-09-15; assemble it when the user explicitly switches focus to it.
+1. **M6 — same-image full reload:** 20× A32→A32 reloads through the approved
+   exclusive-owner lifecycle (FPGA Manager programming the M4 bitstream from Linux),
+   plus a cold boot and repeat sample; no normal-path reboot; activation validation after
+   every load. Note the M4 boot chain is already proven; M6 adds the *runtime* reload path.
+2. Then M7 (profiles A–D; teammate merge decision) → M8 (demo CLI/harness) →
+   M9 (pre-research release freeze).
+3. Competition report due 2026-09-15 — assemble when the user switches focus; the
+   evidence base (167+ bit-exact frames, timing/utilization/power, ARM qualification) is ready.
