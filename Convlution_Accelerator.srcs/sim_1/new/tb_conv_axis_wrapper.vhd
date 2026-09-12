@@ -129,10 +129,13 @@ architecture sim of tb_conv_axis_wrapper is
         end case;
     end function last_keep;
 begin
-    assert C_K = 8
-        report "Product wrapper regression expects CFG_K = 8" severity failure;
-    assert C_OUTPUT_BEATS_PER_POSITION = 2
-        report "K=8 must serialize as two AXIS64 beats per output position" severity failure;
+    assert C_K = 16
+        report "Product wrapper regression expects CFG_K = 16" severity failure;
+    assert C_K mod 4 = 0
+        report "K16 wrapper regression requires an integral number of full AXIS64 beats per output position"
+        severity failure;
+    assert C_OUTPUT_BEATS_PER_POSITION = 4
+        report "K=16 must serialize as four AXIS64 beats per output position" severity failure;
 
     clk <= not clk after CLK_PERIOD / 2;
     m_axis_tready <= '1' when hold_output_for_soft_reset = '0' and
@@ -470,6 +473,8 @@ begin
         variable scalar_index : natural := 0;
         variable last_count   : natural := 0;
         variable position_index : natural;
+        variable completed_position : natural;
+        variable row_boundaries_seen : natural := 0;
         variable expected : std_logic_vector(15 downto 0);
     begin
         wait until resetn = '1';
@@ -477,7 +482,7 @@ begin
             wait until rising_edge(clk);
             if m_axis_tvalid = '1' and m_axis_tready = '1' then
                 assert m_axis_tkeep = x"FF"
-                    report "K=8 wrapper output beat must contain four int16 scalars" severity failure;
+                    report "K=16 wrapper output beat must contain four int16 scalars" severity failure;
                 for lane in 0 to 3 loop
                     position_index := scalar_index / C_K;
                     expected := expected_result(position_index);
@@ -486,12 +491,27 @@ begin
                     scalar_index := scalar_index + 1;
                 end loop;
 
+                -- Count every transition into a new logical output row.  The
+                -- scalar/value scoreboard above then proves that the natural
+                -- window-generator valid bubbles at that boundary neither
+                -- drop nor duplicate a K16 output position.
+                if scalar_index mod C_K = 0 then
+                    completed_position := scalar_index / C_K - 1;
+                    if completed_position > 0 and
+                       completed_position mod C_LOGICAL_WIDTH = 0 then
+                        row_boundaries_seen := row_boundaries_seen + 1;
+                    end if;
+                end if;
+
                 if m_axis_tlast = '1' then
                     last_count := last_count + 1;
                 end if;
                 if scalar_index = C_OUTPUT_SCALARS then
                     assert m_axis_tlast = '1' and last_count = 1
                         report "Wrapper frame did not terminate with exactly one TLAST" severity failure;
+                    assert row_boundaries_seen = C_LOGICAL_HEIGHT - 1
+                        report "Wrapper did not preserve every K16 output-row boundary"
+                        severity failure;
                     if frame_index = 0 then
                         frame_one_done <= '1';
                     elsif frame_index = 1 then
@@ -502,6 +522,7 @@ begin
                     frame_index := frame_index + 1;
                     scalar_index := 0;
                     last_count := 0;
+                    row_boundaries_seen := 0;
                 else
                     assert m_axis_tlast = '0'
                         report "Wrapper asserted TLAST before the final output scalar" severity failure;
@@ -512,7 +533,11 @@ begin
 
     timeout_monitor : process
     begin
-        wait for 100 us;
+        -- K16 CFGLUT configuration requires 16*9*32 clocks before the frame
+        -- traffic and backpressure phases begin.  Keep a generous functional
+        -- timeout so a correct slow AXI-Lite configuration sequence cannot be
+        -- mistaken for a deadlock.
+        wait for 500 us;
         assert false report "AXI4-Stream convolution wrapper regression timed out" severity failure;
         wait;
     end process timeout_monitor;

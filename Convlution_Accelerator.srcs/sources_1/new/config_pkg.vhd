@@ -41,11 +41,10 @@ package config_pkg is
     -- signed int8 kernel coefficients.
     constant CFG_WEIGHT_WIDTH : integer := 8;
 
-    -- Approximate multiplier setting. The multiplier discards this many
-    -- least-significant pixel bits before multiplication, then restores their
-    -- binary position with a constant left shift. A value of 0 is exact;
-    -- the optimized variant uses 2.
-    constant CFG_APPROX_PIXEL_LSB_DROP : natural := 2;
+    -- This branch uses exact CFGLUT5 constant-coefficient multiplication.
+    -- Retain the legacy capability field at zero so software and reports
+    -- identify that no activation bits are discarded.
+    constant CFG_APPROX_PIXEL_LSB_DROP : natural := 0;
 
     -- CVH1 default: signed 24-bit bias.
     constant CFG_BIAS_WIDTH : integer := 24;

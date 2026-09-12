@@ -4,7 +4,7 @@
 <!-- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.                   -->
 <!-- Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.   -->
 
-<Project Product="Vivado" Version="7" Minor="71" Path="D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.xpr">
+<Project Product="Vivado" Version="7" Minor="71" Path="C:/Users/Sigma/Desktop/Convlution_Accelerator_K16_CFGLUT5_Exact/Convlution_Accelerator.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="ef79c526b8ba45bc8ea20eaa785cfbbe"/>
@@ -45,8 +45,7 @@
     <Option Name="SimulatorGccVersionActiveHdl" Val="9.3.0"/>
     <Option Name="TargetLanguage" Val="VHDL"/>
     <Option Name="SimulatorLanguage" Val="VHDL"/>
-    <Option Name="BoardPart" Val="digilentinc.com:zedboard:part0:1.1"/>
-    <Option Name="BoardPartRepoPaths" Val="C:/Users/moham/AppData/Roaming/Xilinx/Vivado/2025.2/xhub/board_store/xilinx_board_store"/>
+    <Option Name="BoardPart" Val=""/>
     <Option Name="ActiveSimSet" Val="sim_1"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="ProjectType" Val="Default"/>
@@ -62,7 +61,7 @@
     <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSABoardId" Val="zedboard"/>
-    <Option Name="WTXSimLaunchSim" Val="12"/>
+    <Option Name="WTXSimLaunchSim" Val="22"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -135,6 +134,18 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/new/cfglut5_bitheap_3x3.vhd">
+        <FileInfo SFType="VHDL2008">
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/cfglut5_kcm.vhd">
+        <FileInfo SFType="VHDL2008">
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/window_generator.vhd">
         <FileInfo SFType="VHDL2008">
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -181,8 +192,14 @@
         <CompFileExtendedInfo CompFileName="accelerator_dma.bd" FileRelPathName="ip\accelerator_dma_axi_dma_0_0\accelerator_dma_axi_dma_0_0.xci">
           <Proxy FileSetName="accelerator_dma_axi_dma_0_0"/>
         </CompFileExtendedInfo>
+        <CompFileExtendedInfo CompFileName="accelerator_dma.bd" FileRelPathName="ip\accelerator_dma_axi_lite_smartconnect_0\accelerator_dma_axi_lite_smartconnect_0.xci">
+          <Proxy FileSetName="accelerator_dma_axi_lite_smartconnect_0"/>
+        </CompFileExtendedInfo>
         <CompFileExtendedInfo CompFileName="accelerator_dma.bd" FileRelPathName="ip\accelerator_dma_conv_axis_wrapper_bd_0_0\accelerator_dma_conv_axis_wrapper_bd_0_0.xci">
           <Proxy FileSetName="accelerator_dma_conv_axis_wrapper_bd_0_0"/>
+        </CompFileExtendedInfo>
+        <CompFileExtendedInfo CompFileName="accelerator_dma.bd" FileRelPathName="ip\accelerator_dma_hp0_smartconnect_0\accelerator_dma_hp0_smartconnect_0.xci">
+          <Proxy FileSetName="accelerator_dma_hp0_smartconnect_0"/>
         </CompFileExtendedInfo>
         <CompFileExtendedInfo CompFileName="accelerator_dma.bd" FileRelPathName="ip\accelerator_dma_processing_system7_0_0\accelerator_dma_processing_system7_0_0.xci">
           <Proxy FileSetName="accelerator_dma_processing_system7_0_0"/>
@@ -266,6 +283,18 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sim_1/new/tb_cfglut5_exact.vhd">
+        <FileInfo SFType="VHDL2008">
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sim_1/new/tb_cfglut5_k16_smoke.vhd">
+        <FileInfo SFType="VHDL2008">
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sim_1/imports/new/tb_conv_axis_wrapper.vhd">
         <FileInfo>
           <Attr Name="ImportPath" Val="$PSRCDIR/sim_1/new/tb_conv_axis_wrapper.vhd"/>
@@ -276,7 +305,7 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="tb_conv_axis_wrapper"/>
+        <Option Name="TopModule" Val="tb_cfglut5_k16_smoke"/>
         <Option Name="TransportPathDelay" Val="0"/>
         <Option Name="TransportIntDelay" Val="0"/>
         <Option Name="SelectedSimModel" Val="rtl"/>
@@ -312,27 +341,39 @@
         <Option Name="TopAutoSet" Val="TRUE"/>
       </Config>
     </FileSet>
-    <FileSet Name="accelerator_dma_processing_system7_0_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_processing_system7_0_0" RelGenDir="$PGENDIR/accelerator_dma_processing_system7_0_0">
-      <Config>
-        <Option Name="TopModule" Val="accelerator_dma_processing_system7_0_0"/>
-        <Option Name="UseBlackboxStub" Val="1"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="accelerator_dma_rst_100m_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_rst_100m_0" RelGenDir="$PGENDIR/accelerator_dma_rst_100m_0">
-      <Config>
-        <Option Name="TopModule" Val="accelerator_dma_rst_100m_0"/>
-        <Option Name="UseBlackboxStub" Val="1"/>
-      </Config>
-    </FileSet>
     <FileSet Name="accelerator_dma_axi_dma_0_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_axi_dma_0_0" RelGenDir="$PGENDIR/accelerator_dma_axi_dma_0_0">
       <Config>
         <Option Name="TopModule" Val="accelerator_dma_axi_dma_0_0"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
+    <FileSet Name="accelerator_dma_processing_system7_0_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_processing_system7_0_0" RelGenDir="$PGENDIR/accelerator_dma_processing_system7_0_0">
+      <Config>
+        <Option Name="TopModule" Val="accelerator_dma_processing_system7_0_0"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
+    <FileSet Name="accelerator_dma_axi_lite_smartconnect_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_axi_lite_smartconnect_0" RelGenDir="$PGENDIR/accelerator_dma_axi_lite_smartconnect_0">
+      <Config>
+        <Option Name="TopModule" Val="accelerator_dma_axi_lite_smartconnect_0"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
+    <FileSet Name="accelerator_dma_hp0_smartconnect_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_hp0_smartconnect_0" RelGenDir="$PGENDIR/accelerator_dma_hp0_smartconnect_0">
+      <Config>
+        <Option Name="TopModule" Val="accelerator_dma_hp0_smartconnect_0"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
     <FileSet Name="accelerator_dma_conv_axis_wrapper_bd_0_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_conv_axis_wrapper_bd_0_0" RelGenDir="$PGENDIR/accelerator_dma_conv_axis_wrapper_bd_0_0">
       <Config>
         <Option Name="TopModule" Val="accelerator_dma_conv_axis_wrapper_bd_0_0"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
+    <FileSet Name="accelerator_dma_rst_100m_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/accelerator_dma_rst_100m_0" RelGenDir="$PGENDIR/accelerator_dma_rst_100m_0">
+      <Config>
+        <Option Name="TopModule" Val="accelerator_dma_rst_100m_0"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
@@ -366,6 +407,16 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
+    <Run Id="accelerator_dma_axi_dma_0_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_axi_dma_0_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_axi_dma_0_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_axi_dma_0_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_synth_1" ParallelReportGen="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
+        <Step Id="synth_design"/>
+      </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+      <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2025"/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
+      <RQSFiles/>
+    </Run>
     <Run Id="accelerator_dma_processing_system7_0_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_processing_system7_0_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_processing_system7_0_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_processing_system7_0_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_processing_system7_0_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_processing_system7_0_0_synth_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
@@ -376,7 +427,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="accelerator_dma_rst_100m_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_rst_100m_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_rst_100m_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_rst_100m_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_synth_1" ParallelReportGen="true">
+    <Run Id="accelerator_dma_axi_lite_smartconnect_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_axi_lite_smartconnect_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_axi_lite_smartconnect_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_axi_lite_smartconnect_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_lite_smartconnect_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_lite_smartconnect_0_synth_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
         <Step Id="synth_design"/>
@@ -386,7 +437,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="accelerator_dma_axi_dma_0_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_axi_dma_0_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_axi_dma_0_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_axi_dma_0_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_synth_1" ParallelReportGen="true">
+    <Run Id="accelerator_dma_hp0_smartconnect_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_hp0_smartconnect_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_hp0_smartconnect_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_hp0_smartconnect_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_hp0_smartconnect_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_hp0_smartconnect_0_synth_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
         <Step Id="synth_design"/>
@@ -406,7 +457,37 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
+    <Run Id="accelerator_dma_rst_100m_0_synth_1" Type="Ft3:Synth" SrcSet="accelerator_dma_rst_100m_0" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_rst_100m_0" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" Dir="$PRUNDIR/accelerator_dma_rst_100m_0_synth_1" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_synth_1" ParallelReportGen="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
+        <Step Id="synth_design"/>
+      </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+      <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2025"/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
+      <RQSFiles/>
+    </Run>
     <Run Id="impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="constrs_1" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" State="current" Dir="$PRUNDIR/impl_1" SynthRun="synth_1" IncludeInArchive="true" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/impl_1" LaunchOptions="-jobs 4 " AutoRQSDir="$PSRCDIR/utils_1/imports/impl_1" ParallelReportGen="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2025"/>
+        <Step Id="init_design"/>
+        <Step Id="opt_design"/>
+        <Step Id="power_opt_design"/>
+        <Step Id="place_design"/>
+        <Step Id="post_place_power_opt_design"/>
+        <Step Id="phys_opt_design"/>
+        <Step Id="route_design"/>
+        <Step Id="post_route_phys_opt_design" EnableStepBool="1">
+          <Option Id="Directive">1</Option>
+        </Step>
+        <Step Id="write_bitstream"/>
+      </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+      <ReportStrategy Name="Vivado Implementation Default Reports" Flow="Vivado Implementation 2025"/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
+      <RQSFiles/>
+    </Run>
+    <Run Id="accelerator_dma_axi_dma_0_0_impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_axi_dma_0_0" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="accelerator_dma_axi_dma_0_0_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_impl_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2025"/>
         <Step Id="init_design"/>
@@ -419,7 +500,6 @@
         <Step Id="post_route_phys_opt_design"/>
         <Step Id="write_bitstream"/>
       </Strategy>
-      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
       <ReportStrategy Name="Vivado Implementation Default Reports" Flow="Vivado Implementation 2025"/>
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
@@ -441,7 +521,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="accelerator_dma_rst_100m_0_impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_rst_100m_0" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="accelerator_dma_rst_100m_0_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_impl_1" ParallelReportGen="true">
+    <Run Id="accelerator_dma_axi_lite_smartconnect_0_impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_axi_lite_smartconnect_0" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="accelerator_dma_axi_lite_smartconnect_0_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_lite_smartconnect_0_impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_lite_smartconnect_0_impl_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2025"/>
         <Step Id="init_design"/>
@@ -458,7 +538,7 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
-    <Run Id="accelerator_dma_axi_dma_0_0_impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_axi_dma_0_0" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="accelerator_dma_axi_dma_0_0_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_axi_dma_0_0_impl_1" ParallelReportGen="true">
+    <Run Id="accelerator_dma_hp0_smartconnect_0_impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_hp0_smartconnect_0" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="accelerator_dma_hp0_smartconnect_0_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_hp0_smartconnect_0_impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_hp0_smartconnect_0_impl_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2025"/>
         <Step Id="init_design"/>
@@ -492,10 +572,25 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
       <RQSFiles/>
     </Run>
+    <Run Id="accelerator_dma_rst_100m_0_impl_1" Type="Ft2:EntireDesign" Part="xc7z020clg484-1" ConstrsSet="accelerator_dma_rst_100m_0" Description="Default settings for Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" SynthRun="accelerator_dma_rst_100m_0_synth_1" IncludeInArchive="false" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/accelerator_dma_rst_100m_0_impl_1" ParallelReportGen="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2025"/>
+        <Step Id="init_design"/>
+        <Step Id="opt_design"/>
+        <Step Id="power_opt_design"/>
+        <Step Id="place_design"/>
+        <Step Id="post_place_power_opt_design"/>
+        <Step Id="phys_opt_design"/>
+        <Step Id="route_design"/>
+        <Step Id="post_route_phys_opt_design"/>
+        <Step Id="write_bitstream"/>
+      </Strategy>
+      <ReportStrategy Name="Vivado Implementation Default Reports" Flow="Vivado Implementation 2025"/>
+      <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
+      <RQSFiles/>
+    </Run>
   </Runs>
-  <Board>
-    <Jumpers/>
-  </Board>
+  <Board/>
   <DashboardSummary Version="1" Minor="0">
     <Dashboards>
       <Dashboard Name="default_dashboard">

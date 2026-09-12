@@ -190,6 +190,18 @@ architecture rtl of conv_top is
     signal production_enable_wire :
         std_logic;
 
+    signal coeff_write_pulse_wire :
+        std_logic;
+
+    signal coeff_write_addr_wire :
+        std_logic_vector(31 downto 0);
+
+    signal coeff_write_data_wire :
+        std_logic_vector(31 downto 0);
+
+    signal config_ready_wire :
+        std_logic;
+
     signal datapath_resetn :
         std_logic;
 
@@ -368,6 +380,9 @@ begin
             internal_error_in =>
                 internal_error_in,
 
+            datapath_config_ready =>
+                config_ready_wire,
+
             start_pulse =>
                 start_pulse_wire,
 
@@ -379,6 +394,15 @@ begin
 
             production_enable =>
                 production_enable_wire,
+
+            coeff_write_pulse =>
+                coeff_write_pulse_wire,
+
+            coeff_write_addr =>
+                coeff_write_addr_wire,
+
+            coeff_write_data =>
+                coeff_write_data_wire,
 
             coeffs_out =>
                 coeffs_wire,
@@ -454,6 +478,9 @@ begin
             resetn =>
                 datapath_resetn,
 
+            cfg_resetn =>
+                resetn,
+
             ce =>
                 datapath_ce,
 
@@ -463,9 +490,6 @@ begin
             valid_in =>
                 window_valid_wire,
 
-            coeffs_all =>
-                coeffs_wire,
-
             bias_all =>
                 bias_wire,
 
@@ -474,6 +498,18 @@ begin
 
             relu_en_all =>
                 relu_en_wire,
+
+            coeff_write_pulse =>
+                coeff_write_pulse_wire,
+
+            coeff_write_addr =>
+                coeff_write_addr_wire,
+
+            coeff_write_data =>
+                coeff_write_data_wire,
+
+            cfg_ready =>
+                config_ready_wire,
 
             results_out =>
                 results_out,
