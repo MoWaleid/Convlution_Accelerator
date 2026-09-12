@@ -1,0 +1,203 @@
+M7 full switching matrix — 58 switches, 58 full-PL reloads, 20 ordered pairs
+Date: 2026-09-13
+Script: /home/petalinux/m7_switch.py md5 e853933b4d0610881e895be4ff48c3bf
+Start profile: D640 (read from live BUILD_ID, not assumed)
+Gate: M1_ACTIVATION_LIFECYCLE.md switching matrix — 20x A32->B32->A32 cycles
+plus every other ordered distinct source->destination pair at least once;
+activation validation after every load; PASS only after final cleanup check.
+Provenance: verbatim transcript relayed from PuTTY serial session by the user.
+
+--- transcript ---
+$ sudo python3 /home/petalinux/m7_switch.py --matrix
+Password:
+PHASE MATRIX: starting from D640, 58 switches
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.145 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.145 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.125 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.129 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.128 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.129 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.126 ms sha=cb3975593073652b
+  ... 10/58 switches, 10 reloads
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.127 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.129 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.130 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.126 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.125 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.128 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.129 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+  ... 20/58 switches, 20 reloads
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.129 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.128 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.130 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.131 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.131 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.128 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.130 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.130 ms sha=cb3975593073652b
+  ... 30/58 switches, 30 reloads
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.127 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.127 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.128 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.127 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.129 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.130 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.128 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.129 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.130 ms sha=cb3975593073652b
+  ... 40/58 switches, 40 reloads
+fpga_manager fpga0: writing m7_C32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.127 ms sha=b6ab2d53dd9517f3
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.128 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_D32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.126 ms sha=6cb736f6a80132d8
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.128 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_D640.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D640 (D640N3K04-260912)
+  [D640] activation OK 3.842 ms sha=e323defbf8ad2616
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.130 ms sha=cb3975593073652b
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.127 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_C32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.128 ms sha=b6ab2d53dd9517f3
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.128 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_D32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.126 ms sha=6cb736f6a80132d8
+  ... 50/58 switches, 50 reloads
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.130 ms sha=5821c8b19a88fd34
+fpga_manager fpga0: writing m7_D640.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D640 (D640N3K04-260912)
+  [D640] activation OK 3.749 ms sha=e323defbf8ad2616
+fpga_manager fpga0: writing m7_C32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.126 ms sha=b6ab2d53dd9517f3
+fpga_manager fpga0: writing m7_D32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.128 ms sha=6cb736f6a80132d8
+fpga_manager fpga0: writing m7_C32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.129 ms sha=b6ab2d53dd9517f3
+fpga_manager fpga0: writing m7_D640.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D640 (D640N3K04-260912)
+  [D640] activation OK 3.768 ms sha=e323defbf8ad2616
+fpga_manager fpga0: writing m7_D32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.126 ms sha=6cb736f6a80132d8
+fpga_manager fpga0: writing m7_D640.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D640 (D640N3K04-260912)
+  [D640] activation OK 3.768 ms sha=e323defbf8ad2616
+SUMMARY: 58 switches, 58 full-PL reloads, 20 ordered pairs covered, 404.4 s
+M7 SWITCH MATRIX: PASS
+final state clean, handles closed
+
+--- verification notes ---
+All 58 activation frames matched their profile golden anchors:
+A32 cb3975593073652b (24 occurrences), B32 5821c8b19a88fd34 (24),
+C32 b6ab2d53dd9517f3 (5), D32 6cb736f6a80132d8 (4), D640 e323defbf8ad2616 (4).
+Observed-transition coverage check passed inside the script (all 20 ordered
+pairs of {A32,B32,C32,D32,D640}); termination guaranteed; final cleanup state
+verified 0x181 before PASS was printed. Total wall time 404.4 s.

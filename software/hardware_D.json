@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "platform": "zedboard_linux",
+  "profile": "D32",
+  "frozen_utc": "2026-09-12",
+  "accelerator": {
+    "build_id_hex": "444e334b30345733322d323630393132",
+    "build_id_ascii": "DN3K04W32-260912",
+    "magic": "0x43564831",
+    "abi_version": "0x00010000",
+    "capabilities": "0x000001ff",
+    "dma_length_width": 22,
+    "kernel_n": 3,
+    "channels_k": 4,
+    "image_w": 32,
+    "image_h": 32,
+    "pixel_width": 8,
+    "weight_width": 8,
+    "bias_width": 24,
+    "output_width": 16,
+    "expected_input_bytes": 1156,
+    "expected_output_bytes": 8192,
+    "clock_mhz": 100
+  },
+  "bus": {
+    "accelerator_base": "0x43c00000",
+    "accelerator_aperture": 65536,
+    "dma_base": "0x40400000",
+    "globals_base": "0x4100"
+  },
+  "devices": {
+    "dma_uio": "/dev/uio0",
+    "accel_uio": "/dev/uio1",
+    "buffer_device": "/dev/udmabuf0",
+    "buffer_phys_addr": "0x1f100000",
+    "buffer_bytes": 4194304,
+    "buffer_sync_mode": 1
+  },
+  "layout": {
+    "tx_offset": 4096,
+    "rx_offset": 65536,
+    "rx_capacity": 32768,
+    "guard_size": 64,
+    "guard_byte": 165
+  },
+  "artifacts": {
+    "bitstream_sha256": "0cf965e37375426b0b5fd7f363b69dbb19672a6b4e10bcbad5722903cb96749a",
+    "firmware_bin_sha256": "fc28223877f4a779f251f67c791ee971761470b40d44ba74974b0491ca7ab894",
+    "bitstream_file": "bitstreams/dn3k04_len22_2026-09-12.bit",
+    "firmware_file": "bitstreams/dn3k04_len22_2026-09-12.bit.bin"
+  }
+}

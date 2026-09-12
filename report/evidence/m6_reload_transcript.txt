@@ -1,0 +1,42 @@
+M6 SAME-IMAGE FULL-PL RELOAD — ZedBoard (zedboard_linux), serial console transcript
+Captured 2026-09-12 UTC. Script: software/m6_reload.py (board md5 bb508cf3a4075a36a2d5d7b5c40293ed
+after functional import fix; logical content identical to repo rev). Firmware image:
+/lib/firmware/m4_accelerator_dma.bin, SHA256 b59378e4918f3c128d0d787546981e58b7508085c916780a21fef5db3a04130b.
+Kernel log line during each programming step: "fpga_manager fpga0: writing
+m4_accelerator_dma.bin to Xilinx Zynq FPGA Manager".
+===========================================================================
+
+PHASE VALIDATING: candidate m4_accelerator_dma.bin sha256 OK
+PHASE VALIDATING: live identity matches hardware.json
+PHASE: 20x same-image A32->A32 full reload
+  cycle 01: program 181 ms, frame 0.096 ms, sha=cb3975593073652b
+  cycle 02: program 183 ms, frame 0.097 ms, sha=cb3975593073652b
+  cycle 03: program 182 ms, frame 0.079 ms, sha=cb3975593073652b
+  cycle 04: program 182 ms, frame 0.079 ms, sha=cb3975593073652b
+  cycle 05: program 182 ms, frame 0.083 ms, sha=cb3975593073652b
+  cycle 06: program 183 ms, frame 0.078 ms, sha=cb3975593073652b
+  cycle 07: program 183 ms, frame 0.077 ms, sha=cb3975593073652b
+  cycle 08: program 182 ms, frame 0.079 ms, sha=cb3975593073652b
+  cycle 09: program 182 ms, frame 0.079 ms, sha=cb3975593073652b
+  cycle 10: program 183 ms, frame 0.078 ms, sha=cb3975593073652b
+  cycle 11: program 181 ms, frame 0.079 ms, sha=cb3975593073652b
+  cycle 12: program 184 ms, frame 0.079 ms, sha=cb3975593073652b
+  cycle 13: program 183 ms, frame 0.077 ms, sha=cb3975593073652b
+  cycle 14: program 182 ms, frame 0.078 ms, sha=cb3975593073652b
+  cycle 15: program 182 ms, frame 0.078 ms, sha=cb3975593073652b
+  cycle 16: program 183 ms, frame 0.080 ms, sha=cb3975593073652b
+  cycle 17: program 183 ms, frame 0.078 ms, sha=cb3975593073652b
+  cycle 18: program 183 ms, frame 0.078 ms, sha=cb3975593073652b
+  cycle 19: program 182 ms, frame 0.081 ms, sha=cb3975593073652b
+  cycle 20: program 183 ms, frame 0.078 ms, sha=cb3975593073652b
+PHASE READY: final cleanup
+SUMMARY: 20 full-PL reloads, 20 activation frames bit-exact (sha cb3975593073652b)
+M6 SAME-IMAGE RELOAD: PASS
+
+Per cycle the script: halted DMA and confirmed quiescence; closed all UIO/udmabuf
+handles; reprogrammed the full PL via /sys/class/fpga_manager/fpga0 (flags=0,
+firmware name write, state polled to "operating"); reopened fresh handles; proved
+no stale state (STATUS exactly 0x101, zero error flags, zero counters); re-validated
+CVH1 identity (MAGIC/ABI/CAPABILITIES/BUILD_ID/geometry/DMA_LENGTH_WIDTH); reinstalled
+all 40 parameter words with readback verification; ran one inference; verified bit-exact
+output, guards, and exact counters.

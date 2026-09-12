@@ -12,18 +12,25 @@ package config_pkg is
 
     -- ========================================================================
     -- Master Hardware Configuration
-    -- Change these constants to globally update the architecture at compile-time
+    -- Catalog authority: profiles/m7_profiles.json; selected constants below are a projection.
     -- ========================================================================
 
+    -- BEGIN SELECTED PROFILE: derived from profiles/m7_profiles.json.
+    -- Use scripts/prepare_profile.py for an explicit isolated selection.
+    constant CFG_PROFILE : string := "D640";
+    constant CFG_BUILD_ID : std_logic_vector(127 downto 0) :=
+        x"443634304e334b30342d323630393132";
+
     -- Number of parallel output channels (K).
-    constant CFG_K : integer := 8;
+    constant CFG_K : integer := 4;
 
     -- Kernel spatial dimension (N x N).
     constant CFG_N : integer := 3;
 
     -- Image spatial dimensions.
-    constant CFG_UNPADDED_WIDTH  : integer := 32;
-    constant CFG_UNPADDED_HEIGHT : integer := 32;
+    constant CFG_UNPADDED_WIDTH  : integer := 640;
+    constant CFG_UNPADDED_HEIGHT : integer := 480;
+    -- END SELECTED PROFILE
 
     -- Hardware receives an externally zero-padded image.
     constant CFG_IMAGE_WIDTH  : integer :=

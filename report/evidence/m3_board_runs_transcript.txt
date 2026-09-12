@@ -1,0 +1,55 @@
+M3-ERA BOARD RUNS — ZedBoard (zedboard_linux), serial console transcripts
+Captured 2026-09-11 on the M2P image (zedboard_M2P_2026-09-10.wic; len16 boot chain,
+1-MiB udmabuf profile). Three runs, transcribed verbatim from the serial session.
+===========================================================================
+
+--- RUN 1: dma_len16_trained.py (M0 runner, trained K8 configuration) ---
+TEST: TRAINED_CIFAR_K8_V1
+IMAGE: alley_cat_s_000013.png
+INPUT SHA256: 967c1c7687d3775d4512bd30eaa7f07fc8e1956145ed82326b35eb8cff28f74e
+EXPECTED OUTPUT SHA256: cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705
+TX: 0x1F101000, 1156 bytes
+RX: 0x1F110000, capacity 32768 bytes
+ALL 40 PARAMETER WORDS VERIFIED
+MM2S STATUS: 0x00001002
+S2MM STATUS: 0x00001002
+RECEIVED BYTES: 16384 (expected 16384)
+FIRST 16 ACTUAL:   [0, 71, 28, 26, 0, 0, 117, 0, 0, 104, 81, 86, 0, 0, 97, 12]
+FIRST 16 EXPECTED: [0, 71, 28, 26, 0, 0, 117, 0, 0, 104, 81, 86, 0, 0, 97, 12]
+ACTUAL OUTPUT SHA256: cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705
+CHANNEL 0..7: 0 mismatches / 1024 (each)
+MISMATCHES: 0 / 8192
+OUTPUT AND GUARDS: PASS
+TRAINED CIFAR CONVOLUTION TEST: PASS
+
+--- RUN 2: dma_len16_repeated.py (20 consecutive frames, no inter-frame reset) ---
+TEST: NONZERO_3X3_REPEAT20_V1
+20 distinct frames; one initial reset, no resets between frames.
+ALL 40 PARAMETER WORDS VERIFIED
+FRAME 01..20: PASS | bytes=16384 | mismatches=0/8192 | guards=PASS (each frame)
+TOTAL: 20 frames, 163840 values, zero mismatches.
+REPEATED-FRAME TEST: PASS
+
+--- RUN 3: dma_len16_golden.py (custom saturation filters) ---
+TEST: NONZERO_3X3_V1
+FIRST 16 ACTUAL: [148, 39, 27, -15, 0, 25, 32767, -32768, 303, 32, 47, -29, 0, 23, 32767, -32768]
+ACTUAL OUTPUT SHA256: 23ffd4bb5e87106232d374d05a4550d7b602b0d2ca8f40f94ac14a2206b0ecbe
+MISMATCHES: 0 / 8192
+NONZERO CONVOLUTION TEST: PASS
+
+--- RUN 4: m3_filebackend.py (file-driven, loads model from /opt/conv-lab library) ---
+MODEL: m0-trained-cifar-k8 converted-1 (N=3, K=8, geometry 32x32)
+SOFTWARE REFERENCE VERIFIED AGAINST GOLDEN ANCHOR
+FRAME 1: mismatches=0/8192 guards=OK sha256=cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705 time=0.156 ms (6577342 positions/s)
+FRAME 2: mismatches=0/8192 guards=OK sha256=cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705 time=0.148 ms (6902270 positions/s)
+FRAME 3: mismatches=0/8192 guards=OK sha256=cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705 time=0.136 ms (7531793 positions/s)
+M3 FILE-DRIVEN INFERENCE: PASS
+
+--- RUN 5: m3_demo.py (9 images x trained+custom configs, PNG rendering on board) ---
+MODEL: m0-trained-cifar-k8 (N=3, K=8, 32x32)
+IMAGES: 9
+[18 image/config lines: ..._trained OK / ..._custom OK, all sha-verified]
+TOTAL FRAMES: 36 (verified bit-exact each)
+OUTPUTS: 135 files in /home/petalinux/demo_out
+MANIFEST SHA256: 96b01a0f416893c7acb2df32b02a54d5712e1283b6debc5cf11686c1e21a4828
+M3 DEMO RUNNER: PASS

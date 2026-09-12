@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "image": "alley_cat_s_000013",
+  "canonical_sha256": "a240bb760e2a85951f5c4e27c95041e98d4919c5cc32114cc4f5191f6ffb6771",
+  "A32": {
+    "tx_bytes": 1156,
+    "rx_bytes": 16384,
+    "output_sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705"
+  },
+  "B32": {
+    "tx_bytes": 1156,
+    "rx_bytes": 32768,
+    "output_sha256": "5821c8b19a88fd34e3002dd7b0c7d60c7fcd79b8a61a326697d95b6e3ec3be94"
+  },
+  "C32": {
+    "tx_bytes": 1296,
+    "rx_bytes": 16384,
+    "output_sha256": "b6ab2d53dd9517f3892865b386c6206adf24c4137ca8cc259ef3c3ed938d018c"
+  },
+  "D32": {
+    "tx_bytes": 1156,
+    "rx_bytes": 8192,
+    "output_sha256": "6cb736f6a80132d8d67bd69854d3d47c5222b3c3936951531632fd6bbf756d5f"
+  },
+  "D640_preprocessing": {
+    "source": "alley_cat_s_000013.png",
+    "operation": "PIL LANCZOS resize to 640x480, grayscale",
+    "canonical_sha256": "d0721535491e4cde11db2ee591c2f7082ce67362d0c353b4ee5d1daacb604ace"
+  },
+  "D640": {
+    "tx_bytes": 309444,
+    "rx_bytes": 2457600,
+    "output_sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e"
+  }
+}

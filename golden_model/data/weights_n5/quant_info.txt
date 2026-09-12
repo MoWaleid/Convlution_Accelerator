@@ -1,0 +1,17 @@
+# FPGA Conv1 Quantization Report
+# Source model: trained_n5.pth
+# Test accuracy: 67.72%
+# Kernel size (N): 5
+# Output channels (K): 8
+# Output fraction bits: 8
+#
+#  Ch  Shift   Fw      Bias_Q       MaxAbsW
+# ---  -----  ---  ----------  ------------
+    0      8    8        2182    0.30806959
+    1      8    8        6048    0.32785454
+    2      8    8        4129    0.29919299
+    3      8    8        3561    0.30926099
+    4      8    8        1509    0.31047377
+    5      8    8       -3477    0.41776368
+    6      8    8        4019    0.37273720
+    7      8    8       -6800    0.26854900

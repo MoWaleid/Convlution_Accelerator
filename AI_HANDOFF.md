@@ -4,7 +4,8 @@
 continuing this project. If you have this file plus repository access, you need nothing
 else to work effectively — it covers the system, the history, the workflow, and **how to
 talk to the user** (§15). Every claim below was verified first-hand; state as of
-**2026-09-12**, HEAD commit `5d7e416` ("M4: integrate CVH1 hybrid accelerator").
+**2026-09-13**, HEAD commit `9f6f68a` ("M6: qualify same-image full-PL reload");
+all M7 work (now **board-qualified**, §16) is uncommitted in the working tree.
 
 ---
 
@@ -36,10 +37,11 @@ teammate with a parallel implementation (see §11).
 
 ## 2. Repository map (D:\MyProjects\Convlution_Accelerator)
 
-Git branch `v1-bringup`; HEAD `5d7e416` ("M4: integrate CVH1 hybrid accelerator",
-2026-09-12). Prior key commits: `f711631` M3 closeout, `172a691` first handoff,
-`267c1c4` K8 bring-up config. M5+M6 delivered 2026-09-12 (`software/m5_qualify.py`,
-`software/hardware.json`, `software/m6_reload.py`) — commit pending at handoff-refresh time.
+Git branch `v1-bringup`; HEAD `9f6f68a` ("M6: qualify same-image full-PL reload",
+2026-09-12). Prior key commits: `9a499ae` M5, `b11200a` handoff update, `5d7e416` M4,
+`f711631` M3 closeout. **All M7 work is uncommitted** (modified: RTL identity chain,
+golden_model scripts, dma.py; untracked: M7 docs, profiles/, software/hardware_*.json,
+report/, profile_builds/, verification/m7_profiles/).
 
 | Path | What it is |
 |---|---|
@@ -47,12 +49,16 @@ Git branch `v1-bringup`; HEAD `5d7e416` ("M4: integrate CVH1 hybrid accelerator"
 | `Convlution_Accelerator.srcs/sources_1/bd/accelerator_dma/` | The tracked final M4 block design `accelerator_dma.bd`: no System ILA, AXI DMA simple-mode length width = 22, ZedBoard PS/HP0 platform |
 | `Convlution_Accelerator.srcs/sim_1/new/` | RTL testbenches including `tb_conv_top`, `tb_conv_axis_wrapper`, AXI-Lite, AXI-stream frontend/serializer, datapath, window and regfile regressions. `sim_1/imports/new/` contains Vivado-imported copies registered in the project fileset |
 | `scripts/` | `create_accelerator_dma_bd.tcl` + `zedboard_ps_platform.tcl` (ZedBoard PS7 preset). **Note:** the BD creation script has not yet been reconciled with the final M4 tracked BD setting `c_sg_length_width=22`; the tracked `.bd` is authoritative for M4 |
-| `software/` | `conv_lab/` (M2 PS software), `tests/`, `reports/`, `m3_filebackend.py`, `m3_demo.py`, and `m4_filebackend.py` (CVH1 live-discovery/BUILD_ID validation, parameter admission, repeated-frame DMA inference, final counter checks, guard verification and cleanup RESET). **Repo is the source of truth** for board-script copies |
+| `software/` | `conv_lab/` (M2 PS software), `tests/`, `reports/`, `m3_filebackend.py`, `m3_demo.py`, and `m4_filebackend.py` (CVH1 live-discovery/BUILD_ID validation, parameter admission, repeated-frame DMA inference, final counter checks, guard verification and cleanup RESET). **Repo is the source of truth** for board-script copies. **M7 additions:** `m7_switch.py` (profile switch manager — repaired + mock-tested, see §16), `hardware.json` (= A32 manifest) + `hardware_{B,C,D,D640}.json` (per-profile manifests), `conv_lab/profiles.py` |
 | `deploy/petalinux/` | Finalized PetaLinux application pack: 3 recipes (conv-lab, conv-lab-starter, conv-lab-validation), rootfs configs, apply/preflight scripts, `SHA256SUMS.txt` (76 entries), `check_build_settings.sh` + `check_settings.py` (six-recipe `bitbake -e` evaluated-settings checker; **image target = `petalinux-image-minimal`, MACHINE = `zynq-generic-7z020`**) |
 | `platform/accelerator_dma.xsa` | **Older** hardware handoff. The current qualified M4 XSA is `bitstreams/k8_gp0_noila_len22_2026-09-11.xsa`, SHA-256 `47a53884ff7529d3979a40d58418b837166c2ebd80bf93d32477a4f2824a503d` |
-| `bitstreams/` (mostly gitignored) | Historical bring-up snapshots plus the qualified M4 no-ILA/len22 XSA `k8_gp0_noila_len22_2026-09-11.xsa`. Final M4 bitstream SHA-256: `8bc60890250bd34311f67fc9e66ce842abb9813f6053b116d254b059e80b67fd` |
+| `bitstreams/` (mostly gitignored) | Historical bring-up snapshots plus the qualified M4 no-ILA/len22 XSA `k8_gp0_noila_len22_2026-09-11.xsa`. Final M4 bitstream SHA-256: `8bc60890250bd34311f67fc9e66ce842abb9813f6053b116d254b059e80b67fd`. **M7:** `bn3k16/cn5k08/dn3k04/dn3k04_w640480_*_2026-09-12.bit` + their `.bit.bin` FPGA-manager firmware images (the board's `m7_A32.bin` is a copy of the M4 firmware) |
 | `debug_captures/` | ILA captures telling the bring-up story (GP0 AR deadlock → fixes), plus 2 board-rendered demo PNGs (`m3_demo_sobel_mag_*.png`) |
-| `golden_model/` | Training + quantization + golden model + test vectors (see §6) |
+| `golden_model/` | Training + quantization + golden model + test vectors (see §6). **M7 additions:** `data/weights_k16/` (B32, 70.08%), `data/weights_n5/` (C32, 67.72%), `data/weights_d32/` (hand-authored D filters), `data/trained_k16.pth`, `data/trained_n5.pth`; `train_cifar10.py`/`extract_weights.py` take env-var overrides (`CNN_K`, `CNN_N`, `CNN_MODEL`, `CNN_LOG`, `CNN_WEIGHTS_DIR`) |
+| `profiles/` | M7 profile inputs: `m7_profiles.json` (frozen catalog — BUILD_IDs reconciled to the manifests, review finding 4), `anchors_m7.json` (per-profile golden output SHA256 + D640 preprocessing record), `README.md` (**its C32/D32/D640 ID list is stale — catalog + manifests are authority**), `history/` |
+| `M7_CONTINUATION.md` / `M7_STATE.md` / `M7_FIX_PLAN.md` / `feedback.md` | M7 plan + approved gates (≥100-frame soak per profile, cold boot) / execution state (⚠ extraction-path claim corrected — see §16.2) / review-fix plan / the other AI's review (8 P1 findings) |
+| `verification/m7_profiles/` | M7 software+RTL test suites and `mock_switch_test.py` (mocked full-activation test of the real manager) |
+| `report/` | Competition report (`report.md`, print-ready `report.html`, `evidence/` board transcripts, `profile_builds/<P>/` per-profile frozen reports — some are intermediate/pre-physopt, see feedback finding 9) |
 | `verification/axi_address_normalization/` | SystemVerilog regression of the BD adapter + full RTL + `run_xsim.ps1` driver |
 | `Important documents/` | Competition announcement PDF, spec-decisions (39 pp), master plan (12 milestones), ADR, `Architecture_Mapping.html` (**stale** — predates K=8 and the MAC array) |
 | `AI_HANDOFF.md` | This file |
@@ -84,7 +90,7 @@ is the milestone table — read it before doing milestone work).
 | **M4 integrate the exact hybrid incrementally** | CVH1 ABI per contract; regression per subsystem; clean 100 MHz build | **PASS** (2026-09-11; exact hybrid integration and live board proof complete) |
 | **M5 qualify one hybrid build end-to-end** | ≥100 frames no inter-frame RESET, extremes, lifecycle, bounded-failure, identity/platform freeze | **PASS** (2026-09-12; `software/m5_qualify.py` + `software/hardware.json`) |
 | **M6 same-image full reload** | 20× A32→A32 via approved lifecycle + cold-boot sample; activation validation per load; no stale state | **PASS** (2026-09-12; `software/m6_reload.py`, FPGA Manager + `m4_accelerator_dma.bin`) |
-| M7 required profiles + model switching | A=N3/K8, B=N3/K16, C=N5/K8, D=N3/K4, D@640×480; switching matrix | pending |
+| M7 required profiles + model switching | A=N3/K8, B=N3/K16, C=N5/K8, D=N3/K4, D@640×480; switching matrix | **PASS** (2026-09-13 — 5/5 anchors, 58-switch matrix 20/20 ordered pairs, 5×100-frame soaks, cold boot; §10/§16; commit pending user) |
 | M8 reproducible operation and demo | CLI/API, run archive, previews, measurement harness | demo core exists (m3_demo.py); formal M8 pending |
 | M9 freeze pre-research release | release tag, qualification matrix, 1000-frame soak | pending |
 
@@ -110,6 +116,19 @@ is the milestone table — read it before doing milestone work).
   Same day/night: **M4 implemented** — full CVH1 ABI in RTL (~10.5 k lines), ILA removed,
   22-bit DMA lengths, integration sim A–H PASS, routed **WNS +0.066**, XSA exported,
   M4 WIC built, board run PASS via `m4_filebackend.py` (counters exact). Committed `5d7e416`.
+- **Sep 12 (M5, M6, M7 prep):** M5 qualification (103 frames) and M6 same-image full-PL
+  reload (21 reloads) closed and committed (`9a499ae`, `9f6f68a`). M7: all 5 profile
+  bitstreams built with timing closure, K16/N5 models trained (70.08% / 67.72%),
+  per-profile manifests + golden anchors written, switch manager drafted — then an
+  external review (`feedback.md`, 8 P1 findings) forced a local repair pass.
+- **Sep 13 (M7 execution, board):** repaired manager (md5 `e853933b…`) + profile delta
+  pushed via per-chunk-verified relay (staged payloads had CRLF endings — fixed locally
+  before the push). All 5 profiles switched with anchor-exact activation frames; full
+  matrix PASS (58 switches / 58 full-PL reloads / 20 ordered pairs / 404.4 s);
+  100-frame soaks ×5 PASS (A32/B32/C32/D32 median ≈0.124 ms, D640 median 3.731 ms
+  timed); same-build parameter-only path proven at A32/D640 soak starts; cold-boot
+  fallback PASS. 577 new frames, 69 new reloads, **0 mismatches**. §16 now records
+  the closed state.
 
 ---
 
@@ -301,7 +320,7 @@ programming, brand-new handles after).
 
 ---
 
-## 10. Verification evidence ledger (hardware, 2026-09-11/12)
+## 10. Verification evidence ledger (hardware, 2026-09-11/13)
 
 | Run | Frames | Result |
 |---|---|---|
@@ -313,8 +332,13 @@ programming, brand-new handles after).
 | `m4_filebackend.py` (CVH1 hybrid build) | 3 | PASS; repeated START/no inter-frame RESET; counters exact; guards intact; output SHA `cb397559…` |
 | `m5_qualify.py` (M5 qualification) | 103 | **PASS** — 100-frame no-reset soak (alternating images) + saturation/all-zero/all-255 extremes + ABORT→FAULT→recovery, ABORT-race, poisoned-expectation tests; median 0.076 ms/frame; final retained state `0x181` |
 | `m6_reload.py` (same-image full reload) | 21 frames / 21 reloads | **PASS** — 20 consecutive + 1 post-cold-boot A32→A32 full-PL reloads via FPGA Manager (`m4_accelerator_dma.bin` from `/lib/firmware`); per-cycle: identity re-validated, stale-state proof (STATUS==`0x101`), full re-installation, bit-exact frame; ~183 ms/reload |
+| M7 host-side (mocked end-to-end manager test, matrix-seq, D640 resize hash) | — | **PASS locally** (`verification/m7_profiles/mock_switch_test.py`) |
+| `m7_switch.py` singles (B32 first, then A32/C32/D32/D640) | 5×3 | **PASS** — first M7 board evidence; every activation frame anchor-exact; D640 via recorded LANCZOS preprocessing |
+| `m7_switch.py --matrix` | 58 activation frames / 58 full-PL reloads | **PASS** — 20/20 ordered pairs observed-verified, 404.4 s, final state `0x181` |
+| `m7_switch.py --soak` ×5 | 100 each | **PASS** — A32/B32/C32/D32 median 0.124–0.125 ms, D640 median 3.731 ms (timed); same-build parameter-only lifecycle proven at A32/D640 soak starts |
+| `m7_switch.py --profile B32 3` after cold reboot | 3 | **PASS** — ext4 persistence (md5 `e853933b…`), BOOT.BIN A32 identity → full reload → anchor-exact frames |
 
-Total recorded board evidence: **188+ frames, 0 mismatches**, guards intact every run; 21 verified full-PL reconfigurations. M2-P, M3, M4, M5 and M6 are closed. Board-side copies: `/home/petalinux/{m4_filebackend,m5_qualify,m6_reload,hardware.json}`.
+Total recorded board evidence: **765+ frames, 0 mismatches**, guards intact every run; **90 verified full-PL reconfigurations** (21 M6 + 69 M7). M2-P, M3, M4, M5, M6 and **M7** are closed. Board-side copies: `/home/petalinux/{m4_filebackend,m5_qualify,m6_reload,m7_switch.py,profiles/}`. M7 transcripts (verbatim relays): `report/evidence/m7_switch_B32_first_20260913.txt`, `m7_switch_matrix_20260913.txt`, `m7_soaks_20260913.txt`, `m7_coldboot_20260913.txt`.
 `debug_captures/m3_demo_sobel_mag_aeroplane_view.png` (Sobel magnitude through real
 silicon); `…_board.png` (alley cat — correctly near-empty: that image's golden Sobel
 max magnitude is 3).
@@ -364,6 +388,16 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
    STATUS reads `0x19D`; only after RESET does it read `0x181`.
 7. `.bit/.ltx/.dcp` files are gitignored — `bitstreams/*.bit` and `checkpoints/*.dcp`
    exist only on disk (the tested-bitstream hash gate in §4 covers this).
+9. **M7 D640 I/O tax (2026-09-13):** each D640 frame spends ~35–40 s in *untimed*
+   buffer I/O (TX write + TX readback + 2.4 MB RX read via u-dma-buf
+   `os.pread`/`os.pwrite`); the timed datapath is only 3.73 ms. The pause is not a
+   hang. The software reference is intentionally disabled above
+   `REF_POSITION_LIMIT = 65536` — D640 validates per frame against its frozen
+   anchor SHA-256 instead. A future optimization (mmap-based bulk access) must not
+   change the validated script without re-pushing + re-verifying.
+10. **Push-payload lesson (2026-09-13):** the staged Temp payloads had CRLF line
+    endings and failed `base64 -d`; always strip CR and re-verify decoded hashes
+    locally before handing chunks to the relay.
 
 ---
 
@@ -444,16 +478,67 @@ zero patience for fluff. What works and what doesn't, learned the hard way:
 
 ---
 
-## 16. Next steps (as of this writing)
+## 16. M7 execution state — CLOSED 2026-09-13 (PASS; commit pending user)
 
-1. **M7 — required profiles + model switching** (the big one): profiles
-   A=N3/K8 (current), B=N3/K16, C=N5/K8, D=N3/K4, plus D at W=640×H=480;
-   each compiled, timed, and switch-qualified through the M6 lifecycle machinery
-   (A32→B32→A32 ≥20 cycles + every ordered source→destination pair once).
-   **This is where the teammate merge decision becomes unavoidable** (profile B is
-   N3/K16 — see §11), and where the RTL must generalize (C=N5 exercises the regfile's
-   25-coefficient layout; D exercises compile-time geometry alternatives).
-2. Then M8 (demo CLI/harness — the live-switching demo) → M9 (release freeze).
-3. Competition report due 2026-09-15 — assemble when the user switches focus; the
-   evidence base (188+ bit-exact frames, 21 verified full-PL reloads, timing/utilization/
-   power, ARM qualification) is ready.
+M7 is complete with board evidence. Ledger rows: §10. Verbatim transcripts:
+`report/evidence/m7_switch_B32_first_20260913.txt`, `m7_switch_matrix_20260913.txt`,
+`m7_soaks_20260913.txt`, `m7_coldboot_20260913.txt`. M7_STATE checklist is fully
+ticked. What happened, in one paragraph: the repaired manager (md5
+`e853933b4d0610881e895be4ff48c3bf`) and the profile delta (11 files) were pushed
+through the per-chunk-md5 relay protocol after fixing CRLF corruption in the staged
+payloads; then, in one board session: first switch A32→B32 PASS, singles through
+A32/C32/D32/D640 PASS, full matrix PASS (58 switches, 58 full-PL reloads, all 20
+ordered pairs observed and verified, 404.4 s), 100-frame soaks ×5 PASS (D640
+validates per frame against its frozen anchor SHA-256; software reference disabled
+above `REF_POSITION_LIMIT=65536`), same-build parameter-only lifecycle proven at the
+A32/D640 soak starts, and the cold-boot fallback PASS (persistence md5 verified, then
+BOOT.BIN A32 identity → full reload → anchor-exact frames, `0x181` cleanup).
+
+Board inventory (persistent): `/home/petalinux/m7_switch.py` (md5 `e853933b…`),
+`/home/petalinux/profiles/` (`m7_profiles.json`, `anchors_m7.json`,
+`hardware_<P>.json` ×5, `A32/ B32/ C32/ D32/ D640/` parameter dirs),
+`/lib/firmware/m7_{A32,B32,C32,D32,D640}.bin`, push payloads retained under
+`/home/petalinux/push/` (regenerable from the repo — deletion is optional cleanup).
+
+All five profiles frozen exactly as in the old 16.1 table (A32 `M4N3K8W32-260911`,
+B32 `BN3K16W32-260912`, C32 `CN5K08W32-260912`, D32 `DN3K04W32-260912`,
+D640 `D640N3K04-260912`); golden anchors unchanged
+(A32 `cb397559…`, B32 `5821c8b1…`, C32 `b6ab2d53…`, D32 `6cb736f6…`,
+D640 `e323defb…`).
+
+### 16.6 Report correction queue (still open — apply when the user re-opens the report)
+
+- **Throughput/FOM overstated (review P1 #10):** the 64-bit output stream needs ≥2
+  beats per K8 output position (K16: 4) → sustained ≤0.5 (0.25) positions/cycle,
+  not 1. Recompute report §3/§9/§11: FOM ≈ 2.2×10⁻⁵ full-system / ≈ 3.5×10⁻³ core
+  at 0.5 px/cycle.
+- **Bias/accumulator widths:** implemented policy is signed-24 bias, 25-bit
+  accumulator (`config_pkg.vhd`), not the 32/33-bit text in report §3/§6 and
+  `report/figures/generate_figures.py`.
+- **Citation freeze:** the A32 timing citation points into the live run directory
+  (now D640 content); cite the frozen `report/profile_builds/<P>/` copies and
+  label intermediate (pre-physopt) reports as such.
+- **M7 report updates (M7_CONTINUATION §7 queue):** multi-profile architecture §,
+  per-profile utilization/timing/FOM table, §8 switching evidence (58-switch matrix
+  transcript exists in `report/evidence/`), D-profile Sobel figures.
+
+**Next milestone: M8** (reproducible operation and demo — CLI/API, run archive,
+measurement harness; demo core exists as `m3_demo.py`; formal M8 pending), then M9
+(release freeze). The old per-step M7 push/run instructions below this section were
+executed and are preserved only in git history / the amendment note that follows.
+
+## M7 foundation amendment — 2026-09-12 (SUPERSEDED)
+
+Superseded by §16. Its "current source keeps B32 selected" claim is stale (the
+selected RTL snapshot is the D640 projection per the review), and its "tests NOT
+RUN" claim was overtaken by the foundation test runs and then by the mocked
+end-to-end suite. Historical text kept below for provenance only.
+
+Current source keeps B32 selected. profiles/m7_profiles.json owns the five frozen
+IDs/geometries; wrapper defaults now use CFG_BUILD_ID. Focused integrated discovery
+and guarded DMA tests are implemented but NOT RUN. M7_CONTINUATION.md contains
+exact user commands and corrected D640 RX=313728 / exact-length guidance. A32
+metadata was already 32 hexadecimal digits in the inspected file; it is unchanged and
+the original is preserved under profiles/history. No deployed-file verification.
+The full per-profile M5 gate (>=100 frames without inter-frame RESET) and M7
+switching/cold-boot requirements remain; this amendment claims no qualification.

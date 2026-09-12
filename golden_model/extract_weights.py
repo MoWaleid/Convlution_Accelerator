@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from pathlib import Path
 
 import numpy as np
@@ -33,14 +34,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR   = SCRIPT_DIR / "data"
 
 # ═══════════════════════ CONFIGURATION ═══════════════════════
+# Overridable via environment for per-profile runs (defaults = profile A):
+#   CNN_MODEL, CNN_WEIGHTS_DIR — see M7_CONTINUATION.md.
 OUTPUT_FRACTION_BITS = 8     # Fractional bits in the int16 output: Q(16-F).F format (8 → Q8.8)
 RELU_EN              = True  # Enable ReLU on all exported channels (clamp negatives to 0)
 # ═════════════════════════════════════════════════════════════
 
 PIXEL_FRACTION_BITS = 8
 INT8_MAX            = 127
-MODEL_PATH          = DATA_DIR / "trained_model.pth"
-WEIGHTS_DIR         = DATA_DIR / "weights"
+MODEL_PATH          = Path(os.environ.get("CNN_MODEL", str(DATA_DIR / "trained_model.pth")))
+WEIGHTS_DIR         = Path(os.environ.get("CNN_WEIGHTS_DIR", str(DATA_DIR / "weights")))
 
 
 # ──────────────────────────────────────────────────────────────

@@ -1,0 +1,292 @@
+"""Mocked full-activation test for software/m7_switch.py (feedback review gate:
+exercise the actual manager end-to-end, not just its supporting helpers).
+
+Emulates in one process: AXI DMA register semantics (Halted RO bit, W1C status,
+length registers), CVH1 accelerator registers (START/RESET lifecycle, counters,
+sticky events, factory-fresh state after programming), FPGA Manager programming,
+u-dma-buf memory (golden convolution results written into the RX region), and
+the activation PNG.
+
+Usage (from the repo root, venv python):
+    python verification/m7_profiles/mock_switch_test.py --matrix-seq
+    python verification/m7_profiles/mock_switch_test.py --profile B32 3
+Run --profile twice in a row to also exercise the same-build (no reload) path.
+"""
+import json
+import os
+import struct
+import sys
+import types
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[2]
+STAGE = Path(os.environ.get(
+    "M7_MOCK_STAGE", "C:/Users/moham/AppData/Local/Temp/m7_bundle2/profiles"))
+PNG = REPO / "golden_model/data/cifar10_images/test/cat/alley_cat_s_000013.png"
+BUFSZ = 4 * 1024 * 1024
+
+# --- fake m4_filebackend before importing the manager -------------------------
+fb = types.ModuleType("m4_filebackend")
+
+
+class _Platform:
+    @staticmethod
+    def machine():
+        return "armv7l"
+
+
+fb.platform = _Platform
+
+
+def _require(cond, msg):
+    if not cond:
+        raise RuntimeError(msg)
+
+
+fb.require = _require
+sys.modules["m4_filebackend"] = fb
+sys.path.insert(0, str(REPO / "software"))
+import m7_switch as M  # noqa: E402
+
+# --- fake hardware state -------------------------------------------------------
+buf = bytearray(BUFSZ)          # u-dma-buf contents
+FAKE_FD = 0x5D0                 # stand-in fd for /dev/udmabuf0
+CURRENT = {}                    # profile context for completion emulation
+
+
+class FakeRegs:
+    def __init__(self):
+        self.mem = bytearray(0x10000)
+
+    def close(self):
+        pass
+
+
+dma_regs = FakeRegs()           # AXI DMA register map
+acc_regs = FakeRegs()           # accelerator register map
+
+
+def r32m(mem, off):
+    return struct.unpack_from("<I", mem, off)[0]
+
+
+def w32m(mem, off, val):
+    struct.pack_into("<I", mem, off, val & 0xFFFFFFFF)
+
+
+def program_profile(profile):
+    """Emulate FPGA Manager programming: factory-fresh PL with target identity."""
+    hw = json.loads((STAGE / f"hardware_{profile}.json").read_text())["accelerator"]
+    groups = [bytes.fromhex(hw["build_id_hex"])[i * 4:(i + 1) * 4] for i in range(4)]
+    for j in range(4):          # word @0x4150 holds group 3 (m4_filebackend order)
+        w32m(acc_regs.mem, M.REG_BUILD_ID_0 + 4 * j, int.from_bytes(groups[3 - j], "big"))
+    w32m(acc_regs.mem, M.REG_MAGIC, 0x43564831)
+    w32m(acc_regs.mem, M.REG_ABI_VERSION, 0x00010000)
+    w32m(acc_regs.mem, M.REG_CAPABILITIES, 0x1FF)
+    w32m(acc_regs.mem, M.REG_IMAGE_W, hw["image_w"])
+    w32m(acc_regs.mem, M.REG_IMAGE_H, hw["image_h"])
+    w32m(acc_regs.mem, M.REG_KERNEL_N, hw["kernel_n"])
+    w32m(acc_regs.mem, M.REG_CHANNEL_K, hw["channels_k"])
+    w32m(acc_regs.mem, M.REG_EXPECTED_INPUT_BYTES, hw["expected_input_bytes"])
+    w32m(acc_regs.mem, M.REG_EXPECTED_OUTPUT_BYTES, hw["expected_output_bytes"])
+    w32m(acc_regs.mem, M.REG_DMA_LENGTH_WIDTH, 22)
+    w32m(acc_regs.mem, M.REG_STATUS, 0x101)
+    w32m(acc_regs.mem, M.REG_ERROR_FLAGS, 0)
+    for a in (0x4140, 0x4144, 0x4148, 0x414C):
+        w32m(acc_regs.mem, a, 0)
+
+
+def complete_frame():
+    """Write the golden output into the fake buffer and set completion bits."""
+    tx = r32m(dma_regs.mem, 0x28)
+    rx = r32m(dma_regs.mem, 0x58)
+    running = (r32m(dma_regs.mem, 0x00) & 1) and (r32m(dma_regs.mem, 0x30) & 1)
+    if not (tx and rx and running):
+        return False            # transfer not armed yet
+    layout = M.compute_layout(tx, rx, BUFSZ)
+    padded = bytes(buf[layout["tx_offset"]:layout["tx_offset"] + tx])
+    expected = M.make_expected(padded, CURRENT["n"], CURRENT["w"], CURRENT["h"],
+                               CURRENT["channels"])
+    packed = struct.pack(f"<{len(expected)}h", *expected)
+    require_eq = len(packed) == rx
+    assert require_eq, (len(packed), rx)
+    buf[layout["rx_offset"]:layout["rx_offset"] + rx] = packed
+    w32m(acc_regs.mem, 0x4140, tx)
+    w32m(acc_regs.mem, 0x4144, tx)
+    w32m(acc_regs.mem, 0x4148, rx // (2 * CURRENT["k"]))
+    w32m(acc_regs.mem, 0x414C, rx)
+    w32m(acc_regs.mem, M.REG_STATUS, 0x19D)  # IDLE|events|DONE|PARAM|QUIESCENT
+    w32m(dma_regs.mem, 0x04, r32m(dma_regs.mem, 0x04) | 0x1000)  # MM2S IOC
+    w32m(dma_regs.mem, 0x34, r32m(dma_regs.mem, 0x34) | 0x1000)  # S2MM IOC
+    return True
+
+
+# --- patch the manager's I/O surface ------------------------------------------
+M.BASE = STAGE
+M.LOCK_FILE = STAGE.parent / "mock.lock"
+M.FW_DIR = REPO / "bitstreams"
+M.FW_NAME = {
+    "B32": "bn3k16_len22_2026-09-12.bit.bin",
+    "C32": "cn5k08_len22_2026-09-12.bit.bin",
+    "D32": "dn3k04_len22_2026-09-12.bit.bin",
+    "D640": "dn3k04_w640480_2026-09-12.bit.bin",
+}
+
+
+def fake_open_handles():
+    return dma_regs, acc_regs, FAKE_FD, []
+
+
+def fake_program(firmware):
+    program_profile({v: k for k, v in M.FW_NAME.items()}[firmware.name])
+
+
+def fake_load_input(n, w, h):
+    from PIL import Image
+    image = Image.open(PNG).convert("L")
+    if image.size != (w, h):
+        image = image.resize((w, h), Image.LANCZOS)
+    raw = image.tobytes()
+    stride = w + n - 1
+    padded = bytearray(stride * (h + n - 1))
+    for row in range(h):
+        s = (row + n // 2) * stride + n // 2
+        padded[s:s + w] = raw[row * w:(row + 1) * w]
+    return bytes(padded)
+
+
+def fake_wait(predicate, description, seconds=5.0):
+    for _ in range(1000):
+        if predicate():
+            return
+        if "PARAM_COMPLETE" in description:
+            w32m(acc_regs.mem, M.REG_STATUS,
+                 r32m(acc_regs.mem, M.REG_STATUS) | 0x80)
+        elif "frame did not complete" in description:
+            complete_frame()
+    raise TimeoutError(description)
+
+
+def fake_read32(regs, off):
+    return r32m(regs.mem, off)
+
+
+def fake_write32(regs, off, val):
+    if regs is dma_regs and off in (0x04, 0x34):
+        cur = r32m(regs.mem, off)
+        w32m(regs.mem, off, cur & ~val & ~1)   # W1C status, Halted bit0 is RO
+        return
+    w32m(regs.mem, off, val)
+    if regs is dma_regs and off in (0x00, 0x30):
+        sr_off = 0x04 if off == 0x00 else 0x34
+        sr = r32m(regs.mem, sr_off)
+        w32m(regs.mem, sr_off, (sr & ~1) if val & 1 else (sr | 1))
+    elif regs is acc_regs and off == M.REG_COMMAND:
+        if val & 1:      # START: counters + events cleared, BUSY
+            w32m(acc_regs.mem, M.REG_STATUS, 0x2)
+            for a in (0x4140, 0x4144, 0x4148, 0x414C):
+                w32m(acc_regs.mem, a, 0)
+        elif val & 2:    # RESET: retained parameters, 0x181
+            w32m(acc_regs.mem, M.REG_STATUS, 0x181)
+            for a in (0x4140, 0x4144, 0x4148, 0x414C):
+                w32m(acc_regs.mem, a, 0)
+
+
+class FakeSysPath:
+    def __init__(self, s):
+        self.s = str(s)
+
+    def __truediv__(self, name):
+        return FakeSysPath(self.s + "/" + str(name))
+
+    def read_text(self):
+        if self.s.endswith("phys_addr"):
+            return "0x1F100000"
+        if self.s.endswith("size"):
+            return str(BUFSZ)
+        raise AssertionError(f"unexpected sysfs read: {self.s}")
+
+
+_RealPath = Path
+
+
+def fake_path(p):
+    return FakeSysPath(p) if str(p).startswith("/sys/") else _RealPath(p)
+
+
+# Windows os lacks pwrite/pread: give the manager a proxy os module whose
+# pwrite/pread address the fake u-dma-buf when handed the fake fd.
+_real_os = os
+
+
+def fake_pwrite(fd, data, off):
+    if fd == FAKE_FD:
+        buf[off:off + len(data)] = data
+        return len(data)
+    return None
+
+
+def fake_pread(fd, count, off):
+    if fd == FAKE_FD:
+        return bytes(buf[off:off + count])
+    return b"\x00" * count
+
+
+fake_os = types.SimpleNamespace(
+    getpid=_real_os.getpid,
+    pwrite=fake_pwrite, pread=fake_pread, close=lambda fd: None)
+
+M.open_handles = fake_open_handles
+M.program_fpga = fake_program
+M.load_input = fake_load_input
+M.wait_for = fake_wait
+M.read32 = fake_read32
+M.write32 = fake_write32
+M.Path = fake_path
+M.os = fake_os
+
+
+def run(argv):
+    profile = argv[1]
+    hw = json.loads((STAGE / f"hardware_{profile}.json").read_text())["accelerator"]
+    CURRENT.update(n=hw["kernel_n"], k=hw["channels_k"], w=hw["image_w"],
+                   h=hw["image_h"],
+                   channels=M.load_params(profile, hw["kernel_n"], hw["channels_k"]))
+    sys.argv = ["m7_switch.py"] + argv
+    M.main()
+    print(f"MOCK OK: {' '.join(argv)}", flush=True)
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if args == ["--matrix-seq"]:
+        need = {(a, b) for a in M.ORDER for b in M.ORDER if a != b}
+        for start in M.ORDER:
+            seq = M.build_matrix_sequence(start)
+            pairs, cur = set(), start
+            for t in seq:
+                assert t in M.ORDER, t
+                pairs.add((cur, t))
+                cur = t
+            assert need <= pairs, (start, need - pairs)
+            print(f"matrix from {start}: {len(seq)} switches, all 20 pairs covered")
+        print("MOCK OK: --matrix-seq")
+    else:
+        if args and args[0] == "--same-build":
+            frames = args[2] if len(args) > 2 else "3"
+            program_profile("A32")
+            run(["--profile", args[1], frames])
+            run(["--profile", args[1], frames])   # live build already matches
+        elif args == ["--d640-input-hash"]:
+            import hashlib
+            from PIL import Image
+            image = Image.open(PNG).convert("L").resize((640, 480), Image.LANCZOS)
+            digest = hashlib.sha256(image.tobytes()).hexdigest()
+            want = json.loads((STAGE / "anchors_m7.json").read_text())[
+                "D640_preprocessing"]["canonical_sha256"]
+            print("D640 canonical input:", digest)
+            assert digest == want, (digest, want)
+            print("MOCK OK: --d640-input-hash")
+        else:
+            program_profile("A32")   # board starts with the A32 build live
+            run(args)

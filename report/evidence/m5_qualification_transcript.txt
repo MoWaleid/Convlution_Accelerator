@@ -1,0 +1,34 @@
+M5 QUALIFICATION RUN — ZedBoard (zedboard_linux), serial console transcript
+Captured 2026-09-12 UTC. Environment: Linux 6.12.40-xilinx, armv7l, Python 3.12.11,
+Pillow 10.3.0. Run by the user via PuTTY serial session; transcribed verbatim.
+Script: software/m5_qualify.py (md5 04a4ec766e4ecc00bd3fb5d699426475)
+===========================================================================
+
+PHASE 0: platform identity admission
+  live identity matches hardware.json (BUILD_ID M4N3K8W32-260911)
+  READY (clean state 0x101)
+PHASE 1: 100-frame soak (no inter-frame RESET)
+  frame 0: sha=cb3975593073652b (0.098 ms)
+  frame 25: sha=357182e0a80e16f1 (0.076 ms)
+  frame 50: sha=cb3975593073652b (0.075 ms)
+  frame 75: sha=357182e0a80e16f1 (0.076 ms)
+  100 frames bit-exact, no inter-frame RESET
+PHASE 2: numerical extremes (config re-admission per case)
+  custom_saturation: OK min=-3 max=222 sha=9df9caeb468bfc06
+  all_zero_input: OK min=0 max=1 sha=0315a1eac9137c2a
+  all_255_input: OK min=0 max=243 sha=2a905d8109242176
+PHASE 3: lifecycle and bounded-failure tests
+  [recover-abort] proof frame OK, 0.075 ms
+  [recover-abort-race] proof frame OK, 0.075 ms
+  ABORT race: FAULT path taken, recovered
+  [recover-poisoned] proof frame OK, 0.076 ms
+PHASE 4: final state
+SUMMARY: 103 verified frames total
+LATENCY ms: min=0.074 median=0.076 max=0.121
+M5 QUALIFICATION: PASS
+
+Notes: frame hashes alternate between cb3975593073652b (golden trained anchor,
+alley_cat_s_000013) and 357182e0a80e16f1 (aeroplane_s_000002, second image) on
+odd frames — matching the two-image soak design. all_zero_input verifies the
+round-half-up bias case (channel 1 bias +179, shift 8 -> output 1; all other
+channels 0). all_255_input exercises saturation paths.

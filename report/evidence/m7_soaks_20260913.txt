@@ -1,0 +1,108 @@
+M7 per-profile soaks — A32/B32/C32/D32 at 100 frames (PASS), D640 probe
+Date: 2026-09-13
+Script: /home/petalinux/m7_switch.py md5 e853933b4d0610881e895be4ff48c3bf
+Gate: >=100 frames per required compiled case without inter-frame RESET
+(approved M5-grade gate; review finding 12 forbids downgrade).
+Provenance: verbatim transcripts relayed from PuTTY serial session.
+
+--- A32: 100/100 PASS ---
+$ sudo python3 /home/petalinux/m7_switch.py --soak A32 100
+  live build already A32: parameter re-admission only
+  [A32] activation OK 0.144 ms sha=cb3975593073652b
+  10/100 frames bit-exact
+  20/100 frames bit-exact
+  30/100 frames bit-exact
+  40/100 frames bit-exact
+  50/100 frames bit-exact
+  60/100 frames bit-exact
+  70/100 frames bit-exact
+  80/100 frames bit-exact
+  90/100 frames bit-exact
+  100/100 frames bit-exact
+M7 SOAK A32: PASS — 100 frames, median 0.125 ms, min 0.123, max 0.169
+  cleanup: final STATUS 0x00000181
+
+--- B32: 100/100 PASS ---
+$ sudo python3 /home/petalinux/m7_switch.py --soak B32 100
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.146 ms sha=5821c8b19a88fd34
+  10/100 frames bit-exact
+  20/100 frames bit-exact
+  30/100 frames bit-exact
+  40/100 frames bit-exact
+  50/100 frames bit-exact
+  60/100 frames bit-exact
+  70/100 frames bit-exact
+  80/100 frames bit-exact
+  90/100 frames bit-exact
+  100/100 frames bit-exact
+M7 SOAK B32: PASS — 100 frames, median 0.124 ms, min 0.122, max 0.183
+  cleanup: final STATUS 0x00000181
+
+--- C32: 100/100 PASS ---
+$ sudo python3 /home/petalinux/m7_switch.py --soak C32 100
+fpga_manager fpga0: writing m7_C32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.143 ms sha=b6ab2d53dd9517f3
+  10/100 frames bit-exact
+  20/100 frames bit-exact
+  30/100 frames bit-exact
+  40/100 frames bit-exact
+  50/100 frames bit-exact
+  60/100 frames bit-exact
+  70/100 frames bit-exact
+  80/100 frames bit-exact
+  90/100 frames bit-exact
+  100/100 frames bit-exact
+M7 SOAK C32: PASS — 100 frames, median 0.124 ms, min 0.121, max 0.144
+  cleanup: final STATUS 0x00000181
+
+--- D32: 100/100 PASS ---
+$ sudo python3 /home/petalinux/m7_switch.py --soak D32 100
+fpga_manager fpga0: writing m7_D32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.143 ms sha=6cb736f6a80132d8
+  10/100 frames bit-exact
+  20/100 frames bit-exact
+  30/100 frames bit-exact
+  40/100 frames bit-exact
+  50/100 frames bit-exact
+  60/100 frames bit-exact
+  70/100 frames bit-exact
+  80/100 frames bit-exact
+  90/100 frames bit-exact
+  100/100 frames bit-exact
+M7 SOAK D32: PASS — 100 frames, median 0.124 ms, min 0.121, max 0.177
+  cleanup: final STATUS 0x00000181
+
+--- D640: 100/100 PASS (qualifying soak, completes step 6) ---
+$ sudo python3 /home/petalinux/m7_switch.py --soak D640 100
+Password:
+  live build already D640: parameter re-admission only
+  [D640] activation OK 3.795 ms sha=e323defbf8ad2616
+  10/100 frames bit-exact
+  20/100 frames bit-exact
+  30/100 frames bit-exact
+  40/100 frames bit-exact
+  50/100 frames bit-exact
+  60/100 frames bit-exact
+  70/100 frames bit-exact
+  80/100 frames bit-exact
+  90/100 frames bit-exact
+  100/100 frames bit-exact
+M7 SOAK D640: PASS — 100 frames, median 3.731 ms, min 3.711, max 3.824
+  cleanup: final STATUS 0x00000181
+
+Note: the "live build already D640: parameter re-admission only" line at soak
+start is the first board proof of the compatible same-build lifecycle shortcut
+(no PL reload; parameter re-admission + full identity validation instead),
+required by M1_ACTIVATION_LIFECYCLE.md. The A32 soak shows the same path.
+
+--- notes ---
+D640 per-frame wall cost (~35-40 s) is dominated by untimed buffer I/O
+(~3.1 MB per frame of os.pwrite/os.pread through the u-dma-buf driver copy
+path: TX write + TX readback + 2.4 MB RX read), not by golden-model
+computation: REF_POSITION_LIMIT=65536 (m7_switch.py) disables the software
+reference for D640; per-frame validation is the frozen anchor SHA-256.
+Timed datapath latency at D640: ~3.76-3.84 ms/frame.

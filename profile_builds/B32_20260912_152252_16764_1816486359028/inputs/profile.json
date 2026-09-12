@@ -1,0 +1,25 @@
+{
+  "purpose": "M7 build input; NOT a deployable hardware manifest or qualification",
+  "profile": "B32",
+  "W": 32,
+  "H": 32,
+  "N": 3,
+  "K": 16,
+  "build_id": "424e334b31365733322d323630393132",
+  "catalog_sha256": "25f0a7fbd11d77dd3022bb0220316e60c4270e2c0b50a5b2e08042fb95c01f7f",
+  "source_original_sha256": {
+    "config_pkg.vhd": "59b097968123cc10ccb84f7266395c92223d9d7d3437c4cdc7b4902a17958c40",
+    "conv_pkg.vhd": "ed0642de89567746174c18abb2978b84542b6ed0f9b5545fe45c69fb2befa6bc",
+    "coeff_bias_shift_regfile.vhd": "8f99c89d553e356c21c4f259fb1ae4b15b4aa36eee3f3564c6683ab8b6d4d703",
+    "axi_lite_ctrl.vhd": "d52a4216d51670d9ce621ccc76643651eb6b1de4a0238a06d40017cedf83cacd",
+    "sync_fifo.vhd": "293e65fe3dac7d88f3099723a940254fdb7c760c9ff146a820e268522d813967",
+    "axi_stream_input_frontend.vhd": "718377dfc41defb1328d7989f9cbc5af33bb0d3d1721086e1c2c717dd01f713a",
+    "axi_stream_output_serializer.vhd": "9d4bae15a6c59e50e21f067b1c26d309ef490b74ff105208055f2194480dc969",
+    "window_generator.vhd": "5068b186cf5b451d7d2552f5fa64570f30ceeddba53c8ec0d0d92b7842789174",
+    "conv_channel.vhd": "57fada818c3bd8ea5fb22716ac06e76cc87a259efc64305dc7a01a56697f1cd0",
+    "conv_engine.vhd": "9b388247961f89a68f4f01c77c5dd7de8b7a7f51d2ae9500fbbca058ddff28af",
+    "conv_top.vhd": "f15afe89ad0b2584b0ae603cb9de2e0bd598d8dfc03bc782fdf2d3ef99dc89ee",
+    "conv_axis_wrapper.vhd": "94714b2d568c52e8b367d3e4b74c3b699c029132b7238dfa9f080e5aff050b46",
+    "conv_axis_wrapper_bd.v": "cb23545794f075dd34ac1575288c0e145ad51c6fd10669f94bea0095532f9c19"
+  }
+}

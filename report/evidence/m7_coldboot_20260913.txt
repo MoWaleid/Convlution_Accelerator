@@ -1,0 +1,28 @@
+M7 cold-boot fallback proof + persistence check
+Date: 2026-09-13 (after full M7 matrix + 5x100-frame soaks)
+Procedure: sudo reboot (PL reprogrammed by BOOT.BIN = factory M4/A32 build;
+ext4 rootfs persists), clock re-set, persistence hash check, one full switch.
+Script: /home/petalinux/m7_switch.py md5 e853933b4d0610881e895be4ff48c3bf
+Provenance: verbatim transcript relayed from PuTTY serial session by the user.
+
+--- transcript ---
+$ sudo date -s "2026-09-13 01:48:00"
+Sun Sep 13 01:48:00 UTC 2026
+$ md5sum /home/petalinux/m7_switch.py
+e853933b4d0610881e895be4ff48c3bf  /home/petalinux/m7_switch.py
+$ sudo python3 /home/petalinux/m7_switch.py --profile B32 3
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.146 ms sha=5821c8b19a88fd34
+  [B32] frame 2 OK 0.147 ms
+  [B32] frame 3 OK 0.122 ms
+M7_SWITCH B32: PASS (3 frames, reload=yes)
+  cleanup: final STATUS 0x00000181
+
+--- verification notes ---
+Persistence: the pushed manager survived reboot byte-identical on ext4
+(md5 match). Cold-start PL identity was the BOOT.BIN A32 build; the manager
+detected the mismatch and took the full reload path to B32, proving the
+cold-boot fallback route (UNVERIFIED start -> full lifecycle -> READY).
+Activation output sha 5821c8b19a88fd34... = B32 golden anchor. Final retained
+state 0x181.

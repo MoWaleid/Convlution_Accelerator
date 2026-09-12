@@ -1,0 +1,14 @@
+M6 COLD-BOOT SAMPLE — ZedBoard (zedboard_linux), serial console transcript
+Captured 2026-09-12 UTC, after a full power cycle and fresh login.
+Board clock set to 2026-09-12 02:26:00 UTC prior to the run (no RTC battery).
+===========================================================================
+
+$ sudo python3 /home/petalinux/m6_reload.py --sample
+PHASE VALIDATING: candidate m4_accelerator_dma.bin sha256 OK
+PHASE VALIDATING: live identity matches hardware.json
+PHASE: 1x same-image A32->A32 full reload
+fpga_manager fpga0: writing m4_accelerator_dma.bin to Xilinx Zynq FPGA Manager
+  cycle 01: program 182 ms, frame 0.095 ms, sha=cb3975593073652b
+PHASE READY: final cleanup
+SUMMARY: 1 full-PL reloads, 1 activation frames bit-exact (sha cb3975593073652b)
+M6 SAME-IMAGE RELOAD: PASS

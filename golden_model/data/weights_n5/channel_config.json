@@ -1,0 +1,88 @@
+{
+  "format_version": 2,
+  "N": 5,
+  "K": 8,
+  "boundary_mode": "same",
+  "stride": 1,
+  "pixel_format": "uint8_q0.8",
+  "input_scale_divisor": 256,
+  "coefficient_format": "int8_raw",
+  "bias_bits": 32,
+  "output_format": "int16_q8",
+  "output_fraction_bits": 8,
+  "accumulator_width_min": 22,
+  "channels": [
+    {
+      "channel": 0,
+      "source_channel": 0,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": 2182,
+      "relu_en": 1
+    },
+    {
+      "channel": 1,
+      "source_channel": 1,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": 6048,
+      "relu_en": 1
+    },
+    {
+      "channel": 2,
+      "source_channel": 2,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": 4129,
+      "relu_en": 1
+    },
+    {
+      "channel": 3,
+      "source_channel": 3,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": 3561,
+      "relu_en": 1
+    },
+    {
+      "channel": 4,
+      "source_channel": 4,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": 1509,
+      "relu_en": 1
+    },
+    {
+      "channel": 5,
+      "source_channel": 5,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": -3477,
+      "relu_en": 1
+    },
+    {
+      "channel": 6,
+      "source_channel": 6,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": 4019,
+      "relu_en": 1
+    },
+    {
+      "channel": 7,
+      "source_channel": 7,
+      "shift": 8,
+      "weight_fraction_bits": 8,
+      "bias_fraction_bits": 16,
+      "bias_quantized": -6800,
+      "relu_en": 1
+    }
+  ]
+}

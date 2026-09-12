@@ -15,6 +15,7 @@ Numeric contract
 """
 from __future__ import annotations
 
+import os
 import random
 from pathlib import Path
 
@@ -31,11 +32,13 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = SCRIPT_DIR / "data"
 
 # ═══════════════════════ CONFIGURATION ═══════════════════════
+# All values overridable via environment for per-profile runs (defaults = profile A):
+#   CNN_K (channels), CNN_N (kernel), CNN_MODEL, CNN_LOG — see M7_CONTINUATION.md.
 EPOCHS         = 50     # Total training epochs (may stop earlier via PATIENCE)
 LEARNING_RATE  = 1e-3   # Initial Adam optimizer learning rate (halved every 10 epochs)
 BATCH_SIZE     = 128    # Number of images per training mini-batch
-KERNEL_SIZE    = 3      # Spatial size of Conv1 filter (N×N); must be odd and >= 3
-NUM_CHANNELS   = 8      # Number of Conv1 output channels (K) — deployed to FPGA
+KERNEL_SIZE    = int(os.environ.get("CNN_N", 3))      # odd and >= 3
+NUM_CHANNELS   = int(os.environ.get("CNN_K", 8))      # Conv1 output channels (K)
 SEED           = 2026   # RNG seed for reproducible training (locks random, numpy, torch)
 NUM_WORKERS    = 0      # DataLoader worker threads (0 = load in main thread)
 DOWNLOAD       = False  # Set True to auto-download CIFAR-10 if not already extracted
@@ -44,8 +47,8 @@ PATIENCE       = 10     # Early-stopping: halt after this many epochs with no ac
 
 INPUT_SCALE_DIVISOR  = 256
 OUTPUT_FRACTION_BITS = 8
-MODEL_PATH           = DATA_DIR / "trained_model.pth"
-LOG_PATH             = DATA_DIR / "training_log.txt"
+MODEL_PATH           = Path(os.environ.get("CNN_MODEL", str(DATA_DIR / "trained_model.pth")))
+LOG_PATH             = Path(os.environ.get("CNN_LOG", str(DATA_DIR / "training_log.txt")))
 
 
 # ──────────────────────────────────────────────────────────────

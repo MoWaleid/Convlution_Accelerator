@@ -1,0 +1,44 @@
+{
+  "format_version": 2,
+  "N": 3,
+  "K": 4,
+  "boundary_mode": "same",
+  "stride": 1,
+  "pixel_format": "uint8_q0.8",
+  "input_scale_divisor": 256,
+  "coefficient_format": "int8_raw",
+  "bias_bits": 32,
+  "output_format": "int16_q8",
+  "output_fraction_bits": 8,
+  "accumulator_width_min": 21,
+  "channels": [
+    {
+      "channel": 0,
+      "weights_file": "kernel_ch0.mem",
+      "bias_quantized": 0,
+      "shift": 7,
+      "relu_en": 0
+    },
+    {
+      "channel": 1,
+      "weights_file": "kernel_ch1.mem",
+      "bias_quantized": 0,
+      "shift": 8,
+      "relu_en": 0
+    },
+    {
+      "channel": 2,
+      "weights_file": "kernel_ch2.mem",
+      "bias_quantized": 0,
+      "shift": 8,
+      "relu_en": 0
+    },
+    {
+      "channel": 3,
+      "weights_file": "kernel_ch3.mem",
+      "bias_quantized": 0,
+      "shift": 4,
+      "relu_en": 0
+    }
+  ]
+}
