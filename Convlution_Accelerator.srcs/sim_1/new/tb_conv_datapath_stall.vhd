@@ -51,7 +51,7 @@ architecture sim of tb_conv_datapath_stall is
 
     type result_mem_t is array (0 to C_EXPECTED_OUTPUTS - 1) of std_logic_vector(15 downto 0);
     constant EXPECTED_RESULTS : result_mem_t :=
-        (x"0007", x"0008", x"0009", x"000C", x"000D", x"000E", x"0011", x"0012", x"0013");
+        (x"0004", x"0008", x"0008", x"000C", x"000C", x"000C", x"0010", x"0010", x"0010");
     signal baseline_results : result_mem_t := (others => (others => '0'));
     signal baseline_done : std_logic := '0';
     signal stalled_done  : std_logic := '0';

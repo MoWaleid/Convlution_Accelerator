@@ -5,7 +5,7 @@
 --   result = ReLU( saturate_int16( round_half_up( Σ(pixel×weight) + bias, shift )))
 --
 -- Pipeline stages (4 clocks total latency):
---   S1  MULTIPLY     : N² unsigned×signed multiplications → N² products
+--   S1  MULTIPLY     : N² Drop-2 unsigned×signed multiplications → N² products
 --   S2  ADD-TREE L1  : Reduce N² products → N partial sums (groups of N)
 --   S3  ADD-TREE L2  : Reduce N partial sums → 1, add 32-bit bias
 --   S4  POST-PROCESS : Round-half-up, saturate to int16, ReLU
@@ -55,6 +55,7 @@ architecture rtl of conv_channel is
     constant C_PSUM_W : integer := CFG_PSUM_WIDTH;          -- 19 for N=3
     constant C_FULL_W : integer := CFG_FULL_ACCUM_WIDTH;    -- 33 for N=3
     constant C_OUT_W  : integer := CFG_OUTPUT_WIDTH;        -- 16
+    constant C_DROP   : natural := CFG_APPROX_PIXEL_LSB_DROP;
 
     -- ========================================================================
     -- Pipeline register types
@@ -83,6 +84,10 @@ architecture rtl of conv_channel is
     attribute use_dsp of products_s1 : signal is "no";
 
 begin
+
+    assert C_DROP < CFG_PIXEL_WIDTH
+        report "CFG_APPROX_PIXEL_LSB_DROP must be smaller than CFG_PIXEL_WIDTH"
+        severity failure;
 
     -- ========================================================================
     -- 4-Stage Pipeline
@@ -114,12 +119,23 @@ begin
 
                 -- ==============================================================
                 -- Stage 1: MULTIPLY
-                -- unsigned(8) pixel × signed(8) weight → signed(17) product
-                -- Zero-extend pixel to signed(9), multiply by signed(8) weight.
+                -- Drop-2 approximate unsigned(8) pixel × signed(8) weight.
+                --
+                --   product = floor(pixel / 2^C_DROP) * weight * 2^C_DROP
+                --
+                -- The retained pixel is explicitly zero-extended, so Vivado
+                -- infers a (9-C_DROP)-by-8 signed multiplier. The final shift
+                -- is constant wiring and does not add a barrel shifter.
                 -- ==============================================================
                 for i in 0 to C_N * C_N - 1 loop
-                    products_s1(i) <= signed('0' & window_in(i))
-                                    * signed(coeffs_in(i));
+                    products_s1(i) <= shift_left(
+                        resize(
+                            signed('0' & window_in(i)(CFG_PIXEL_WIDTH - 1 downto C_DROP))
+                            * signed(coeffs_in(i)),
+                            C_PROD_W
+                        ),
+                        C_DROP
+                    );
                 end loop;
                 valid_s1 <= valid_in;
 

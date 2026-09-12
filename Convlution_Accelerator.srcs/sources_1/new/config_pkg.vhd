@@ -16,7 +16,7 @@ package config_pkg is
     -- ========================================================================
 
     -- Number of parallel output channels (K).
-    constant CFG_K : integer := 8;
+    constant CFG_K : integer := 16;
 
     -- Kernel spatial dimension (N x N).
     constant CFG_N : integer := 3;
@@ -40,6 +40,12 @@ package config_pkg is
 
     -- signed int8 kernel coefficients.
     constant CFG_WEIGHT_WIDTH : integer := 8;
+
+    -- Approximate multiplier setting. The multiplier discards this many
+    -- least-significant pixel bits before multiplication, then restores their
+    -- binary position with a constant left shift. A value of 0 is exact;
+    -- the optimized variant uses 2.
+    constant CFG_APPROX_PIXEL_LSB_DROP : natural := 2;
 
     -- CVH1 default: signed 24-bit bias.
     constant CFG_BIAS_WIDTH : integer := 24;
