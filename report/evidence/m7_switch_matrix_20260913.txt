@@ -1,5 +1,18 @@
 M7 full switching matrix — 58 switches, 58 full-PL reloads, 20 ordered pairs
 Date: 2026-09-13
+
+> **CORRECTIONS (2026-09-14, review E2):**
+> 1. The occurrence counts in the verification notes below were wrong: the
+>    actual per-profile activation counts in this transcript are A32=23,
+>    B32=23, C32=4, D32=4, D640=4 (total 58) — not 24/24/5/4/4 (=61).
+> 2. With the live start profile D640, the matrix construction began its
+>    alternating block at B32, so the first cycle was D640→B32→A32 and the
+>    transcript demonstrates **19 consecutive full A32→B32→A32 cycles**, not
+>    20, alongside full 20-pair coverage. build_matrix_sequence has since been
+>    fixed to establish A32 before the counted block; a matrix rerun with the
+>    fixed construction (59 switches from a non-A32 start) is pending and will
+>    re-establish the 20-consecutive-cycles claim (AI_HANDOFF §16.7).
+
 Script: /home/petalinux/m7_switch.py md5 e853933b4d0610881e895be4ff48c3bf
 Start profile: D640 (read from live BUILD_ID, not assumed)
 Gate: M1_ACTIVATION_LIFECYCLE.md switching matrix — 20x A32->B32->A32 cycles

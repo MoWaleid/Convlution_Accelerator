@@ -1,5 +1,12 @@
 M7 cold-boot fallback proof + persistence check
-Date: 2026-09-13 (after full M7 matrix + 5x100-frame soaks)
+Date: 2026-09-13
+
+> **SCOPE NOTE (2026-09-14, review E2):** the procedure below uses
+> `sudo reboot` — a warm reboot. It proves FSBL/BOOT.BIN re-programming of the
+> PL, ext4 persistence across reboot, and the reload lifecycle from the
+> factory identity. It does NOT document physical power removal/restoration;
+> that stronger cold-boot form remains separate evidence for M9's five-cold-boot
+> gate. The procedure text is preserved exactly as executed. (after full M7 matrix + 5x100-frame soaks)
 Procedure: sudo reboot (PL reprogrammed by BOOT.BIN = factory M4/A32 build;
 ext4 rootfs persists), clock re-set, persistence hash check, one full switch.
 Script: /home/petalinux/m7_switch.py md5 e853933b4d0610881e895be4ff48c3bf

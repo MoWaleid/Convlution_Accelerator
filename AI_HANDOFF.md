@@ -509,7 +509,44 @@ D640 `D640N3K04-260912`); golden anchors unchanged
 (A32 `cb397559…`, B32 `5821c8b1…`, C32 `b6ab2d53…`, D32 `6cb736f6…`,
 D640 `e323defb…`).
 
-### 16.6 Report corrections — APPLIED 2026-09-13 (report/report.md, uncommitted)
+### 16.7 PENDING BOARD PUSH — BLOCKREADY (2026-09-14, E2 round)
+
+The user is away from the board. On the keyword **BLOCKREADY**, re-emit the
+staged payload blocks exactly and resume injection. State:
+
+- Payload: Temp/m11fix.tgz (18,319 B) — contains home/petalinux/m7_switch.py
+  (md5 2fe949ca9040dd3fda990016c78a4474, E2 consecutive-cycle bridge in
+  build_matrix_sequence) and home/petalinux/m8_cli.py (md5
+  1553ec801557e9defe2fedef83725bce, cmd_extremes). Whole b64 m11fix.b64 md5
+  42c667cd2b4522da6e26f9f2e18363e0, 322 lines = 14 chunks in
+  Temp/m11f_00..m11f_13 (first 13 x 24 lines + 10 lines).
+- Chunk md5s: c1 c19334d8f7e21e030301719d68fcec1c, c2
+  4bf62fd4b1321fc3408ad81988e16c86, c3 f3978f825c7665f9f8c9242e3dc455f3, c4
+  1f30ed843ecd37e74d5bbac1fa2c981f, c5 ce1983e767058476072d278e973fe02f, c6
+  6d7f77eb6077702aa6787a9e6022b2bb, c7 e8c7a60d3066950fde4a03adc1c9f958, c8
+  b390dcf49305e534cc3ef0d87cdf7255, c9 91ead0ce20a2b150970beb46bca8a62b, c10
+  09df40ff2df8be80a378bd253bea3305, c11 5037aee93702ee3794bad599572c65f8, c12
+  8cd34320edcc96053486a278c5ca9175, c13 353866b27ca1e6008b0d6d172be17333, c14
+  e522fd81146b3e8cd17fc2a90fb0a72f.
+- Install: concat 14 chunks in order -> decode (base64 ONLY - no gzip) ->
+  verify tgz 18,319 B -> tar xzf m11fix.tgz -C /home/petalinux
+  --strip-components=2 (members carry the home/petalinux/ prefix; the strip
+  avoids the nesting bug) -> verify installed md5s.
+- Board validation plan after install:
+  1. sudo python3 /home/petalinux/m8_cli.py extremes --profile A32 (fast)
+  2. extremes --profile B32, then C32, then D32
+  3. extremes --profile D640 (three exact-reference computations take minutes
+     each - expected, not a hang)
+  4. sudo python3 /home/petalinux/m7_switch.py --matrix (rerun with the
+     bridge: establishes A32 first -> 20 provably consecutive A32-B32-A32
+     cycles; 59 switches from a non-A32 start)
+  5. Evidence: report/evidence/m8_02_extremes_20260914.txt + matrix rerun
+     transcript; then E2 closes.
+- Board state at pause: PL holds B32; all five canonical bundles installed;
+  m7_switch md5 8b4315b8..., m8_cli md5 bfdbb39b... (both superseded by this
+  push); importer + conv_lab grammar/worker package in place.
+
+## 16.6 Report corrections — APPLIED 2026-09-13 (report/report.md, uncommitted)
 
 - **Throughput/FOM:** done — 4/K is now labeled an output-interface ceiling
   (theoretical upper bound) in §3/§9.1/§11/§12; the 10.24 µs / 1,024-cycle
@@ -554,9 +591,21 @@ board evidence as historical and listed new blockers; disposition so far:
   hardware mutation; M8-02 partial — byte/dimension/format limits before
   decode, single read, decode of exactly the hashed bytes, image admission
   before the switch.
-- **Still open:** M8-07 remainder (immutable snapshot binding beyond recorded
-  hashes), E2 exact-cycle-coverage precision + M5-grade per-profile extremes
-  coverage. All P1 findings from both reviews are now closed.
+- **Still open:** E2 extremes/cycle-precision board session (staged, §16.7).
+  All P1 findings from both reviews are closed.
+- **M8-02 CLOSED (2026-09-14, board-proven):** m8_cli --image decoding routes
+  through the M2 isolated bounded worker (LinuxDecoder with root-supervisor
+  demotion); board evidence in report/evidence/m8_02_worker_isolation_20260914.txt.
+- **M8-07 CLOSED (2026-09-14, disposition):** single-admitted-context met -
+  load_params admits one canonical bundle and returns its immutable SHA-256;
+  reference, hardware frames and the archived record all bind to that admitted
+  state (schema v3: bundle_sha256, per-file parameter hashes, catalog/anchors
+  hashes). Assets are content-addressed via git-tracked canonical bundles plus
+  conversion receipts; per-run byte preservation consciously traded for hash
+  binding.
+- **M9 prep:** execution checklist at M9_CHECKLIST.md (1,000-frame varied
+  soak plan, five true power-cycle cold boots, clean-build reproduction,
+  release tag, known-limits list).
 - **M8-02 CLOSED (2026-09-14, board-proven):** m8_cli's `--image` path decodes
   through the M2 isolated bounded worker (`conv_lab.preprocessing.LinuxDecoder`);
   a scoped root-supervisor extension (`demote_to=(uid,gid)`) drops the worker
