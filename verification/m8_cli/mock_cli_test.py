@@ -202,6 +202,26 @@ def main():
     assert (run_dir / "frame_saturation_params.s16le").is_file()
     print("MOCK OK: extremes (4 stimulus frames, saturation rails exercised)")
 
+    # 4c) M9 soak: library-anchor mode, then image exact-reference mode
+    set_current("A32")
+    CLI.main(["soak", "--profile", "A32", "--frames", "5"])
+    rec, _ = newest_record()
+    assert rec["outcome"] == "PASS" and len(rec["frames"]) == 5
+    assert rec["verification"]["mode"] == "anchor_sha256"
+    print("MOCK OK: soak library-anchor mode")
+    set_current("B32")
+    CLI.load_image_exact = fake_loader
+    try:
+        CLI.main(["soak", "--profile", "B32", "--frames", "2", "--image",
+                  str(custom)])
+    finally:
+        CLI.load_image_exact = real_loader
+    rec, _ = newest_record()
+    assert rec["outcome"] == "PASS" and len(rec["frames"]) == 2
+    assert rec["verification"]["mode"] == "exact_reference"
+    assert all(f["mismatches"] == 0 for f in rec["frames"])
+    print("MOCK OK: soak image exact-reference mode")
+
     # 5) failure path: injected frame error must still produce a record
     real_run_frame = MH.M.run_frame
 
@@ -228,7 +248,7 @@ def main():
     listing = out.getvalue()
     n_runs = len(list(ARCHIVE.glob("*/record.json")))
     assert f"({n_runs} runs)" in listing, listing
-    assert listing.count(": PASS") == 7, listing
+    assert listing.count(": PASS") == 9, listing
     assert "UNVERIFIED" in listing and "FAILED" in listing, listing
     rec, _ = newest_record()
     out = io.StringIO()

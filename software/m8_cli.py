@@ -433,6 +433,135 @@ def cmd_run(args):
                   f"check) -> {rec['archive_root']}/{rec['run_id']}", flush=True)
 
 
+def cmd_soak(args):
+    """Baseline soak (M9): N frames under one activation. Library-anchor mode
+    verifies every frame against the golden anchor SHA-256; image mode
+    verifies every frame value-by-value against the exact reference computed
+    once from the worker-decoded canonical bytes (32x32 profiles only)."""
+    m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
+    catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
+    m7.require(args.profile in catalog, f"unknown profile {args.profile}")
+    anchors = json.loads((m7.BASE / "anchors_m7.json").read_text())
+    hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
+    n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
+
+    image_tag = Path(args.image).stem if args.image else "library_alley_cat"
+    rec = new_record(args.profile, hw, image_tag)
+    rec["soak"] = {"frames": args.frames}
+    root, root_name = archive_root()
+    rec["archive_root"] = root_name
+    run_dir = allocate_run_dir(root, time.strftime("%Y%m%dT%H%M%SZ",
+                                                   time.gmtime())
+                               + f"-soak{args.frames}-{args.profile}-{image_tag}")
+    rec["run_id"] = run_dir.name
+    m7.require(args.frames >= 1, "--frames must be >= 1")
+
+    m7.acquire_lock()
+    ctx = None
+    t_start = time.perf_counter()
+    try:
+        info = m7.Path("/sys/class/u-dma-buf/udmabuf0")
+        ctx = {"phys": int((info / "phys_addr").read_text(), 0),
+               "buffer_size": int((info / "size").read_text(), 0),
+               "anchors": anchors, "handles": None, "digests": []}
+        channels, pbundle = m7.load_params(args.profile, n, k)
+        rec["parameters"] = {**parameter_identity(args.profile),
+                             "bundle_sha256": pbundle}
+        storage_admission(root, args.frames * 4096 + 1048576)
+
+        t0 = time.perf_counter()
+        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
+        dma, accel, buf_fd, _fds = ctx["handles"]
+        layout = m7.compute_layout(hw["expected_input_bytes"],
+                                   hw["expected_output_bytes"],
+                                   ctx["buffer_size"])
+
+        if args.image:
+            m7.require(w * h * k <= m7.REF_POSITION_LIMIT,
+                       f"image soak needs an exact-reference profile "
+                       f"({w}*{h}*{k} positions > {m7.REF_POSITION_LIMIT}); "
+                       "use the library-anchor soak for this profile")
+            raw, meta = load_image_exact(args.image, w, h)
+            padded = pad_bytes(raw, n, w, h)
+            expected = m7.make_expected(padded, n, w, h, channels)
+            rec["input"] = {**meta,
+                            "canonical_sha256": hashlib.sha256(raw).hexdigest(),
+                            "padded_tx_sha256": hashlib.sha256(padded).hexdigest()}
+            rec["verification"] = {"mode": "exact_reference"}
+        else:
+            padded = m7.load_input(n, w, h)
+            expected = None
+            anchor = anchors.get(args.profile, {}).get("output_sha256")
+            m7.require(anchor, f"{args.profile}: no golden anchor")
+            rec["input"] = {"source_path": "library:alley_cat_s_000013",
+                            "padded_tx_sha256": hashlib.sha256(padded).hexdigest()}
+            rec["verification"] = {"mode": "anchor_sha256", "anchor": anchor}
+        rec["timings"]["preprocess_s"] = time.perf_counter() - t0
+
+        hw_ms, wall_ms = [], []
+        for i in range(args.frames):
+            w0 = time.perf_counter()
+            values, mismatches, sha, ms = m7.run_frame(
+                dma, accel, buf_fd, ctx["phys"], layout, padded, expected, k)
+            wall_ms.append((time.perf_counter() - w0) * 1000.0)
+            hw_ms.append(ms * 1000.0)
+            if expected is not None:
+                m7.require(mismatches == 0,
+                           f"frame {i + 1}: {mismatches} mismatches")
+            else:
+                m7.require(sha == anchor,
+                           f"frame {i + 1}: output sha {sha[:16]} != anchor")
+            rec["frames"].append({"index": i + 1, "sha256": sha,
+                                  "mismatches": (mismatches if expected
+                                                 is not None else None),
+                                  "hw_ms": hw_ms[-1], "wall_ms": wall_ms[-1]})
+            if (i + 1) % 25 == 0:
+                log(f"  {i + 1}/{args.frames} soak frames bit-exact")
+
+        def stats(xs):
+            xs = sorted(xs)
+            p95 = xs[min(len(xs) - 1, int(round(0.95 * len(xs) + 0.499)) - 1)]
+            return {"median": statistics.median(xs), "min": xs[0],
+                    "max": xs[-1], "p95": p95}
+        rec["timings"]["hw_ms"] = stats(hw_ms)
+        rec["timings"]["wall_ms"] = stats(wall_ms)
+        rec["counters_final"] = counter_snapshot(accel)
+        rec["outcome"] = "PASS"
+    except BaseException as exc:
+        rec["outcome"] = ("CANCELLED" if isinstance(exc, KeyboardInterrupt)
+                          else "FAILED")
+        rec["failure"] = {"type": type(exc).__name__, "message": str(exc)}
+        raise
+    finally:
+        rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
+        try:
+            m7.safe_cleanup(ctx)
+            rec["cleanup"] = {"ok": True}
+        except BaseException as cexc:
+            rec["cleanup"] = {"ok": False, "error": repr(cexc)}
+            if rec["outcome"] == "PASS":
+                rec["outcome"] = "FAILED"
+            if not isinstance(cexc, Exception):
+                try:
+                    write_record(run_dir, rec)
+                except Exception:
+                    pass
+                raise
+        persisted = True
+        try:
+            write_record(run_dir, rec)
+        except Exception as pexc:
+            persisted = False
+            print(f"M8: record persistence failed: {pexc}", flush=True)
+        m7.release_lock()
+        if (rec["outcome"] == "PASS" and rec["cleanup"].get("ok") and persisted):
+            s = rec["timings"]["hw_ms"]
+            print(f"M8 SOAK {rec['run_id']}: PASS ({args.frames} frames, "
+                  f"median {s['median']:.3f} ms / p95 {s['p95']:.3f}) -> "
+                  f"{rec['archive_root']}/{rec['run_id']}", flush=True)
+
+
 def cmd_extremes(args):
     """M5-grade per-profile extremes (E2): all-zero and all-255 stimulus
     frames under the profile's admitted parameters, a temporary saturation
@@ -725,13 +854,18 @@ def main(argv=None):
     e = sub.add_parser("extremes", help="M5-grade per-profile extremes (E2)")
     e.add_argument("--profile", required=True)
 
+    s = sub.add_parser("soak", help="baseline soak (M9), archived record")
+    s.add_argument("--profile", required=True)
+    s.add_argument("--frames", type=int, default=100)
+    s.add_argument("--image", help="exact-geometry image (32x32 profiles only)")
+
     sub.add_parser("list", help="list archived runs")
     c = sub.add_parser("record", help="print one archived record")
     c.add_argument("run_id")
 
     args = p.parse_args(argv)
     {"run": cmd_run, "benchmark": cmd_benchmark, "extremes": cmd_extremes,
-     "list": cmd_list, "record": cmd_record}[args.cmd](args)
+     "soak": cmd_soak, "list": cmd_list, "record": cmd_record}[args.cmd](args)
 
 
 if __name__ == "__main__":
