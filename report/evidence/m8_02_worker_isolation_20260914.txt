@@ -1,0 +1,45 @@
+M8-02 — isolated decoder worker, board validation (positive + negative)
+Date: 2026-09-14
+Scripts: /home/petalinux/m8_cli.py md5 610b444977ae9c5c8973995570ae3053
+         /home/petalinux/conv_lab/preprocessing.py md5 a5b6e60c53275e7de38da8aca0c2e577
+         /home/petalinux/conv_lab/_decoder_worker.py, types.py (payload m10fix.tgz
+          14,557 B, whole b64 md5 01250f7d29636d2c52b76a8155754d05, per-chunk verified)
+Integration: m8_cli load_image_exact delegates to conv_lab LinuxDecoder; the
+sudo backend supervisor passes demote_to=(board uid,gid) so the worker
+subprocess drops privileges before exec, installs its own RLIMIT_AS
+(128 MiB), runs under the 30 s supervisor deadline with bounded IPC and
+zero inherited descriptors (close_fds, pass_fds=(), start_new_session).
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+--- positive: arbitrary image decoded by the isolated worker ---
+$ sudo python3 /home/petalinux/m8_cli.py run --profile A32 --frames 1 \
+    --image /home/petalinux/demo_images/aeroplane_s_000002.png
+  admitted A32 parameter bundle 367fb1f5a45a3271
+  live build already A32: parameter re-admission only
+  [A32] activation OK 0.161 ms sha=cb3975593073652b
+  cleanup: final STATUS 0x00000181
+M8 RUN 20260913T051759Z-A32-aeroplane_s_000002: PASS (1 frames, median 0.149 ms)
+$ python3 -c "... print strategy/canonical from archived record ..."
+strategy: linux-process-rlimit-as-supervised-v1
+canonical: b73461dedc87d3e6
+
+The resource_strategy string is produced inside the demoted worker and
+validated by the supervisor (validate_decoded) against the approved policy
+constants - it cannot be fabricated by an in-process decode. The canonical
+SHA-256 matches the independent decode from 2026-09-13 (record
+20260913T030849Z-D32-aeroplane_s_000002), proving decode equivalence through
+the isolated path.
+
+--- negative: non-image rejected with zero hardware writes ---
+$ sudo python3 /home/petalinux/m8_cli.py run --profile A32 --frames 1 \
+    --image /home/petalinux/conv_lab/strict.py
+Traceback (last frame):
+  conv_lab.errors.AdmissionError: failed/late worker: ValueError: only static
+  PNG/JPEG admitted
+
+The rejection was raised inside the demoted worker, propagated through the
+supervisor as AdmissionError from load_image_exact (cmd_run line 300) - BEFORE
+switch_to is reached. The transcript contains no fpga_manager programming
+line, no reprogrammed-fabric line and no parameter or DMA writes: rejected
+input caused zero hardware mutation, as required. The FAILED run record was
+still archived.

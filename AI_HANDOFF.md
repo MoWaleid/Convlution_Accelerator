@@ -554,10 +554,21 @@ board evidence as historical and listed new blockers; disposition so far:
   hardware mutation; M8-02 partial — byte/dimension/format limits before
   decode, single read, decode of exactly the hashed bytes, image admission
   before the switch.
-- **Still open:** M8-02 full decoder-worker isolation (RLIMIT_AS/unprivileged
-  worker integration), M8-07 remainder (immutable snapshot binding beyond
-  recorded hashes), E2 exact-cycle-coverage precision + M5-grade per-profile
-  extremes coverage.
+- **Still open:** M8-07 remainder (immutable snapshot binding beyond recorded
+  hashes), E2 exact-cycle-coverage precision + M5-grade per-profile extremes
+  coverage. All P1 findings from both reviews are now closed.
+- **M8-02 CLOSED (2026-09-14, board-proven):** m8_cli's `--image` path decodes
+  through the M2 isolated bounded worker (`conv_lab.preprocessing.LinuxDecoder`);
+  a scoped root-supervisor extension (`demote_to=(uid,gid)`) drops the worker
+  subprocess to the board user before exec — the worker keeps its own privilege
+  refusals, 128-MiB RLIMIT_AS, 30 s supervisor deadline, bounded IPC and zero
+  inherited descriptors. Board evidence
+  (`report/evidence/m8_02_worker_isolation_20260914.txt`): positive run with
+  `resource_strategy=linux-process-rlimit-as-supervised-v1` and canonical hash
+  matching the independent decode; negative non-image run rejected inside the
+  worker with zero hardware writes. Board copies: m8_cli md5 `610b4449…`,
+  conv_lab/{preprocessing,_decoder_worker,types}.py pushed (payload m10fix.tgz
+  14,557 B, b64 `01250f7d…`).
 - **M7-R4 CLOSED (2026-09-14, board-proven):** explicit legacy conversion of
   all five parameter bundles to the canonical-flat-2 dialect
   (`scripts/convert_legacy_profiles.py`, receipts in
