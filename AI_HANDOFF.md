@@ -555,12 +555,23 @@ board evidence as historical and listed new blockers; disposition so far:
   decode, single read, decode of exactly the hashed bytes, image admission
   before the switch.
 - **Still open:** M8-02 full decoder-worker isolation (RLIMIT_AS/unprivileged
-  worker integration), M7-R4 strict format-3 whole-bundle admission, M8-07
-  record completeness (model/config hashes, immutable snapshots), M8-08
-  timing-scope naming (hw_ms is a host-clock poll interval, not cycle count),
-  E2 exact-cycle-coverage precision + M5-grade per-profile extremes coverage,
-  E3 stale foundation tests + report corrections (report due 2026-09-15!).
-  Phase B (bundle importer via FAT transport, concurrent/cancel cases) pending.
+  worker integration), M7-R4 strict format-3 whole-bundle admission inside the
+  manager's load path, M8-07 remainder (immutable snapshot binding beyond
+  recorded hashes), E2 exact-cycle-coverage precision + M5-grade per-profile
+  extremes coverage, E3 report regen done — stale foundation tests FIXED
+  (reconciled anchors + D640 projection assertion, 8/8 PASS 2026-09-14).
+- **M8 Phase B importer BOARD-PROVEN (2026-09-14):** `software/m8_import.py`
+  (md5 `899f65e3…`, needs `/home/petalinux/conv_lab/` = 3-file grammar package
+  `__init__/errors/strict` — pushed; keep in sync with repo's conv_lab) imports
+  model/dataset transport archives with strict validation, identity collisions
+  rejected, idempotent same-content re-import, receipts outside bundles.
+  Host suite 15/15 PASS; board import/already-imported/list PASS
+  (`report/evidence/m8_import_board_20260914.txt`). Hardware-bundle import
+  explicitly unsupported this release.
+- **Push lessons (2026-09-14):** never extract tars containing directory
+  entries with sudo over live dirs — it clobbers ownership (fixed via
+  `chown -R petalinux:petalinux /home/petalinux`; extract as petalinux or omit
+  dir entries); re-confirmed §9's never-double-gunzip rule for .tgz transports.
 
 The old per-step M7 push/run instructions below this section were
 executed and are preserved only in git history / the amendment note that follows.

@@ -1,0 +1,34 @@
+M8 Phase B — bundle importer board validation
+Date: 2026-09-14
+Scripts: /home/petalinux/m8_import.py md5 899f65e3ec591c78f4746beddb2937da
+         /home/petalinux/conv_lab/{__init__,errors,strict}.py
+         (3-file grammar package, payload conv_lab_mini.tgz md5 1449f9c126b287e763d917d2c592ff20,
+          whole b64 f4b0185b35f95ce042d9bddf20768022 — per-chunk verified)
+Transport: test_model.tgz md5 dffb4722aaeb9759f6923352c935a1f0 (797 B;
+           2-channel N=3 custom-filter fixture bundle, model_id board-probe)
+Host tests: verification/m8_import/test_import.py — 15/15 PASS (validation
+            positives/negatives, hash mismatches, duplicate keys, signed-24
+            bias bounds, shift bounds, relu_required consistency, traversal
+            filerefs and tar members, member cap, hardware-bundle rejection,
+            identity collision with original intact, idempotency)
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+--- transcript ---
+$ sudo python3 /home/petalinux/m8_import.py import test_model.tgz
+M8 IMPORT imported: model board-probe/1.0.0 (manifest 148912fd67497517) -> /var/lib/conv-lab/library/models/board-probe/1.0.0
+$ sudo python3 /home/petalinux/m8_import.py import test_model.tgz
+M8 IMPORT already-imported: model board-probe/1.0.0 (manifest 148912fd67497517) -> /var/lib/conv-lab/library/models/board-probe/1.0.0
+$ sudo python3 /home/petalinux/m8_import.py list
+models board-probe/1.0.0 manifest 148912fd67497517
+
+--- notes ---
+First board proof of the M8 Phase B gate deliverable: validated bundle import
+via transport archive into /var/lib/conv-lab/library with immutable identity
+(same-identity re-import of identical content is idempotent; different content
+would be rejected as a collision — covered by host tests), FileRef hash
+verification, and receipts written outside bundle contents.
+Push lessons recorded (see AI_HANDOFF quirks): tars containing directory
+entries extracted with sudo clobber live-directory ownership (fixed with
+chown -R petalinux:petalinux /home/petalinux; future pushes extract as
+petalinux or omit dir entries); .tgz transports decode with base64 only —
+never double-gunzip (§9 lesson, re-learned).
