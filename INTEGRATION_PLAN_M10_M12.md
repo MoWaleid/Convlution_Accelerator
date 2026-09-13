@@ -153,3 +153,126 @@ Gate: comparison published, tags, report submitted.
       frequency-independent; per-second +23.1%) — pick and justify one.
 - [ ] Release: v1-m9-release (baseline) + research tag; AI_HANDOFF final
       state; cleanup scan re-run (CLEANUP_SCAN_20260914.md).
+
+---
+
+## Addendum A — Codex review dispositions (2026-09-14, verified first-hand)
+
+Verification: R14-01/03/05 and the IP-02 WNS discrepancy were confirmed by
+direct code/document inspection before acceptance (reviewer is static-only;
+I checked). All dispositions below are accepted or accepted-with-nuance.
+
+### Baseline work (R14 series — pre-integration repair batch)
+
+- **R14-01 ACCEPTED (P1, RTL):** baseline conv_channel S4 computes the
+  rounding constant AT C_FULL_W=25 (`shift_left(to_signed(1, C_FULL_W),
+  shift_val-1)`): shift 25 zero-input counterexample returns -1 (reference 0),
+  shift 24 can overflow the rounding add for large positive accumulators,
+  shifts 26-31 lose the constant entirely (no round-up). Violates
+  M1_NUMERICAL_CONTRACT's explicit widened-temporary requirement; golden
+  model (bignum) could never catch it; all shipped vectors use shift<=8 so
+  NO board evidence is invalidated. **Containment decision for user:** the
+  reviewer offers two honest routes — (a) fix RTL + rebuild + requalify all
+  five profiles, or (b) freeze the baseline with an explicit numerical-scope
+  restriction (shifts 0..8 qualified) enforced at admission (load_params
+  rejects shift>8 for legacy profiles), fix riding M11 via the teammate S4/S5
+  (which implements exactly the contract's discarded-bit alternative).
+  Recommended: (b) now, (a) never separately — the research line supersedes.
+- **R14-02 ACCEPTED (P1, sw):** cleanup/persistence failure after successful
+  frames exits 0 (exception swallowed in finally); KeyboardInterrupt during
+  cleanup can skip release_lock for an embedding caller (kernel flock still
+  releases on process death). Fix: shared finalization, nonzero exit on
+  cleanup/persistence failure, lock release in outermost finally.
+- **R14-03 ACCEPTED (P1, sw):** cmd_soak calls switch_to (line 473) BEFORE
+  load_image_exact (485) — hardware mutation before image admission; run mode
+  (300 before 343) is correct. Fix: hoist admission above the switch, mirror
+  run; add zero-mutation negative tests.
+- **R14-04 ACCEPTED (P1, sw):** load_params validates bias against the
+  BUNDLE-declared width, not the selected hardware manifest's width.
+  Currently mitigated (canonical bundles declare 24 = hardware 24). Fix:
+  thread hw bias_width into load_params admission.
+- **R14-05 ACCEPTED (P1, sw):** load_image_exact does p.read_bytes()
+  unbounded in the root supervisor before the worker's 8 MiB check. Fix:
+  bounded read (MAX+1 bytes) in the supervisor, pass exact bytes on.
+- **R14-06..10 ACCEPTED (P2):** imported-model runtime selection, context
+  freezing/binding, importer idempotency revalidation, aggregate storage
+  ledger, converter overwrite guard — scoped follow-up batch before any
+  unconditional-release language; none block the integration plan's gates.
+
+### Integration plan corrections (IP series — plan revised accordingly)
+
+- **IP-01 ACCEPTED:** 00a6e11 is a direct one-commit child of fb66066 (the
+  "sibling lineage" framing described the DEVELOPMENT history, not the git
+  topology). Integration = selective transplant from current mainline HEAD,
+  never wholesale merge (the commit deletes root XPR/XSAs/B32 tree and
+  predates M8/M9 fixes).
+- **IP-02 ACCEPTED:** the remote branch carries NO release artifacts
+  (work/, dist/ gitignored) — the +0.201/+0.178 WNS discrepancy between the
+  handoff table and STATUS.md has no tracked report to arbitrate it. EF125
+  physical numbers are PROVISIONAL until we obtain the teammate's artifact
+  package or rebuild clean. Never call it "qualified".
+- **IP-03 ACCEPTED — and it improves the plan:** the engine asserts C_N=3
+  and is K-GENERIC. So A32 (K8) and D32/D640 (K4) are configuration
+  rebuilds of the same engine; only C32 (N5) needs a new generator. F3
+  rewritten accordingly; dual-engine coexistence is NOT needed pre-deadline.
+- **IP-04 ACCEPTED:** board-platform decision (ZedBoard vs PYNQ-Z2) is an
+  explicit M10 gate before any FSBL work. Current target: ZedBoard (all
+  board evidence is ZedBoard).
+- **IP-05 ACCEPTED:** create_accelerator_dma_bd.tcl still describes 100 MHz;
+  reconcile or formally retire as non-authoritative before M11 builds.
+- **IP-06 ACCEPTED (critical):** their package_release.py ships THEIR
+  branch's old m7_switch.py + legacy weights_k16 dialect (permissive loader,
+  integer relu_en, bias_bits:32). Any packaged runtime must be replaced with
+  the current mainline manager + canonical-flat-2 conversion of the K16
+  parameters. F5 corrected: K16 source weights + exact reference EXIST;
+  what's missing is the canonical bundle + frozen anchor + board-qualified
+  run.
+- **IP-07/08 ACCEPTED:** single-source-of-truth layout (remove rx_offset
+  from manifests or derive+validate); complete build-input manifest
+  (.bd/XDC/generator/IP config/tool settings); directed cfg-lifecycle tests
+  (START-vs-config races, writes-during-cfg_pending, RESET/ABORT with
+  prefetched window, readback≠installed-state before cfg_ready).
+- **IP-09 ACCEPTED:** unit discipline — channel-results vs complete
+  positions vs beats vs frames/s; K16 position = 4 beats on 64-bit AXIS, so
+  external interface cannot sustain one position/cycle. Edge-free proof is
+  simulation-only unless ILA/counters are added; Fmax ~128.2 is an estimate
+  from one positive-slack route, not established.
+- **IP-10 ACCEPTED:** baseline defect range corrected in F1 (24-31 per
+  R14-01, not 26-31); imported-rounding verification must cover nonzero
+  accumulations, extrema, endpoints — their pipeline test is largely
+  zero-product-sum.
+- **IP-11 ACCEPTED:** M12 comparison must freeze identical
+  parameters/corpus/tool/directives/method; the sibling 100 MHz branch's
+  differing resource totals are not a controlled frequency axis without
+  provenance; power labeled vectorless-estimate; both raw rates reported.
+
+### Feasibility gates (FP series)
+
+- **FP-01 ACCEPTED:** M9 stays open (clean-build + tag unchecked); AI_HANDOFF
+  stale claims to reconcile; no "M0-M9 effectively done" language.
+- **FP-02 ACCEPTED — ACTION WHILE BOARD IS LIVE:** qualified A32 .bit
+  (8bc608…) is NOT preserved anywhere reachable; the A32 firmware
+  (m7_A32.bin = m4_accelerator_dma.bin, b59378e4…) and exact runtime
+  hardware_A32.json exist ON THE BOARD (/lib/firmware) and possibly SD p1.
+  Recover + archive under checksums before any board/SD work risks them.
+- **FP-03 ACCEPTED:** deploy/petalinux recipes recreate M2-P, not the
+  M7/M8 runtime — versioned recipe revision needed for reproducible images
+  (post-deadline; does not affect board correctness).
+- **FP-04/05/07/08 ACCEPTED:** one authoritative research-build path (adapt
+  their fresh-project builder to our profile discipline); orthogonal
+  shape/hardware-release/model-bundle identities for M12; doc drift fixes
+  after state settles; manifest rx_offset fields derived or removed.
+
+### Corrected execution order (supersedes plan §3-5 sequencing detail)
+
+Gate 0 (baseline recoverable): R14-02..05 fixes + tests → A32 artifact
+recovery from board → R14-01 containment decision (b) documented →
+clean-build reproduction → v1-m9-release tag.
+Gate 1 (research contract): corrected identities, authoritative build flow,
+board-part gate.
+Gate 2 (B32_CFGLUT125 first — the smallest competition-ready slice; K4/K8
+variants after; C32 stays legacy until an N5 generator is separately
+qualified).
+Gate 3 (board qualification at 125 MHz incl. measured clock).
+Gate 4 (matched comparison: B32_MAC100 vs CFGLUT100 vs CFGLUT125, frozen
+provenance).
