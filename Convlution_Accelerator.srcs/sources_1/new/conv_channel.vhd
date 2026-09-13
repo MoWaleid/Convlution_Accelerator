@@ -53,7 +53,7 @@ architecture rtl of conv_channel is
     -- ========================================================================
     constant C_PROD_W : integer := CFG_PRODUCT_WIDTH;      -- 17 for N=3
     constant C_PSUM_W : integer := CFG_PSUM_WIDTH;          -- 19 for N=3
-    constant C_FULL_W : integer := CFG_FULL_ACCUM_WIDTH;    -- 33 for N=3
+    constant C_FULL_W : integer := CFG_FULL_ACCUM_WIDTH;    -- 25 for N=3
     constant C_OUT_W  : integer := CFG_OUTPUT_WIDTH;        -- 16
 
     -- ========================================================================

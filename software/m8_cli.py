@@ -141,9 +141,17 @@ def load_image_exact(path, w, h):
     """Approved pipeline via the isolated decoder worker: source read once
     and hashed by the worker, decoded under the address-space ceiling and
     supervisor deadline, canonical W*H bytes plus the validated preprocessing
-    record returned. Exact geometry; no resize."""
+    record returned. Exact geometry; no resize. The supervisor read itself is
+    bounded (R14-05): non-regular inputs are rejected before any read, at
+    most MAX_SOURCE_BYTES+1 bytes ever enter root memory, and oversize
+    sources fail admission here instead of inside the worker."""
     p = Path(path)
-    result = _decoder().decode(p.read_bytes(), w, h, "exact")
+    m7.require(p.is_file(), f"source is not a regular file: {p}")
+    with open(p, "rb") as fh:
+        blob = fh.read(MAX_SOURCE_BYTES + 1)
+    m7.require(len(blob) <= MAX_SOURCE_BYTES,
+               f"source exceeds the {MAX_SOURCE_BYTES} B limit: {p}")
+    result = _decoder().decode(blob, w, h, "exact")
     meta = json.loads(result.record_json)
     meta["source_path"] = str(p)
     return result.canonical, meta
@@ -261,6 +269,40 @@ def write_record(run_dir, rec):
     chown_tree(run_dir)
 
 
+def finalize_run(rec, ctx, run_dir):
+    """Shared finalization for every hardware mode (R14-02): cleanup runs
+    first and demotes a PASS/UNVERIFIED outcome on failure, the record is
+    always persisted atomically, and the ownership lock is released
+    unconditionally BEFORE anything re-raises - a KeyboardInterrupt raised
+    inside cleanup or persistence must never leave the lock held for an
+    embedding caller. Cleanup or persistence failure re-raises after the
+    unlock, so the invocation exits nonzero and no terminal PASS line is
+    printed for a degraded run. Returns only for a run that ended, cleaned
+    up, and was durably archived."""
+    failure = None
+    try:
+        m7.safe_cleanup(ctx)
+        rec["cleanup"] = {"ok": True}
+    except BaseException as cexc:
+        failure = cexc
+        rec["cleanup"] = {"ok": False, "error": repr(cexc)}
+        if rec["outcome"] in ("PASS", "UNVERIFIED"):
+            rec["outcome"] = "FAILED"
+    persisted = True
+    try:
+        write_record(run_dir, rec)
+    except BaseException as pexc:
+        persisted = False
+        rec["persistence_error"] = repr(pexc)
+        print(f"M8: record persistence failed: {pexc}", flush=True)
+        if failure is None:
+            failure = pexc
+    m7.release_lock()
+    if failure is not None:
+        raise failure
+    return rec
+
+
 def cmd_run(args):
     m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
     catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
@@ -292,7 +334,8 @@ def cmd_run(args):
                "anchors": anchors, "handles": None, "digests": []}
 
         # --- admission BEFORE any hardware mutation (M8-02/M8-06) ---------
-        channels, pbundle = m7.load_params(args.profile, n, k)   # read-only files
+        channels, pbundle = m7.load_params(args.profile, n, k,   # read-only files
+                                           hw_bias_width=hw["bias_width"])
         rec["parameters"] = parameter_identity(args.profile)
         rec["parameters"]["bundle_sha256"] = pbundle
         t0 = time.perf_counter()
@@ -400,34 +443,13 @@ def cmd_run(args):
         raise
     finally:
         rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
-        try:
-            m7.safe_cleanup(ctx)
-            rec["cleanup"] = {"ok": True}
-        except BaseException as cexc:
-            rec["cleanup"] = {"ok": False, "error": repr(cexc)}
-            if rec["outcome"] in ("PASS", "UNVERIFIED"):
-                rec["outcome"] = "FAILED"
-            if not isinstance(cexc, Exception):
-                try:
-                    write_record(run_dir, rec)
-                except Exception:
-                    pass
-                raise
-        persisted = True
-        try:
-            write_record(run_dir, rec)
-        except Exception as pexc:
-            persisted = False
-            print(f"M8: record persistence failed: {pexc}", flush=True)
-        m7.release_lock()
-        done = (rec["outcome"] in ("PASS", "UNVERIFIED")
-                and rec["cleanup"].get("ok") and persisted)
-        if done and rec["outcome"] == "PASS":
+        finalize_run(rec, ctx, run_dir)
+        if rec["outcome"] == "PASS":
             lat = [f["hw_ms"] for f in rec["frames"]]
             print(f"M8 RUN {rec['run_id']}: PASS ({args.frames} frames, "
                   f"median {statistics.median(lat):.3f} ms) -> "
                   f"{rec['archive_root']}/{rec['run_id']}", flush=True)
-        elif done:
+        elif rec["outcome"] == "UNVERIFIED":
             print(f"M8 RUN {rec['run_id']}: UNVERIFIED ({args.frames} frames "
                   f"executed, output sha recorded, no independent numerical "
                   f"check) -> {rec['archive_root']}/{rec['run_id']}", flush=True)
@@ -464,19 +486,15 @@ def cmd_soak(args):
         ctx = {"phys": int((info / "phys_addr").read_text(), 0),
                "buffer_size": int((info / "size").read_text(), 0),
                "anchors": anchors, "handles": None, "digests": []}
-        channels, pbundle = m7.load_params(args.profile, n, k)
+        channels, pbundle = m7.load_params(args.profile, n, k,
+                                           hw_bias_width=hw["bias_width"])
         rec["parameters"] = {**parameter_identity(args.profile),
                              "bundle_sha256": pbundle}
         storage_admission(root, args.frames * 4096 + 1048576)
 
+        # --- admit the input and build the reference BEFORE any hardware
+        # mutation (R14-03: a bad image must never reach switch_to) --------
         t0 = time.perf_counter()
-        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
-        rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
-        dma, accel, buf_fd, _fds = ctx["handles"]
-        layout = m7.compute_layout(hw["expected_input_bytes"],
-                                   hw["expected_output_bytes"],
-                                   ctx["buffer_size"])
-
         if args.image:
             m7.require(w * h * k <= m7.REF_POSITION_LIMIT,
                        f"image soak needs an exact-reference profile "
@@ -498,6 +516,14 @@ def cmd_soak(args):
                             "padded_tx_sha256": hashlib.sha256(padded).hexdigest()}
             rec["verification"] = {"mode": "anchor_sha256", "anchor": anchor}
         rec["timings"]["preprocess_s"] = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
+        dma, accel, buf_fd, _fds = ctx["handles"]
+        layout = m7.compute_layout(hw["expected_input_bytes"],
+                                   hw["expected_output_bytes"],
+                                   ctx["buffer_size"])
 
         hw_ms, wall_ms = [], []
         for i in range(args.frames):
@@ -535,27 +561,8 @@ def cmd_soak(args):
         raise
     finally:
         rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
-        try:
-            m7.safe_cleanup(ctx)
-            rec["cleanup"] = {"ok": True}
-        except BaseException as cexc:
-            rec["cleanup"] = {"ok": False, "error": repr(cexc)}
-            if rec["outcome"] == "PASS":
-                rec["outcome"] = "FAILED"
-            if not isinstance(cexc, Exception):
-                try:
-                    write_record(run_dir, rec)
-                except Exception:
-                    pass
-                raise
-        persisted = True
-        try:
-            write_record(run_dir, rec)
-        except Exception as pexc:
-            persisted = False
-            print(f"M8: record persistence failed: {pexc}", flush=True)
-        m7.release_lock()
-        if (rec["outcome"] == "PASS" and rec["cleanup"].get("ok") and persisted):
+        finalize_run(rec, ctx, run_dir)
+        if rec["outcome"] == "PASS":
             s = rec["timings"]["hw_ms"]
             print(f"M8 SOAK {rec['run_id']}: PASS ({args.frames} frames, "
                   f"median {s['median']:.3f} ms / p95 {s['p95']:.3f}) -> "
@@ -596,7 +603,8 @@ def cmd_extremes(args):
         ctx = {"phys": int((info / "phys_addr").read_text(), 0),
                "buffer_size": int((info / "size").read_text(), 0),
                "anchors": anchors, "handles": None, "digests": []}
-        channels, pbundle = m7.load_params(args.profile, n, k)
+        channels, pbundle = m7.load_params(args.profile, n, k,
+                                           hw_bias_width=hw["bias_width"])
         rec["parameters"] = {**parameter_identity(args.profile),
                              "bundle_sha256": pbundle}
         storage_admission(root, 8 * (hw["expected_output_bytes"] + 4096)
@@ -674,27 +682,8 @@ def cmd_extremes(args):
         raise
     finally:
         rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
-        try:
-            m7.safe_cleanup(ctx)
-            rec["cleanup"] = {"ok": True}
-        except BaseException as cexc:
-            rec["cleanup"] = {"ok": False, "error": repr(cexc)}
-            if rec["outcome"] == "PASS":
-                rec["outcome"] = "FAILED"
-            if not isinstance(cexc, Exception):
-                try:
-                    write_record(run_dir, rec)
-                except Exception:
-                    pass
-                raise
-        persisted = True
-        try:
-            write_record(run_dir, rec)
-        except Exception as pexc:
-            persisted = False
-            print(f"M8: record persistence failed: {pexc}", flush=True)
-        m7.release_lock()
-        if (rec["outcome"] == "PASS" and rec["cleanup"].get("ok") and persisted):
+        finalize_run(rec, ctx, run_dir)
+        if rec["outcome"] == "PASS":
             print(f"M8 EXTREMES {rec['run_id']}: PASS ({len(rec['frames'])} "
                   f"verified stimulus frames) -> "
                   f"{rec['archive_root']}/{rec['run_id']}", flush=True)
@@ -777,27 +766,8 @@ def cmd_benchmark(args):
         raise
     finally:
         rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
-        try:
-            m7.safe_cleanup(ctx)
-            rec["cleanup"] = {"ok": True}
-        except BaseException as cexc:
-            rec["cleanup"] = {"ok": False, "error": repr(cexc)}
-            if rec["outcome"] in ("PASS", "UNVERIFIED"):
-                rec["outcome"] = "FAILED"
-            if not isinstance(cexc, Exception):
-                try:
-                    write_record(run_dir, rec)
-                except Exception:
-                    pass
-                raise
-        persisted = True
-        try:
-            write_record(run_dir, rec)
-        except Exception as pexc:
-            persisted = False
-            print(f"M8: record persistence failed: {pexc}", flush=True)
-        m7.release_lock()
-        if (rec["outcome"] == "PASS" and rec["cleanup"].get("ok") and persisted):
+        finalize_run(rec, ctx, run_dir)
+        if rec["outcome"] == "PASS":
             s = rec["timings"]["hw_ms"]
             print(f"M8 BENCH {rec['run_id']}: PASS ({args.frames} frames) "
                   f"hw median {s['median']:.3f} ms / p95 {s['p95']:.3f} / "

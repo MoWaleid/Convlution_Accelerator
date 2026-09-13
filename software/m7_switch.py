@@ -109,13 +109,23 @@ def log(message):
 
 # ─── Profile parameter loading (strict validation) ───────────────────────────
 
-def load_params(profile, n, k):
+def load_params(profile, n, k, hw_bias_width=None, max_shift=23):
     """Strictly admit the profile's canonical-flat-2 parameter bundle
     (explicit legacy conversion, see profiles/history/legacy_conversion_*):
     exact root/entry field sets, canonical JSON types, boolean relu_en (no
     integer coercion), required exact per-channel weight paths, coefficient
     grammar, bundle-declared signed bias width, and an immutable whole-bundle
-    SHA-256 over every admitted byte. Returns (channels, bundle_sha256)."""
+    SHA-256 over every admitted byte. Returns (channels, bundle_sha256).
+
+    hw_bias_width (R14-04): when given, the bundle must declare exactly the
+    target hardware's signed bias width and every bias is bounded by it - a
+    bundle's self-declaration alone never widens admission.
+
+    max_shift (R14-01 containment, decision b): the MAC S4 rounding add is
+    defective for shifts 24..31 (the round-up constant overflows/wraps at
+    the fixed 25-bit width), so admission rejects shift >= 24. Shifts 0..23
+    are arithmetically safe for this geometry and 4/7/8/9 are
+    board-qualified; the research line lifts this bound explicitly."""
     d = BASE / profile
     cfg_bytes = (d / "channel_config.json").read_bytes()
     cfg = parse_json(cfg_bytes)
@@ -126,6 +136,10 @@ def load_params(profile, n, k):
     require(integer(cfg["N"], 1, 64) == n, f"{profile}: config N mismatch")
     require(integer(cfg["K"], 1, 64) == k, f"{profile}: config K mismatch")
     bias_width = integer(cfg["bias_width"], 1, 32)
+    if hw_bias_width is not None:
+        require(bias_width == hw_bias_width,
+                f"{profile}: bundle bias_width {bias_width} != hardware "
+                f"bias width {hw_bias_width}")
     lo, hi = -(1 << (bias_width - 1)), (1 << (bias_width - 1)) - 1
 
     digest = __import__("hashlib").sha256()
@@ -149,6 +163,9 @@ def load_params(profile, n, k):
 
         bias = integer(e["bias_quantized"], lo, hi)
         shift = integer(e["shift"], 0, 31)
+        require(shift <= max_shift,
+                f"{profile}: shift {shift} exceeds the frozen-baseline "
+                f"admission scope 0..{max_shift} (R14-01 containment)")
         relu = boolean(e["relu_en"])
 
         channels.append((kernel, bias, shift, 1 if relu else 0))
@@ -463,7 +480,8 @@ def switch_to(profile, catalog, anchors, ctx):
     firmware_hash = hashlib.sha256(firmware.read_bytes()).hexdigest()
     require(firmware_hash == hw["artifacts"]["firmware_bin_sha256"],
             f"{profile}: firmware hash mismatch")
-    channels, bundle_hash = load_params(profile, n, k)
+    channels, bundle_hash = load_params(profile, n, k,
+                                        hw_bias_width=acc["bias_width"])
     log(f"  admitted {profile} parameter bundle {bundle_hash[:16]}")
 
     require(ctx.get("buffer_size"), "runtime buffer size not discovered")
@@ -744,7 +762,8 @@ def main():
             hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
             acc = hw["accelerator"]
             n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
-            channels, _bundle = load_params(profile, n, k)
+            channels, _bundle = load_params(profile, n, k,
+                                            hw_bias_width=acc["bias_width"])
             padded = load_input(n, w, h)
             expected = make_expected(padded, n, w, h, channels) \
                 if w * h * k <= REF_POSITION_LIMIT else None
@@ -821,7 +840,8 @@ def do_switch_frames(profile, catalog, anchors, ctx, frames):
     hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
     acc = hw["accelerator"]
     n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
-    channels, _bundle = load_params(profile, n, k)
+    channels, _bundle = load_params(profile, n, k,
+                                    hw_bias_width=acc["bias_width"])
     padded = load_input(n, w, h)
     expected = make_expected(padded, n, w, h, channels) \
         if w * h * k <= REF_POSITION_LIMIT else None

@@ -222,6 +222,155 @@ def main():
     assert all(f["mismatches"] == 0 for f in rec["frames"])
     print("MOCK OK: soak image exact-reference mode")
 
+    # 4d) R14-03: a bad soak image must be rejected BEFORE any hardware
+    # switch (zero-mutation ordering, mirroring run mode)
+    switch_calls = []
+    real_switch = MH.M.switch_to
+
+    def spy_switch(*a, **kw):
+        switch_calls.append(1)
+        return real_switch(*a, **kw)
+    MH.M.switch_to = spy_switch
+    try:
+        try:
+            CLI.main(["soak", "--profile", "A32", "--frames", "2",
+                      "--image", str(ARCHIVE / "definitely-missing.png")])
+            raise AssertionError("missing soak image did not propagate")
+        except RuntimeError as exc:
+            assert "not a regular file" in str(exc), exc
+        assert not switch_calls, "switch_to ran before soak image admission"
+        # 4e) R14-05: oversize source rejected by the bounded supervisor
+        # read; non-regular sources rejected before any read
+        big = ARCHIVE / "m8_mock_oversize.bin"
+        big.write_bytes(b"\0" * (CLI.MAX_SOURCE_BYTES + 1))
+        try:
+            CLI.main(["soak", "--profile", "A32", "--frames", "1",
+                      "--image", str(big)])
+            raise AssertionError("oversize soak image did not propagate")
+        except RuntimeError as exc:
+            assert "exceeds" in str(exc), exc
+        assert not switch_calls, "oversize image reached the switch"
+        try:
+            CLI.main(["soak", "--profile", "A32", "--frames", "1",
+                      "--image", str(ARCHIVE)])
+            raise AssertionError("directory image did not propagate")
+        except RuntimeError as exc:
+            assert "not a regular file" in str(exc), exc
+        assert not switch_calls
+    finally:
+        MH.M.switch_to = real_switch
+    print("MOCK OK: soak admission ordering + bounded supervisor read "
+          "(zero hardware mutation on bad input)")
+
+    # 4f) R14-02: cleanup failure must demote the outcome to FAILED, persist
+    # the record, release the lock, and exit nonzero (no terminal PASS line)
+    import io
+    from contextlib import redirect_stdout
+    set_current("A32")
+    real_cleanup = MH.M.safe_cleanup
+
+    def cleanup_boom(ctx):
+        raise RuntimeError("mock injected cleanup failure")
+    MH.M.safe_cleanup = cleanup_boom
+    try:
+        out = io.StringIO()
+        try:
+            with redirect_stdout(out):
+                CLI.main(["run", "--profile", "A32", "--frames", "1"])
+            raise AssertionError("cleanup failure did not propagate")
+        except RuntimeError as exc:
+            assert "cleanup failure" in str(exc), exc
+        assert "PASS" not in out.getvalue(), out.getvalue()
+    finally:
+        MH.M.safe_cleanup = real_cleanup
+    rec, _ = newest_record()
+    assert rec["outcome"] == "FAILED", rec["outcome"]
+    assert rec["cleanup"]["ok"] is False
+    assert "cleanup failure" in rec["cleanup"]["error"]
+    MH.M.acquire_lock()
+    MH.M.release_lock()   # lock was released: immediately reacquirable
+    print("MOCK OK: cleanup failure -> FAILED record, nonzero exit, lock freed")
+
+    # 4g) R14-02: KeyboardInterrupt during cleanup must still persist the
+    # record and release the lock before re-raising
+    set_current("A32")
+
+    def cleanup_ki(ctx):
+        raise KeyboardInterrupt()
+    MH.M.safe_cleanup = cleanup_ki
+    try:
+        try:
+            CLI.main(["run", "--profile", "A32", "--frames", "1"])
+            raise AssertionError("cleanup KeyboardInterrupt did not propagate")
+        except KeyboardInterrupt:
+            pass
+    finally:
+        MH.M.safe_cleanup = real_cleanup
+    rec, _ = newest_record()
+    assert rec["outcome"] == "FAILED" and rec["cleanup"]["ok"] is False
+    MH.M.acquire_lock()
+    MH.M.release_lock()
+    print("MOCK OK: KeyboardInterrupt in cleanup -> record kept, lock freed")
+
+    # 4h) R14-02: record persistence failure must also exit nonzero
+    set_current("A32")
+    real_write = CLI.write_record
+
+    def write_boom(run_dir, rec):
+        raise OSError("mock injected persistence failure")
+    CLI.write_record = write_boom
+    try:
+        try:
+            CLI.main(["run", "--profile", "A32", "--frames", "1"])
+            raise AssertionError("persistence failure did not propagate")
+        except OSError:
+            pass
+    finally:
+        CLI.write_record = real_write
+    MH.M.acquire_lock()
+    MH.M.release_lock()
+    print("MOCK OK: persistence failure -> nonzero exit, lock freed")
+
+    # 4i) R14-04: a bundle declaring a wider bias width than the hardware
+    # manifest is rejected at admission; so is an out-of-range bias value
+    wider = STAGE_COPY / "A32WIDE"
+    shutil.copytree(STAGE_COPY / "A32", wider)
+    cfg_p = wider / "channel_config.json"
+    cfg = json.loads(cfg_p.read_text())
+    cfg["bias_width"] = 32
+    cfg["channels"][0]["bias_quantized"] = 1 << 23
+    cfg_p.write_text(json.dumps(cfg))
+    try:
+        MH.M.load_params("A32WIDE", 3, 8, hw_bias_width=24)
+        raise AssertionError("wide-bias bundle admitted")
+    except RuntimeError as exc:
+        assert "bias width" in str(exc), exc
+    cfg["bias_width"] = 24
+    cfg_p.write_text(json.dumps(cfg))
+    try:
+        MH.M.load_params("A32WIDE", 3, 8, hw_bias_width=24)
+        raise AssertionError("out-of-range bias admitted")
+    except (RuntimeError, ValueError):
+        pass
+    print("MOCK OK: hardware bias width enforced over bundle self-declaration")
+
+    # 4j) R14-01 containment: defective shifts (24..31) rejected at
+    # admission; a legal shift still admits
+    cfg["channels"][0]["bias_quantized"] = 0
+    cfg["channels"][0]["shift"] = 24
+    cfg_p.write_text(json.dumps(cfg))
+    try:
+        MH.M.load_params("A32WIDE", 3, 8)
+        raise AssertionError("shift-24 bundle admitted")
+    except (RuntimeError, ValueError) as exc:
+        assert "R14-01 containment" in str(exc), exc
+    cfg["channels"][0]["shift"] = 8
+    cfg_p.write_text(json.dumps(cfg))
+    chans, _b = MH.M.load_params("A32WIDE", 3, 8)
+    assert len(chans) == 8
+    shutil.rmtree(wider)
+    print("MOCK OK: R14-01 containment - defective shifts rejected at admission")
+
     # 5) failure path: injected frame error must still produce a record
     real_run_frame = MH.M.run_frame
 
@@ -246,9 +395,12 @@ def main():
     with redirect_stdout(out):
         CLI.main(["list"])
     listing = out.getvalue()
-    n_runs = len(list(ARCHIVE.glob("*/record.json")))
+    recs = list(ARCHIVE.glob("*/record.json"))
+    n_runs = len(recs)
+    n_pass = sum(1 for p in recs
+                 if json.loads(p.read_text())["outcome"] == "PASS")
     assert f"({n_runs} runs)" in listing, listing
-    assert listing.count(": PASS") == 9, listing
+    assert listing.count(": PASS") == n_pass, (listing.count(": PASS"), n_pass)
     assert "UNVERIFIED" in listing and "FAILED" in listing, listing
     rec, _ = newest_record()
     out = io.StringIO()

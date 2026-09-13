@@ -1,4 +1,408 @@
-# Current feedback for GLM: M7 closeout and M8 review
+# Full-project integration feasibility audit for GLM — 2026-09-14
+
+## Outcome
+
+**The selective-integration strategy is viable, but the repository is not yet in a state where the M10–M12 plan can be executed end to end without losing reproducibility.** Git-level conflict risk is low; build, release, deployment, and runtime-model risk is materially higher. Do not merge the teammate branch wholesale and do not start from `origin/v1-bringup`. First close or explicitly defer the gates below, then create the integration branch from the current local `v1-bringup` HEAD.
+
+This was a read-only/static pass over the live Git state, current RTL and Vivado flows, software/runtime, profile bundles and manifests, PetaLinux stage, milestone/status documents, evidence indexes, and the teammate's 100/125 MHz branch history. No simulation, synthesis, implementation, generator, test suite, packaging command, or board operation was run during this audit.
+
+Verified repository identity and health:
+
+- branch: `v1-bringup`;
+- current HEAD: `e97e002a53efc81f11374b7b97a62b5f3fea1110`;
+- local branch is 17 commits ahead of `origin/v1-bringup`;
+- the only working-tree change is this `feedback.md` review;
+- `git fsck --no-dangling` completed cleanly;
+- there are currently no Git tags, including no `v1-m9-release` tag;
+- teammate 125 MHz tip: `00a6e116b2823692c4e9de63eae04bc154d4dc1a`, whose direct parent and merge base with this line is `fb66066ab6eef721e09ce34d385cb53ca95e78d5`.
+
+Since `fb66066`, the two lines have no overlapping RTL/build-source edits; their only path overlap is `AI_HANDOFF.md`. That makes a selective transplant mechanically reasonable. It does **not** prove that the two build systems, manifests, runtime APIs, clocks, or numerical implementations are compatible.
+
+## Release-blocking findings
+
+### FP-01 — M9 is not closed and the integration baseline is not frozen
+
+`M9_CHECKLIST.md` records the M8 suite, the 1,000-frame soak, and five physical power-cycle boots as complete. The clean-build reproduction, release snapshot/manifest, final limitations record, and `v1-m9-release` tag remain unchecked; the tag does not exist. `AI_HANDOFF.md` therefore overstates the position when it calls M0–M9 effectively done. It also contains stale statements that M7 still needs a commit, that all M8 P1 findings are closed, and that board evidence totals only 765+ frames/90 reconfigurations.
+
+Before integration, either close M9 honestly or create a clearly named **pre-M9 integration baseline**. Do not label the current line a frozen M9 release while the remaining gates and R14 findings are open.
+
+### FP-02 — The qualified A32 release cannot currently be reproduced from the repository
+
+The M4 evidence expects A32 `.bit` SHA-256 `8bc608...`, but that artifact was not found in this repository, `D:\MyProjects\release_checkpoints`, or `C:\VMShare`. Board evidence identifies `/lib/firmware/m7_A32.bin` with SHA-256 `b59378e4...`; neither that binary nor the exact runtime `hardware_A32.json` containing its `firmware_bin_sha256` is preserved here. `software/hardware.json` is historical and lacks the fields required by the current strict manager.
+
+The B32, C32, D32, and D640 `.bit`/`.bit.bin` files currently match their local manifests, but these artifacts are ignored by Git. A fresh clone therefore does not contain the qualified hardware library. Preserve the artifacts in a checksum-addressed external release store or an approved artifact mechanism before cleanup, and retrieve the exact A32 firmware/manifest from the board while it is still available. Compare `.bit` to `.bit` and `.bit.bin` to `.bit.bin`; their hashes are not expected to be equal.
+
+### FP-03 — The PetaLinux recipes recreate M2-P, not the board-proven M7/M8 runtime
+
+`deploy/petalinux/SHA256SUMS.txt` verifies all 76 entries, but that only proves internal integrity of the old deployment stage. The recipe copy of `conv_lab/dma.py` lacks current layout validation, the recipe copy of `preprocessing.py` lacks the board-proven supervisor demotion path, and `conv_lab/profiles.py` is absent. The recipes do not install `m7_switch.py`, `m8_cli.py`, `m8_import.py`, the five-profile catalog/library, or the corresponding firmware images.
+
+A clean PetaLinux rebuild from the tracked recipes would therefore regress from the live board state. Create a new versioned recipe revision that installs the exact current runtime, profiles, manifests, library data, and firmware; record source-to-recipe hashes; build and re-run installed-file, activation, inference, and recovery qualification. Do not silently overwrite the older M2-P recipe evidence.
+
+### FP-04 — The current profile build flow will not build the teammate datapath correctly
+
+The live root project and `Convlution_Accelerator.xpr` register the baseline `conv_channel`/`conv_engine` path, not `cfglut5_kcm.vhd` or `cfglut5_bitheap.vhd`. `scripts/prepare_profile.py` does not include those sources, while `scripts/build_profile.tcl` clones the root XPR and enforces the current 100 MHz/profile assumptions. The teammate release flow instead creates a fresh Vivado project, explicitly adds the CFGLUT sources, and imports its saved 125 MHz block design. The live BD-recreation script is still a 100 MHz description and remains unreconciled with the saved 125 MHz design.
+
+Choose one authoritative research-build path before transplanting RTL. The recommended path is to adapt the teammate's fresh-project release builder so it consumes the current frozen profile snapshots, manifests, checksum policy, and output-directory discipline. The alternative is to update the root XPR, source lists, profile preparer, builder, and recreation Tcl together. Mixing these flows will either omit the CFGLUT sources or produce a build that cannot be recreated from Tcl.
+
+### FP-05 — Runtime identity currently conflates geometry, hardware implementation, and model
+
+The present manager/catalog assumes exactly five identities (`A32`, `B32`, `C32`, `D32`, `D640`) and maps each identity to both one firmware manifest and one parameter directory. That cannot represent a controlled comparison of `B32_MAC100`, `B32_CFGLUT100`, and `B32_CFGLUT125` using the same N3/K16 weights and image set without duplicating or relabeling model data.
+
+M10 must introduce orthogonal identifiers:
+
+1. a shape/ABI compatibility ID such as `N3_K16_W32_H32`;
+2. a hardware implementation/release ID such as `B32_MAC100` or `B32_CFGLUT125`;
+3. a model-bundle ID independent of hardware.
+
+The catalog must select a hardware release and a compatible model bundle separately, validate ABI/shape/numerical compatibility, and bind both hashes into the run record. A standalone EF125 runner is acceptable for the first board proof, but it is not an acceptable M12 comparison interface.
+
+### FP-06 — Existing R14 correctness findings remain live
+
+The current files relevant to R14-01 through R14-10 have not changed since that review. In particular, the shift-24+ rounding defect, unsafe success/cleanup semantics, mutation before soak-image admission, signed-bias validation gap, unbounded pre-decode read, unselectable imported bundles, incomplete admitted-context binding, weak importer idempotency, incomplete resource accounting, and conversion-overwrite risk remain actionable. At minimum, the P1 findings must be fixed and requalified before the current runtime is called an unconditional release baseline.
+
+### FP-07 — Profile metadata and project documentation have drifted
+
+The active `config_pkg.vhd` is D640 (N3/K4/640×480), not B32. `profiles/README.md` says B32 is active, lists build identities inconsistent with `profiles/m7_profiles.json`, and still describes switching as future work. `software/README.md` still says M1/M2 and real qualification are pending. `report/report.md` does not include the M9 1,000-frame/cold-boot campaigns and still references an older record schema/evidence total. `M9_CHECKLIST.md` also retains a contradictory known-limits sentence about physical power-cycle evidence.
+
+Update these only after the source/release state is settled. Documentation must be generated or checked against the authoritative catalog and evidence index so another stale handoff cannot become the source of truth.
+
+### FP-08 — Baseline layout fields are contradictory even though runtime recomputes them
+
+The A32/B32/C32/D32 hardware manifests retain `rx_offset=65536`; the approved 64-byte-aligned layouts derive 5,440 bytes for A/B/D and 5,568 for C. D640 correctly records 313,728. The runtime currently recomputes layout, so this did not invalidate the verified local payload arithmetic, but two authorities for the same value are unsafe. Remove the redundant field or make manifest generation derive and validate it from the approved layout function.
+
+## Static checks that passed
+
+- All 86 Python files parsed successfully without importing or executing them.
+- All 37 JSON files parsed successfully.
+- All five parameter bundles satisfy the inspected canonical-flat-2 structural rules: expected channel counts, per-channel weight counts, signed-24 biases, Boolean ReLU, shifts 0–31, and two-digit coefficient bytes.
+- Derived layouts fit the 4 MiB policy: A32 extent 21,888; B32 38,272; C32 22,016; D32 13,696; D640 2,771,392 bytes.
+- Local B32/C32/D32/D640 bitstreams and firmware binaries match their recorded manifest hashes.
+- The PetaLinux deployment-stage checksum manifest passes 76/76 entries.
+- The current `impl_1` outputs correspond to D640 and match the local D640 artifact hashes.
+
+These checks are useful integrity evidence, not substitutes for simulation, clean synthesis/implementation, ARM execution, or board qualification.
+
+## Corrected integration sequence
+
+### Gate 0 — Make the current baseline recoverable
+
+1. Resolve the release-critical R14 findings or explicitly record each accepted deferral and its containment.
+2. Recover and archive the exact A32 firmware and runtime manifest; preserve all five qualified hardware artifacts, XSAs, reports, manifests, and board evidence under immutable checksums outside ignored working files.
+3. Reconcile the current runtime into a new versioned PetaLinux recipe and prove a clean image installs the same bytes and can activate/recover every retained baseline profile.
+4. Reproduce the chosen baseline from a clean source checkout, record tool/version/directive identity, update the evidence/report status, commit the current local work, push the 17 unpublished commits, and tag only if the M9 gates actually pass.
+
+### Gate 1 — Establish a research-variant build and catalog contract
+
+1. Create the integration branch from the resulting local HEAD, never from stale `origin/v1-bringup` and never by checking out over the live D640 project.
+2. Separate shape/ABI, hardware-release, and model-bundle identities in schemas and manager APIs.
+3. Create one authoritative clean research build flow that explicitly registers the CFGLUT sources and regenerates or validates the 125 MHz platform. Preserve the baseline recovery build unchanged.
+4. Add a hard board/part/platform gate before accepting the teammate design.
+
+### Gate 2 — Transplant and prove the minimum N3 datapath
+
+1. Selectively transplant the exact multiplier/bitheap, fixed rounding, and only the required controller/prefetch changes. Preserve the current ABI unless a reviewed version bump is necessary.
+2. Regenerate the bitheap and compare generated output byte-for-byte or semantically against the checked-in source.
+3. Add directed tests for nonzero weights, accumulator extrema, every shift, signed-24 bias extrema, ReLU boundaries, AXI configuration lifecycle, START/config races, RESET/ABORT during configuration, stream stalls, TLAST, and reset recovery.
+4. Build `B32_CFGLUT125` from a clean tree and preserve the exact bit/bin/XSA, utilization, timing, power, tool logs, source manifest, and hashes. Treat the teammate engine as N=3-specialized; retain the legacy path for C32/N5 unless a separate N5 bitheap is designed and qualified.
+
+### Gate 3 — Board qualification
+
+1. Package the 125 MHz platform with a matching XSA/FSBL/device tree/clock contract; do not combine a 125 MHz PL with unreviewed 100 MHz platform assumptions.
+2. Activate through FPGA Manager using the new hardware-release identity, then run identity/capability checks, exact known-answer inference, 100+ distinct-frame soak, repeated reconfiguration, physical power cycles, and injected fault/recovery cases.
+3. Verify the actual PL clock and capture ILA or equivalent counters if claiming an edge-free internal initiation interval. Keep internal window rate, external 64-bit AXIS beats per output position, end-to-end latency, and throughput as separate metrics.
+
+### Gate 4 — Matched research comparison
+
+Audit or rebuild `B32_CFGLUT100` from the same source and directives as the 125 MHz variant, changing only the intended clock/platform variable. Compare it against the retained `B32_MAC100` using identical weights, images, geometry, preprocessing, quantization, transfer sizes, software path, and measurement method. Report timing closure, resources, power method, exact correctness, latency, steady-state throughput, and recovery separately. Do not call the branch's simulation-only edge count or unmatched WNS a board-level performance result.
+
+## Deadline-aware recommendation
+
+The shortest defensible route is: preserve/recover the current baseline now; fix the release-critical runtime defects; create an isolated `B32_CFGLUT125` research build and prove one exact board path; then add the orthogonal catalog support and matched 100 MHz comparison. Do not spend the deadline merging all profiles into the new datapath before the K16 path is reproducible and board-qualified. K4/K8 can follow on the N=3 engine; C32/N5 should remain on the proven legacy implementation until it has its own exact generated reduction network.
+
+---
+
+# Teammate-branch integration-plan review for GLM — 2026-09-14
+
+## Verdict
+
+**Do not merge `origin/feature/k16-cfglut5-edgefree-125mhz` yet. The branch contains a strong exact CFGLUT5/Dadda implementation and useful timing work, but `INTEGRATION_PLAN_M10_M12.md` needs factual corrections and several explicit gates before it is safe or reproducible.** Integrate through a selective transplant onto the current `v1-bringup` line; do not adopt the branch wholesale.
+
+Reviewed identities:
+
+- current line: `e97e002a53efc81f11374b7b97a62b5f3fea1110`;
+- teammate release tip: `00a6e116b2823692c4e9de63eae04bc154d4dc1a`;
+- teammate tip's direct parent and merge base: `fb66066ab6eef721e09ce34d385cb53ca95e78d5`.
+
+Only `feedback.md` was edited. The teammate ref was inspected through Git objects without checkout. No merge, source edit, generator, simulation, build, package, programming or board command was run.
+
+### What is worth keeping
+
+- The exact runtime-configurable CFGLUT5 multipliers and generated signed Dadda bitheap are substantive research work, with zero accelerator DSP/BRAM use.
+- The split post-processing pipeline appears to solve the baseline large-shift rounding failure without widening the whole product-sum pipeline.
+- `cfg_pending`/`cfg_ready`, registered local window banks, the prefetch slot, registered controller decode and completion staging are well-motivated architectural/timing changes.
+- The failed broad-`MAX_FANOUT` experiment is documented instead of hidden; the local registered-bank remedy is the credible result to preserve.
+- The fresh-project release flow has useful fail-closed timing/DRC/route gates and RTL source/build comparisons.
+- Host/simulation evidence is broad and the branch correctly labels board execution `NOT_RUN`.
+
+## Required corrections to `INTEGRATION_PLAN_M10_M12.md`
+
+### IP-01 [P1] Correct the lineage and integration method
+
+The plan and handoff call the published release ref a sibling lineage. That is not true for the ref we can actually integrate: `00a6e11` is a direct one-commit child of `fb66066`, and `fb66066` is the merge base. Earlier CFGLUT development may have happened on a separate lineage, but the published release commit was laid onto the M8-era base.
+
+Required plan change: state this distinction explicitly. Create the integration branch from the current mainline, then selectively import reviewed files or commits from `00a6e11`. Do not use an unreviewed wholesale merge/cherry-pick: that commit deliberately deletes the root XPR, historical XSAs and the tracked B32 generated tree, and it predates current M8/M9 fixes.
+
+### IP-02 [P1] The remote branch does not contain its claimed release artifacts or reports
+
+The remote tree contains no `work/release_125/artifacts`, `dist/edgefree125`, `.bit`, `.xsa`, or whitelisted timing/power report/log evidence. Those outputs are intentionally ignored and existed only in the teammate's local workspace. A fresh clone therefore cannot perform the M11 instruction to import `edgefree.xsa`, nor independently validate physical numbers.
+
+There is also a recorded discrepancy: the handoff/plan say setup WNS `+0.201 ns`, while the authoritative tracked `release/STATUS.md` and commit message say `+0.178 ns`; WHS is `+0.019 ns`. No tracked report arbitrates this.
+
+Required gate: either obtain a complete immutable teammate artifact/evidence package with hashes and provenance, or reproduce the build from a clean tree. Until then, call it a routed release-candidate claim, not a qualified package, and mark all physical metrics provisional.
+
+### IP-03 [P1] The engine is N=3-specialized, not K16/W32-specialized
+
+The generated bitheap is fixed at nine taps and 21-bit sum rows, and `conv_engine.vhd` explicitly asserts `C_N = 3`. In contrast, channel count is generic (`C_K`), bank count is derived from it, and image width/height are generic in the surrounding design. Therefore:
+
+- A32 N3/K8 and D32/D640 N3/K4 are plausible configuration/rebuild/qualification variants of this engine;
+- B32 N3/K16 is the shipped instance;
+- C32 N5/K8 needs a new N5 bitheap/generator path or must stay on the legacy MAC engine.
+
+Rewrite F3 accordingly. Do not spend deadline time designing dual-engine coexistence before proving the simpler N3 K4/K8/K16 variants. Prioritize B32/EF125 first, then N3 variants; treat an N5 CFGLUT generator as a later, independently gated extension.
+
+### IP-04 [P1] Add an explicit board-platform decision gate
+
+This release is hard-targeted to the ZedBoard project: `xc7z020clg484-1`, `Zedboard-Master.xdc`, the tracked ZedBoard block design and `platform: zedboard_linux`. It is not a PYNQ-Z2 release. Because the competition wording about “Zynq-7000 XC7Z020/PYNQ-Z2” was still ambiguous, M10 must resolve the physical board before FSBL/PetaLinux work. If PYNQ-Z2 is required, constraints, PS configuration, project target, bitstream/XSA and board qualification must be ported/rebuilt; the ZedBoard artifact cannot simply be reused.
+
+### IP-05 [P1] Reconcile the stale block-design recreation script
+
+The tracked `.bd` and release build target native PS FCLK0 at 125 MHz, but `scripts/create_accelerator_dma_bd.tcl` still requests 100 MHz and describes one common 100 MHz PL domain. The release flow imports the saved `.bd`, so the claimed fresh build does not prove that the repository's BD-recreation path reproduces the release.
+
+Required: update and validate the recreation script or explicitly retire it as non-authoritative. For sustainable builds, generate a BD from the supported script and compare relevant IP parameters, addresses, widths, resets and clocks with the committed release BD before sign-off.
+
+### IP-06 [P1] Do not package the teammate branch's old manager and parameter dialect
+
+`scripts/package_release.py` copies that branch's `software/m7_switch.py` and legacy `golden_model/data/weights_k16`. Its `load_params()` uses permissive JSON/type rules and returns only `channels`. Current mainline requires `canonical-flat-2`, exact types/fields, weight-file binding and returns `(channels, bundle_sha256)`. The branch config is format 2, declares `bias_bits: 32`, stores integer `relu_en`, and does not satisfy the current strict bundle contract.
+
+A blind mixture will fail: `edgefree_board.py` expects the old `load_params()` return shape and old data. Replace the packaged manager/backend with the current audited software, convert K16 parameters into the current canonical model library, and add an adapter/integration test that exercises the exact current API. F5 should say the branch has source K16 weights and an exact runtime reference, but lacks a current canonical bundle, frozen expected anchor and board-qualified run—not that no K16 golden material exists.
+
+### IP-07 [P1] Make runtime layout and hardware metadata single-source-of-truth
+
+`release/hardware.json` records `rx_offset = 65536`; the approved four-guard layout for B32 computes `rx_offset = 5440`, and the branch runner ignores the manifest value by recomputing the layout. This makes release metadata contradictory/dead. The same template records an exact 4 MiB DMA buffer even though runtime discovery is the authoritative platform fact.
+
+Required: either store a derived-layout policy and calculate it everywhere, or require manifest values and validate them against the calculation before any hardware access. Distinguish required/minimum buffer capacity from the discovered allocation. Add rejection tests for stale layout and capacity metadata.
+
+### IP-08 [P1] Expand reproducibility and integration verification
+
+The package script binds imported RTL files, which is useful, but it does not fully bind the `.bd`, XDC, generator, release scripts, IP configuration, tool build/settings or generated-bitheap equivalence. M10 must create a complete build-input manifest and preserve the reports/artifacts needed to reproduce the result.
+
+Also add directed wrapper/controller tests for:
+
+- START racing with or arriving during CFGLUT configuration;
+- coefficient writes while configuration is pending;
+- RESET and ABORT with a pending prefetched window;
+- no stream acceptance before RUN;
+- parameter readback not being mistaken for installed CFGLUT state before `cfg_ready`;
+- exact one-time transition out of CONFIG after the last truth bit.
+
+The handoff already identifies serializer release-phase and pending-prefetch reset/abort coverage as open; they must appear explicitly in M10/M11 rather than under a generic controller audit.
+
+### IP-09 [P1] Fix throughput, edge-free and on-board evidence language
+
+For K16 signed16 output on a 64-bit AXI Stream, one complete spatial position is 32 bytes and therefore takes four 64-bit beats. The design may accept one internal window per clock and may emit one 64-bit beat per clock without row-edge bubbles, but the external interface does not sustain one complete K16 position per clock. Use unambiguous units everywhere: channel-results/cycle, complete positions/cycle, stream beats/cycle and frames/s.
+
+The reviewed branch exposes edge-bubble metrics in simulation; no on-silicon row-edge metric register was found. The board runner can measure end-to-end frames, but cannot by itself prove internal zero-bubble scheduling. If hardware proof is mandatory, specify an ILA capture or synthesizable counters; otherwise keep simulation bubble proof and board throughput evidence separate.
+
+Do not report `~128.2 MHz` as established Fmax from one positive-slack 125 MHz route. At most it is a rough estimate; a tighter constraint can change the critical path and placement.
+
+### IP-10 [P1] Strengthen numerical verification of the imported rounding fix
+
+The teammate implementation's registered discarded-bit approach is directionally correct for shifts beyond the accumulator width and avoids the baseline's same-width rounding-add overflow. Update F1 from “shift 26–31” to the actual baseline risk range documented in R14-01: shift 24 can overflow for large positive accumulations, shift 25 has a zero-input counterexample, and shifts 26–31 are also wrong for part of the domain.
+
+The teammate pipeline test exercises all shifts and biases largely with zero product sum. Before claiming the arithmetic contract closed, compare RTL with the independent exact oracle for nonzero positive/negative accumulations, accumulator extrema, rounding boundaries, signed24 bias endpoints, saturation rails and both ReLU states across all 32 shifts.
+
+### IP-11 [P1] Make M12 an apples-to-apples research comparison
+
+For MAC versus CFGLUT and 100 versus 125 MHz comparisons, freeze identical parameters, input corpus, output semantics, clock definitions, tool/version/directives and measurement method. The cited 100 and 125 MHz CFGLUT resource totals differ, so do not call them a pure-frequency axis until source/build manifests prove the intended controlled difference.
+
+Vectorless power is an implementation estimate, not measured workload energy. Label it as such and do not mix full-system power with accelerator-hierarchy power in one FOM. Preserve both raw measures—results/cycle and results/s—and state exactly which resource/power boundary the competition formula uses.
+
+## Corrected critical path for M10–M12
+
+### M10A — freeze and repair the baseline
+
+1. Resolve or explicitly scope every current P1 release blocker already listed below, especially R14-01 through R14-04.
+2. Produce the clean-build baseline tag/evidence only after its stated contract matches what was actually qualified.
+3. Preserve current M8/M9 software, profile library and immutable evidence before importing research RTL.
+
+### M10B — make the teammate input reproducible
+
+1. Resolve the target board.
+2. Acquire the missing teammate artifact/report package or reproduce it from a clean tree.
+3. Correct the WNS record and create a complete build-input/evidence manifest.
+4. Reconcile the 100/125 MHz BD recreation path.
+5. Regenerate and byte-compare the Dadda file, then run the expanded numerical and lifecycle tests.
+
+### M11 — integrate the smallest competition-ready slice
+
+1. Branch from current mainline and selectively transplant the CFGLUT/Dadda, pipeline, prefetch/window-bank and timing-safe controller changes.
+2. Keep the current manager/CLI/importer; adapt them deliberately to `cfg_ready` and canonical K16 data.
+3. Build and qualify N3/K16/W32 at 125 MHz first with exact anchors, >=100-frame soak, recovery/fault tests, measured clock and evidence hashes.
+4. After that passes, build/qualify N3 K8 and K4 variants; include D640 only if the selected board and deadline allow it.
+5. Keep C32 N5 on the frozen legacy engine until an N5 CFGLUT generator is independently ready.
+
+### M12 — controlled comparison and release
+
+1. Compare matched B32 MAC100, CFGLUT100 and CFGLUT125 builds only after their provenance and measurement boundaries match.
+2. Keep simulation edge-bubble evidence separate from board frame/throughput evidence unless ILA/counters directly measure bubbles.
+3. Publish raw timing, resources, estimated/measured power and exact definitions before derived FOM values.
+4. Tag baseline and research releases separately, preserve both recovery images/artifact manifests, and update the final report with only qualified claims.
+
+## Integration-plan acceptance gate
+
+GLM should revise `INTEGRATION_PLAN_M10_M12.md` to close IP-01 through IP-11 before modifying RTL. The most deadline-efficient route is **current software + selective exact N3 CFGLUT RTL + one fully qualified B32/125 release first**. Generalization and N5 work must not delay that demonstrable slice.
+
+---
+
+# Current feedback for GLM — 2026-09-14
+
+## Verdict and scope
+
+**There is substantial, credible progress since the previous review. Preserve the passing baseline and its evidence. However, M8's unconditional COMPLETE claim is premature, and M9 must remain open.** The highest-priority issue is a numerical corner case in the baseline RTL; there are also fail-closed and library-integration gaps in the current software.
+
+Reviewed branch: `v1-bringup`; implementation/evidence through `a3f31a5`, with documentation commit `e97e002` arriving during the review; changes since `3117f0f`. Reviewed the current M7 manager, M8 CLI/importer, decoder changes, conversion utility, mocks, qualification transcripts, M9 checklist, report corrections, and the baseline arithmetic implicated by the new research handoff. The `HANDOFF_v1bringup_to_edgefree125.md` and `INTEGRATION_PLAN_M10_M12.md` documents (initially untracked, then committed as `e97e002` during this review) describe a separate research lineage/plan, not work already integrated or board-qualified on this branch. This review does not certify that sibling branch.
+
+Only `feedback.md` was edited. No tests, imports of application code, simulations, generators, conversions, builds, programming or board commands were executed. Counterexamples below are from static inspection, not claimed runtime results. Saved transcripts are reported user-relayed evidence; they are not new reviewer-observed board tests.
+
+### Progress identified
+
+| Area | What is now present | Review disposition |
+|---|---|---|
+| M7 ownership/layout/cleanup | Kernel `flock`; four guards; corrected RX offsets; runtime allocation and 22-bit length checks; cleanup requires legal quiescence and final `0x181` | Real fixes; retain them |
+| Parameter admission | Strict scalar types/coefficient grammar, explicit `canonical-flat-2` conversion receipts, bundle digest, catalog/manifest comparison and WIDTHS register checks | Significant improvement; hardware-bias compatibility and snapshot sharing still need fixes below |
+| M8 run path | Custom decoding delegated to a demoted Linux worker; `run` admits the image before switching; unverified output is labelled UNVERIFIED; exclusive run directories and atomic record replacement | Several prior findings partially or substantially resolved; do not extend that verdict to `soak` or all error paths |
+| Importer | Model/dataset validation, transport extraction, collision check, publication and external receipts; board import/idempotency/list evidence | Import-only demonstration, not imported-model inference |
+| E2 | Five profiles report four stimulus frames each, including both saturation rails and canonical reinstall; matrix rerun reports 58 reloads and all 20 ordered pairs | Valuable new coverage; not exhaustive numerical coverage |
+| M9 soak | Six legs sum to 1,000 frames: A200/B200/C200/D200/D640100/B100, two image paths | Preserve as a six-leg campaign. It is not one uninterrupted 1,000-frame sequence or 1,000 distinct images |
+| M9 cold boot | Five reported physical power removals/restorations, four reload paths plus A32 same-build activation | Stronger than the previous warm-reboot evidence; boot 1's script hash was not captured, as the record acknowledges |
+| Report | Interface throughput is now labelled a theoretical ceiling; final D640 timing evidence is distinguished from intermediate results | Prior wording improved; latest campaigns and schema references still need updating |
+| Research integration | EF125 handoff and M10–M12 planning documents | Proposed next lineage, not a replacement for finishing baseline gates |
+
+The current `m7_switch.py` MD5 is `2fe949ca9040dd3fda990016c78a4474`; current `m8_cli.py` MD5 is `5542738961b01b2a2b1be4ac18136313`. Both match the latest M9 transcript identifiers. This resolves the earlier manager-source mismatch for those reported runs. It does not cryptographically bind every dependency, bitstream or archived record to execution.
+
+## Blocking findings — address before release acceptance
+
+### R14-01 [P1] Baseline rounding overflows at supported large shifts
+
+References: `Convlution_Accelerator.srcs/sources_1/new/conv_channel.vhd:99`, `:159–165`; `config_pkg.vhd:106–107`; `software/m7_switch.py:547–560`.
+
+`C_FULL_W` is 25 for the approved profiles, but both the rounding constant and the addition are evaluated in that same signed width. A minimal legal counterexample is **all weights zero, bias zero, shift 25, ReLU disabled**. The reference returns `(0 + 2^24) >> 25 = 0`. In the RTL, `1 << 24` occupies the sign bit of signed25, becoming negative; the subsequent arithmetic shift produces **-1**. For shifts 26–31 the rounding constant is shifted out of the 25-bit vector; negative accumulators can also produce -1 instead of the reference's 0. Shift 24 can overflow the rounding addition for sufficiently positive valid accumulators.
+
+This is not exactly the research handoff's “out-of-range read” description: the current baseline uses a fixed-width add/shift. Correct the diagnosis in the integration plan. Existing low-shift passing vectors remain useful evidence, but the advertised 0..31 numerical contract is not fully satisfied. The new `extremes` saturation stimulus uses shift 0 and cannot detect this.
+
+Required: use an overflow-safe rounding implementation without widening the entire product-sum pipeline unnecessarily; add directed RTL/reference comparisons for all 32 shifts, especially 24/25/26/31, zero and signed bias endpoints, both ReLU states, and positive/negative near-rounding boundaries. Requalify affected artifacts after a fix. Do not mark this resolved solely because a sibling research branch has different arithmetic. A narrower frozen-release numerical scope would require an explicit approved contract change and matching admission restrictions.
+
+### R14-02 [P1] Cleanup/persistence failure still exits successfully; interruption can skip unlock
+
+References: `software/m8_cli.py:401–434`, `:536–562`, `:675–700`, `:778–805`, `:866–872`.
+
+After otherwise successful frames, an ordinary `safe_cleanup()` exception is caught and the record becomes FAILED, but the function returns normally. A `write_record()` exception is also swallowed. The executable consequently exits 0 despite failed cleanup or missing required evidence. Suppressing the terminal PASS message is an improvement, but a shell/GUI orchestrator still sees success. Additionally, a `KeyboardInterrupt` during cleanup is re-raised before `release_lock()`; an embedding caller which catches it keeps the lock, even though process termination would release it.
+
+Required: one shared finalization path across all four modes, an outer `finally` that always releases ownership, and a nonzero process result/raised error for cleanup or persistence failure. Preserve the primary failure and separately report cleanup/persistence errors. Add injected cleanup failure, record-write failure and cleanup interruption cases; assert nonzero outcome, no PASS, and immediate lock reacquisition. Current mocks inject a frame failure, not these finalization failures.
+
+### R14-03 [P1] New `soak --image` regresses pre-mutation admission
+
+Reference: `software/m8_cli.py:472–499`.
+
+`cmd_soak` calls `switch_to` before checking the custom-image reference limit or decoding the image. That call can reload PL, install parameters and execute the activation DMA frame. A missing/non-image input, wrong geometry, or unsupported D640 custom soak is rejected only afterward. The negative worker proof for `run` does not qualify this new ordering.
+
+Required: resolve/decode/validate the selected input and verification mode before calling the switch manager, using the same admitted context as `run`. Add invalid-image, wrong-size, missing-file and disallowed-D640 soak cases that assert **zero programming, parameter writes and DMA launches**.
+
+### R14-04 [P1] Bias admission trusts bundle width rather than the selected hardware width
+
+References: `software/m7_switch.py:128–150`, `:466`, `:508`, `:528–541`.
+
+`load_params` accepts a declared width up to 32 and validates against that declaration only. A bundle declaring `bias_width=32`, with bias `8388608`, passes this stage despite every current target implementing signed24. `program_params_accel` then emits the value after coefficient writes have begun. Hardware identity WIDTHS checks do not establish that the candidate biases fit those widths. The controller's canonical-bias check can reject this write; this must be a host-side admission error, not a deliberate MMIO error probe on the board.
+
+Required: carry the target hardware bias width into complete bundle admission and validate every bias against it before any mutation. Test both signed24 endpoints and one beyond each, including a deliberately wider bundle declaration. Use mocks, not a live invalid AXI write, for rejection tests.
+
+### R14-05 [P1] Source-byte limit is applied after an unbounded supervisor read
+
+References: `software/m8_cli.py:140–146`; `software/conv_lab/preprocessing.py:185–192`.
+
+The worker isolation is real, but `Path.read_bytes()` first reads the entire supplied path in the root supervisor. Only then does `LinuxDecoder.decode` enforce 8 MiB. A very large file can exhaust board RAM before the worker starts; a special/unending input can block outside the worker deadline. The 128 MiB worker limit cannot protect that read.
+
+Required: open once, reject inappropriate file types, perform a bounded read of at most MAX_SOURCE_BYTES+1, reject excess bytes, and pass those exact bytes to hashing/decoding. Do not rely only on a pre-read size check susceptible to growth. Add oversized-file and special-file rejection tests with no hardware writes. Keep the isolated worker; do not replace it with in-process decoding.
+
+## Remaining integration and evidence gaps
+
+### R14-06 [P1 — M8 scope] Imported models/datasets cannot be selected by the runtime
+
+References: `software/m8_import.py:272–306`; `software/m7_switch.py:32–43`, `:112–157`; `software/m8_cli.py:264–269`, `:836–860`.
+
+The importer publishes format-3 bundles under `/var/lib/conv-lab/library`, but the runtime still selects fixed profile-directory `canonical-flat-2` parameters under `/home/petalinux/profiles`. Its CLI has no model/release/dataset/image-ID selection. Imported preprocessing/compatibility metadata is not consumed by inference. Hardware imports are explicitly unsupported. The board importer fixture is K=2, so it also does not demonstrate execution on a supported profile.
+
+Required for the approved library workflow: connect an explicit identity resolver over embedded and imported roots to a single validated runtime context; demonstrate import → select model/image → activation → exact-reference run → archive, and a compatible parameter-only model change. Reject conflicting same-ID releases across roots. If the immediate release intentionally supports only frozen profiles and arbitrary image paths, document that as an approved scope reduction; do not call the full library workflow complete. Do not implement hardware import casually as part of this fix—retain its separate compatibility/reconfiguration gate.
+
+### R14-07 [P2] Hash binding is incomplete and the admitted context is reopened
+
+References: `software/m8_cli.py:244–252`, `:295–297`, `:343`, `:467–473`, `:703–743`; `software/m7_switch.py:466–508`.
+
+The CLI parses parameters for the reference, then independently re-reads them for individual hashes; `switch_to` parses them again for hardware installation. The hardware-owner lock does not prevent filesystem editors/converters from changing those files. Therefore one bundle digest does not prove the reference, record and hardware consumed the same snapshot. Benchmark records still leave `input` and `parameters` empty; soak/extremes omit the catalog/anchor-file hashes added to `run`; records do not retain the actual selected hardware-manifest/firmware hashes. Custom-image bytes are not preserved or registered in a retrievable immutable store, so an arbitrary path and its hash alone cannot reproduce a run after the file disappears.
+
+Required: share one frozen parameter/input/hardware context across activation, reference and record creation; return the identity actually installed by the manager. Standardize provenance fields for all modes. Preserve content-addressed custom inputs, or explicitly bind them to a retained immutable dataset. Hash-only storage can avoid duplicates, but only when those bytes are demonstrably retrievable. Add a test changing files between admission and switch that either uses the frozen original or rejects before writes.
+
+### R14-08 [P2] Import idempotency verifies only the manifest, not the installed bundle
+
+References: `software/m8_import.py:274–281`, `:284`, `:298–301`.
+
+On re-import, an existing matching manifest yields `already-imported` without rechecking its referenced files. Delete or corrupt an installed weight/image while leaving the manifest intact, then re-import the original archive: the importer reports success and leaves the corruption in place. Published files are handed to the board user, so post-import changes are possible. Receipt names also have only second-level time plus identity and are overwritten by `write_text` on a same-second repeat.
+
+Required: revalidate existing content before idempotent success; fail closed on damaged content without silently overwriting the published release. Use exclusively allocated unique receipt names and atomic publication. Add altered/deleted-payload and same-second receipt tests. Resolve conflicts against embedded bundles as part of R14-06, not only the mutable root.
+
+### R14-09 [P2] Resource accounting is not yet the approved bounded-storage policy
+
+References: `software/m8_import.py:83–103`, `:248–251`; `software/m8_cli.py:69–82`, `:336–339`, `:732`.
+
+The importer reserves `compressed_size*3 + 1 MiB`, while accepting up to 64 MiB extracted: a highly compressible valid archive can consume much more than the reserved amount and breach the promised 512 MiB headroom. `getmembers()` materializes the entire tar inventory before enforcing the 256-member cap. The CLI checks each run's estimate against 256 MiB, not the accumulated disposable payloads; benchmark's estimate is constant despite unbounded `--frames`. Import and inference use different locks and no shared reservation ledger, so their free-space checks can both admit against the same space.
+
+Required: bounded/streaming inventory admission, conservative extracted/output peak accounting, aggregate disposable-budget enforcement, and coordinated reservations across operations on the filesystem. Test a compressed expansion case, many zero-length headers, sequential runs over the aggregate budget, concurrent import/run reservations and very large benchmark counts. Keep protected evidence excluded from automatic deletion; do not solve quota failures by broad cleanup.
+
+### R14-10 [P2] The new conversion utility can overwrite qualified profile files mid-conversion
+
+References: `scripts/convert_legacy_profiles.py:37–69`, `:75–76`, `:95–98`.
+
+The default output is the live repository `profiles/`, existing output directories are accepted, weights are copied before the whole source is validated, and a fixed receipt is overwritten. A late malformed channel/absent weight can leave a mixture of old metadata and new weights. The original `weights_file` is also used as a path without containment validation. This is not equivalent to the earlier isolated converter's refusal of existing destinations.
+
+Required before reuse: explicit fresh staging/output root, complete source/path validation, atomic publish, and a unique receipt; alternatively retire this as a clearly labelled one-time migration tool and prevent accidental reruns. Preserve already converted files/receipts and the original legacy bytes. No regeneration was performed during this review.
+
+## Release evidence and research handoff
+
+- Keep M9 §4 open: clean-build reproduction, final reviewed tag/snapshot and final documentation are still unchecked. Fix or formally resolve the blocking findings before declaring “no critical correctness/switching issues.” Rebuilding alone does not qualify changed RTL/software.
+- The newest evidence files are useful summaries/excerpts. The matrix file contains an ellipsis in the transition list, and the 1,000-frame file contains a summary table plus board-local record IDs. Transfer the original schema-v3 records/full matrix log, verify their hashes and preserve them with the source/artifact manifest. Do not describe these abbreviated files as complete verbatim transcripts. Do not rerun expensive campaigns merely to replace missing copied records if the originals remain available.
+- Update stale `M9_CHECKLIST.md` introductory M8/BLOCKREADY status, `report/report.md`'s 876-frame/90-reload totals and schema-v2 S18 wording, and the handoff's stale next-action sections. Derive updated totals from a run ledger to avoid double counting activation versus stimulus frames. This does not erase the valid earlier campaign.
+- The new M10–M12 plan identifies the large-shift concern but understates it as 26–31: R14-01 includes shift 25 and a shift-24 overflow case. Its one-output-position-per-clock bonus wording also needs a scope qualifier: a 64-bit stream carrying K16 signed16 channels needs four beats per complete output position. An internal II=1/edge-free test is not proof of one full position per clock at the external interface. Likewise distinguish an interface ceiling from measured sustained throughput.
+- The EF125 sibling line remains separately identified and board-NOT_RUN in its handoff. Keep clocks/FSBL assumptions, artifacts, profile coverage and performance evidence separate until the proposed integration is actually reviewed and qualified. No branch checkout, merge or adoption occurred here.
+- Keep the cleanup scan as a proposal. Its own HOLD list includes potentially unique legacy metadata and board-qualified source copies. No deletion is justified solely by a “regenerable/zero risk” label until those bytes and release dependencies are preserved.
+
+## Recommended next batch for GLM
+
+1. **Numerical and fail-closed repair:** address R14-01 through R14-05, add targeted tests, and hand the user the exact test/simulation commands. Do not change unrelated datapath architecture, regenerate weights or start research integration inside this repair batch.
+2. **M8/M9 closeout correction:** address R14-06 through R14-10 in scoped follow-up work, preserve the actual records, and reconcile milestone/scope claims. Then perform the agreed user-run clean-build and affected board qualification before the reviewed release freeze.
+
+Snapshot SHA-256 (current review):
+
+| File | SHA-256 |
+|---|---|
+| `software/m7_switch.py` | `4c2df0d516e4833b78d7794456fbc0b91cb2f603f0ee512c8cc0b90f3f246360` |
+| `software/m8_cli.py` | `3fa1ff0edc7960b9ad946da5050e0f3377000a8ddd25a74ae85d53ddea3650a1` |
+| `software/m8_import.py` | `f607a6265508bf3eddbf608db18e92ec745113ec731b61bf0d2d318bbbc6ed76` |
+| `software/conv_lab/preprocessing.py` | `eebc34d46018b8bd5a7fed2b889b99de15bbba1a505aa7a9bb500fda58e77894` |
+| `Convlution_Accelerator.srcs/sources_1/new/conv_channel.vhd` | `57fada818c3bd8ea5fb22716ac06e76cc87a259efc64305dc7a01a56697f1cd0` |
+
+---
+
+# Historical feedback — 2026-09-13 (superseded by the review above)
 
 Review date: **2026-09-13**. This section supersedes the original review retained below as history.
 
