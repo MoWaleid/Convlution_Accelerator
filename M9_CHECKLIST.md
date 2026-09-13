@@ -10,17 +10,20 @@ Status inputs: M0–M7 closed (AI_HANDOFF §3). M8 in progress — all P1 review
 findings closed; remaining E2 board session is staged behind the BLOCKREADY
 keyword (§16.7).
 
-## 1. M8 closeout (precondition)
-- [ ] BLOCKREADY: push m11fix payload (m7_switch consecutive-cycle bridge,
-      m8_cli cmd_extremes) — AI_HANDOFF §16.7
-- [ ] Board: `extremes` × A32/B32/C32/D32 (fast) and D640 (minutes of exact
-      reference per stimulus — expected)
-- [ ] Board: `--matrix` rerun (59 switches from a non-A32 start; 20
-      provably consecutive A32→B32→A32 cycles + full pair coverage)
-- [ ] Evidence: transcripts → report/evidence/; E2 closed in AI_HANDOFF
-- [ ] M8-07 disposition documented (hash binding + git content-addressed
+## 1. M8 closeout (precondition) — DONE 2026-09-14
+- [x] BLOCKREADY: push m11fix payload (m7_switch consecutive-cycle bridge,
+      m8_cli cmd_extremes) — AI_HANDOFF §16.7 (consumed)
+- [x] Board: extremes × A32/B32/C32/D32 (fast) and D640 (seconds per exact
+      reference — faster than budgeted)
+- [x] Board: --matrix rerun (58 switches from D640 via A32 bridge; 20
+      provably consecutive A32→B32→A32 cycles + full pair coverage, 57.5 s)
+- [x] Evidence: report/evidence/e2_extremes_matrix_20260914.txt; E2 closed
+      in AI_HANDOFF
+- [x] M8-07 disposition documented (hash binding + git content-addressed
       canonical bundles; per-run byte preservation traded consciously)
-- [ ] Commit; M8 declared complete in AI_HANDOFF §3
+- [x] Commit ac84c3e; M8 declared complete in AI_HANDOFF §3
+      (note: rerun was 58 switches, not 59 — the greedy walk needed no
+      extra bridge beyond the A32 establishment)
 
 ## 2. 1,000-frame baseline soak (varied inputs/parameters)
 Plan (all machinery exists):
