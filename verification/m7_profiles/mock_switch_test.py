@@ -90,6 +90,9 @@ def program_profile(profile):
     w32m(acc_regs.mem, M.REG_EXPECTED_INPUT_BYTES, hw["expected_input_bytes"])
     w32m(acc_regs.mem, M.REG_EXPECTED_OUTPUT_BYTES, hw["expected_output_bytes"])
     w32m(acc_regs.mem, M.REG_DMA_LENGTH_WIDTH, 22)
+    w32m(acc_regs.mem, 0x4130, 0x10180808)
+    w32m(acc_regs.mem, 0x4134,
+         0x1900 + 17 + (hw["kernel_n"] ** 2 - 1).bit_length())
     w32m(acc_regs.mem, M.REG_STATUS, 0x101)
     w32m(acc_regs.mem, M.REG_ERROR_FLAGS, 0)
     for a in (0x4140, 0x4144, 0x4148, 0x414C):
@@ -291,9 +294,9 @@ M.os = fake_os
 def run(argv):
     profile = argv[1]
     hw = json.loads((STAGE / f"hardware_{profile}.json").read_text())["accelerator"]
+    chans, _bundle = M.load_params(profile, hw["kernel_n"], hw["channels_k"])
     CURRENT.update(n=hw["kernel_n"], k=hw["channels_k"], w=hw["image_w"],
-                   h=hw["image_h"],
-                   channels=M.load_params(profile, hw["kernel_n"], hw["channels_k"]))
+                   h=hw["image_h"], channels=chans)
     sys.argv = ["m7_switch.py"] + argv
     M.main()
     print(f"MOCK OK: {' '.join(argv)}", flush=True)

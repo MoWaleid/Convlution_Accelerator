@@ -23,6 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, "/home/petalinux")
 import m4_filebackend as fb
+from conv_lab.strict import boolean, coefficients, integer, obj, parse_json, string
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
 BASE = Path("/home/petalinux/profiles")
@@ -109,41 +110,51 @@ def log(message):
 # ─── Profile parameter loading (strict validation) ───────────────────────────
 
 def load_params(profile, n, k):
-    """Load format-2 channel config + kernel .mem files with strict validation."""
+    """Strictly admit the profile's canonical-flat-2 parameter bundle
+    (explicit legacy conversion, see profiles/history/legacy_conversion_*):
+    exact root/entry field sets, canonical JSON types, boolean relu_en (no
+    integer coercion), required exact per-channel weight paths, coefficient
+    grammar, bundle-declared signed bias width, and an immutable whole-bundle
+    SHA-256 over every admitted byte. Returns (channels, bundle_sha256)."""
     d = BASE / profile
-    cfg = json.loads((d / "channel_config.json").read_text())
-    require(cfg["N"] == n and cfg["K"] == k, f"{profile}: config N/K mismatch")
+    cfg_bytes = (d / "channel_config.json").read_bytes()
+    cfg = parse_json(cfg_bytes)
+    obj(cfg, "format_version dialect N K bias_width channels")
+    require(integer(cfg["format_version"], 1) == 2, f"{profile}: format_version 2")
+    require(string(cfg["dialect"]) == "canonical-flat-2",
+            f"{profile}: unknown bundle dialect")
+    require(integer(cfg["N"], 1, 64) == n, f"{profile}: config N mismatch")
+    require(integer(cfg["K"], 1, 64) == k, f"{profile}: config K mismatch")
+    bias_width = integer(cfg["bias_width"], 1, 32)
+    lo, hi = -(1 << (bias_width - 1)), (1 << (bias_width - 1)) - 1
 
+    digest = __import__("hashlib").sha256()
+    digest.update(b"channel_config.json\0" + str(len(cfg_bytes)).encode() + b"\0"
+                  + cfg_bytes)
     channels = []
     seen_channels = set()
     for entry in cfg["channels"]:
-        ch = entry["channel"]
+        e = obj(entry, "channel weights_file bias_quantized shift relu_en")
+        ch = integer(e["channel"], 0, k - 1)
         require(ch not in seen_channels, f"{profile}: duplicate channel {ch}")
         require(ch == len(channels), f"{profile}: non-sequential channel {ch}")
         seen_channels.add(ch)
 
-        weights_file = entry.get("weights_file", f"kernel_ch{ch}.mem")
-        raw = [line.strip() for line in
-               (d / weights_file).read_text().splitlines() if line.strip()]
-        kernel = [v - 256 if v >= 128 else v for v in (int(x, 16) for x in raw)]
-        require(len(kernel) == n * n, f"{profile}: wrong kernel size {weights_file}")
-        for v in kernel:
-            require(-128 <= v <= 127, f"{profile}: coefficient {v} out of int8 range")
+        require(string(e["weights_file"]) == f"kernel_ch{ch}.mem",
+                f"{profile}: weights_file must be kernel_ch{ch}.mem")
+        raw = (d / e["weights_file"]).read_bytes()
+        digest.update(e["weights_file"].encode() + b"\0"
+                      + str(len(raw)).encode() + b"\0" + raw)
+        kernel = list(coefficients(raw, n))
 
-        bias = entry["bias_quantized"]
-        require(-8388608 <= bias <= 8388607,
-                f"{profile}: bias {bias} exceeds signed-24 range")
+        bias = integer(e["bias_quantized"], lo, hi)
+        shift = integer(e["shift"], 0, 31)
+        relu = boolean(e["relu_en"])
 
-        shift = entry["shift"]
-        require(0 <= shift <= 31, f"{profile}: shift {shift} out of [0,31]")
-
-        relu_raw = entry["relu_en"]
-        relu = 1 if (relu_raw is True or relu_raw == 1) else 0
-
-        channels.append((kernel, bias, shift, relu))
+        channels.append((kernel, bias, shift, 1 if relu else 0))
 
     require(len(channels) == k, f"{profile}: channel count {len(channels)} != {k}")
-    return channels
+    return channels, digest.hexdigest()
 
 
 # ─── Activation input loading ─────────────────────────────────────────────────
@@ -279,6 +290,8 @@ def read_identity(accel):
         "expected_input": read32(accel, REG_EXPECTED_INPUT_BYTES),
         "expected_output": read32(accel, REG_EXPECTED_OUTPUT_BYTES),
         "len_width": read32(accel, REG_DMA_LENGTH_WIDTH),
+        "widths0": read32(accel, 0x4130),
+        "widths1": read32(accel, 0x4134),
     }
 
 
@@ -297,6 +310,9 @@ def validate_identity(identity, hw):
             (acc["expected_input_bytes"], acc["expected_output_bytes"]),
             "byte counts mismatch")
     require(identity["len_width"] == acc["dma_length_width"], "DMA_LENGTH_WIDTH mismatch")
+    require(identity["widths0"] == 0x10180808, "WIDTHS_0 mismatch")
+    require(identity["widths1"] == 0x1900 + 17 + (acc["kernel_n"] ** 2 - 1).bit_length(),
+            "WIDTHS_1 mismatch")
 
 
 # ─── FPGA Manager programming ─────────────────────────────────────────────────
@@ -428,6 +444,12 @@ def switch_to(profile, catalog, anchors, ctx):
     Returns True if the PL was reprogrammed, False for parameter-only change."""
     hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
     acc = hw["accelerator"]
+    cat = catalog.get(profile) or {}
+    require(cat, f"{profile}: missing catalog entry")
+    require((acc["image_w"], acc["image_h"], acc["kernel_n"], acc["channels_k"],
+             acc["build_id_hex"]) ==
+            (cat["W"], cat["H"], cat["N"], cat["K"], cat["build_id"]),
+            f"{profile}: manifest disagrees with catalog")
     n = acc["kernel_n"]
     k = acc["channels_k"]
     w = acc["image_w"]
@@ -441,7 +463,8 @@ def switch_to(profile, catalog, anchors, ctx):
     firmware_hash = hashlib.sha256(firmware.read_bytes()).hexdigest()
     require(firmware_hash == hw["artifacts"]["firmware_bin_sha256"],
             f"{profile}: firmware hash mismatch")
-    channels = load_params(profile, n, k)
+    channels, bundle_hash = load_params(profile, n, k)
+    log(f"  admitted {profile} parameter bundle {bundle_hash[:16]}")
 
     require(ctx.get("buffer_size"), "runtime buffer size not discovered")
     layout = compute_layout(tx_bytes, rx_bytes, ctx["buffer_size"])
@@ -712,7 +735,7 @@ def main():
             hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
             acc = hw["accelerator"]
             n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
-            channels = load_params(profile, n, k)
+            channels, _bundle = load_params(profile, n, k)
             padded = load_input(n, w, h)
             expected = make_expected(padded, n, w, h, channels) \
                 if w * h * k <= REF_POSITION_LIMIT else None
@@ -789,7 +812,7 @@ def do_switch_frames(profile, catalog, anchors, ctx, frames):
     hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
     acc = hw["accelerator"]
     n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
-    channels = load_params(profile, n, k)
+    channels, _bundle = load_params(profile, n, k)
     padded = load_input(n, w, h)
     expected = make_expected(padded, n, w, h, channels) \
         if w * h * k <= REF_POSITION_LIMIT else None

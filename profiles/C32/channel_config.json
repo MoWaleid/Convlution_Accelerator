@@ -1,0 +1,65 @@
+{
+ "format_version": 2,
+ "dialect": "canonical-flat-2",
+ "N": 5,
+ "K": 8,
+ "bias_width": 24,
+ "channels": [
+  {
+   "channel": 0,
+   "weights_file": "kernel_ch0.mem",
+   "bias_quantized": 2182,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 1,
+   "weights_file": "kernel_ch1.mem",
+   "bias_quantized": 6048,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 2,
+   "weights_file": "kernel_ch2.mem",
+   "bias_quantized": 4129,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 3,
+   "weights_file": "kernel_ch3.mem",
+   "bias_quantized": 3561,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 4,
+   "weights_file": "kernel_ch4.mem",
+   "bias_quantized": 1509,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 5,
+   "weights_file": "kernel_ch5.mem",
+   "bias_quantized": -3477,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 6,
+   "weights_file": "kernel_ch6.mem",
+   "bias_quantized": 4019,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 7,
+   "weights_file": "kernel_ch7.mem",
+   "bias_quantized": -6800,
+   "shift": 8,
+   "relu_en": true
+  }
+ ]
+}

@@ -300,8 +300,9 @@ def cmd_run(args):
                "anchors": anchors, "handles": None, "digests": []}
 
         # --- admission BEFORE any hardware mutation (M8-02/M8-06) ---------
-        channels = m7.load_params(args.profile, n, k)   # read-only files
+        channels, pbundle = m7.load_params(args.profile, n, k)   # read-only files
         rec["parameters"] = parameter_identity(args.profile)
+        rec["parameters"]["bundle_sha256"] = pbundle
         t0 = time.perf_counter()
         if args.image:
             raw, meta = load_image_exact(args.image, w, h)

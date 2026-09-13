@@ -59,10 +59,9 @@ MH.M.FW_NAME = {"A32": "m7_A32_mock.bin",
 
 def set_current(profile):
     hw = json.loads((MH.M.BASE / f"hardware_{profile}.json").read_text())["accelerator"]
+    chans, _bundle = MH.M.load_params(profile, hw["kernel_n"], hw["channels_k"])
     MH.CURRENT.update(n=hw["kernel_n"], k=hw["channels_k"], w=hw["image_w"],
-                      h=hw["image_h"],
-                      channels=MH.M.load_params(profile, hw["kernel_n"],
-                                                hw["channels_k"]))
+                      h=hw["image_h"], channels=chans)
 
 
 def newest_record():

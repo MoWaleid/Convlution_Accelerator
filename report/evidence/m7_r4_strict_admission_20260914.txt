@@ -1,0 +1,42 @@
+M7-R4 — strict parameter-bundle admission, board validation
+Date: 2026-09-14
+Scripts: /home/petalinux/m7_switch.py md5 8b4315b88856e7d0de30516669fb9f24
+         /home/petalinux/m8_cli.py    md5 bfdbb39b97520425bc54a7022563893f
+Bundles: canonical-flat-2 conversion of all five profiles
+         (A32 config md5 cea6789572d2b6078bd7fe2d5adf5fd4,
+          D640 config md5 d78780f348d80430bef98aeee7f7cc6e;
+          conversion receipt profiles/history/legacy_conversion_20260914.json,
+          kernel .mem bytes untouched)
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+--- transcript ---
+$ sudo python3 /home/petalinux/m8_cli.py run --profile A32 --frames 2
+Password:
+  admitted A32 parameter bundle 367fb1f5a45a3271
+  live build already A32: parameter re-admission only
+  [A32] activation OK 0.144 ms sha=cb3975593073652b
+  cleanup: final STATUS 0x00000181
+M8 RUN 20260913T045403Z-A32-library_alley_cat: PASS (2 frames, median 0.140 ms)
+  -> /var/lib/conv-lab/results/20260913T045403Z-A32-library_alley_cat
+$ sudo python3 /home/petalinux/m7_switch.py --profile B32 1
+  admitted B32 parameter bundle 952cb13ce0adad04
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.143 ms sha=5821c8b19a88fd34
+  cleanup: final STATUS 0x00000181
+M7_SWITCH B32: PASS (1 frames, reload=yes)
+
+--- verification notes ---
+Closes review finding M7-R4: load_params now strictly admits ONLY the
+canonical-flat-2 dialect (exact field sets via conv_lab.strict obj(), canonical
+JSON types, boolean relu_en with no integer coercion, required exact
+per-channel weight paths, coefficient grammar over hashed bytes, bundle-declared
+signed-24 bias width) and returns an immutable whole-bundle SHA-256, logged at
+admission. switch_to cross-validates the selected manifest against the catalog
+(W/H/N/K/BUILD_ID) before touching hardware, and validate_identity now checks
+the WIDTHS_0/WIDTHS_1 discovery registers. Explicit legacy conversion was
+performed offline (scripts/convert_legacy_profiles.py) with recorded source and
+output hashes; the former bundles (integer relu_en, implicit weight paths,
+stale bias_bits=32 declaration) are preserved in the conversion receipt.
+Host validation: foundation tests 8/8, M7 manager mocks (reload, same-build,
+matrix termination/coverage), M8 CLI mock suite — all PASS.

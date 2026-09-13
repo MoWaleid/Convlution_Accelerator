@@ -1,0 +1,92 @@
+{
+ "A32": {
+  "profile": "A32",
+  "converted_utc": "2026-09-14",
+  "source_dir": "C:\\Users\\moham\\AppData\\Local\\Temp\\m7_bundle2\\profiles\\A32",
+  "source_channel_config_sha256": "4133b3b68ed52fdd643297a6549417277c7344ed74a8572877eef50df64776a5",
+  "output_channel_config_sha256": "f0b896bbcde13e9b9c6a358a122ce3230b4e12a47b485cbf9376e0440a1d0e3c",
+  "weights": {
+   "kernel_ch0.mem": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86",
+   "kernel_ch1.mem": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405",
+   "kernel_ch2.mem": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc",
+   "kernel_ch3.mem": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e",
+   "kernel_ch4.mem": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181",
+   "kernel_ch5.mem": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914",
+   "kernel_ch6.mem": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31",
+   "kernel_ch7.mem": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f"
+  },
+  "notes": "explicit legacy-flat-2 -> canonical-flat-2 conversion; relu_en canonicalized to JSON boolean; weights_file made explicit; bias_width 24 declared (legacy bias_bits=32 declaration was stale); kernel .mem bytes untouched"
+ },
+ "B32": {
+  "profile": "B32",
+  "converted_utc": "2026-09-14",
+  "source_dir": "C:\\Users\\moham\\AppData\\Local\\Temp\\m7_bundle2\\profiles\\B32",
+  "source_channel_config_sha256": "12c5bcac8d60b5f62e646d4bb33db15b843627be0ada8b3f6fbec54d4692e1de",
+  "output_channel_config_sha256": "840ae86555126f5aa35af5aade728c0274fa8466ec36294a3d3895921fad3c13",
+  "weights": {
+   "kernel_ch0.mem": "d3c5204ca9d191a60366c185090b3930ecac162cff0104cf37b2f9322bb88f61",
+   "kernel_ch1.mem": "3161530188d7ca2f71b4ea609cf5926fe735f71c0eec37b0ac2cc89f6fdcfb6e",
+   "kernel_ch2.mem": "66800fed9ce681e867a09e085a0ac3775c0a6135bcb9180054d1503a424cef8e",
+   "kernel_ch3.mem": "3c2f27d0a5189b3abaab887ad8739d89d6a8d510606e0f22a23731d1dbd32f01",
+   "kernel_ch4.mem": "482592f99f6324e5285279fb412bf7afd188331ce56fcd7c101dea4e09656305",
+   "kernel_ch5.mem": "34ee0dad8da81e0b3e7f0de497492a09db0925c4a0138e0d883a21ecd79383cb",
+   "kernel_ch6.mem": "bc9fd6805d2a7243d86c6c265279438fd41481a9cbbeaaad9dabfd3ea22b6b31",
+   "kernel_ch7.mem": "ccaedf3fc53c9883f16e483fc33c4ccccfa047d8af926a0e7206d470e21bd558",
+   "kernel_ch8.mem": "e35cdb5dc53ca51e0a134548021806acda986a3903ef29ca5cb11a8655bbe04f",
+   "kernel_ch9.mem": "9a407fc80fb951697e9962d699447ea6a0c56a875d695a86ad1437fa905bfbab",
+   "kernel_ch10.mem": "954505d9804d2e90be6c1d97210a57f98365d15187e93410ae9a56982da6052d",
+   "kernel_ch11.mem": "f7d037fe60fb388ef43be0422a6b6b9215f140ede64d700532051867d7d8d9af",
+   "kernel_ch12.mem": "cb58774d28b39dc5c6e878c46f2656ac44d99d68186e189f0f53c774f953945d",
+   "kernel_ch13.mem": "b037c022f3dbf599fc7918e80d9b4e171326b49b2dd6124f275b09b3851f518a",
+   "kernel_ch14.mem": "a3740f60a201e6f94294e8deb15f9b8e8b0bfa500a4f81cfdeb82f915d5e80db",
+   "kernel_ch15.mem": "a98deee41401b1ec5789b7495581f59d3202a276061c5d91aec2cde894e5231c"
+  },
+  "notes": "explicit legacy-flat-2 -> canonical-flat-2 conversion; relu_en canonicalized to JSON boolean; weights_file made explicit; bias_width 24 declared (legacy bias_bits=32 declaration was stale); kernel .mem bytes untouched"
+ },
+ "C32": {
+  "profile": "C32",
+  "converted_utc": "2026-09-14",
+  "source_dir": "C:\\Users\\moham\\AppData\\Local\\Temp\\m7_bundle2\\profiles\\C32",
+  "source_channel_config_sha256": "31f8d25b7594d9fd47fbe05f8f2002db05cb5ab8c50f228d0100dd80a096b50e",
+  "output_channel_config_sha256": "eeeab5812a6a54be1dd172af5247fa1231b8eb982656569150ea0ab858a4f565",
+  "weights": {
+   "kernel_ch0.mem": "9a5621879ccbd73f92261d1a0563f10afcace8bd8438117ff3e7d693bd754731",
+   "kernel_ch1.mem": "bfe57355daa8736afbb5bb454cfc235e055c779f095a0ba3af8ed5b308639a99",
+   "kernel_ch2.mem": "769fb9e21cb3c0011b71dc69b518b9413af04b4edad5d85d60df459f7594b5cf",
+   "kernel_ch3.mem": "ef2da04fac16e7c2af24c04f16b5c3c400f8bd0e7dfe3c92489e77ace1318b7e",
+   "kernel_ch4.mem": "498303536494153b008264426c6b8103f91e9e7aa51216743d419e4e1d80b670",
+   "kernel_ch5.mem": "118c983f8a6bd71746738c6305724fee3a5e1529f65be92a0f77eacc59539b85",
+   "kernel_ch6.mem": "2e6444b151f58c1e50c53b3e68b4c7f149b8ddc52f0646d7bd4869e6635c3ee4",
+   "kernel_ch7.mem": "fe8125010d07aa42760ffb173bcb17a3e3c0004dac8be825471bd52f486acd0f"
+  },
+  "notes": "explicit legacy-flat-2 -> canonical-flat-2 conversion; relu_en canonicalized to JSON boolean; weights_file made explicit; bias_width 24 declared (legacy bias_bits=32 declaration was stale); kernel .mem bytes untouched"
+ },
+ "D32": {
+  "profile": "D32",
+  "converted_utc": "2026-09-14",
+  "source_dir": "C:\\Users\\moham\\AppData\\Local\\Temp\\m7_bundle2\\profiles\\D32",
+  "source_channel_config_sha256": "81306030c7bf6f03707ccea791e7e037db3ca9435b4129a3614cbf9df5455c69",
+  "output_channel_config_sha256": "96cff789191b926becda965c444231f3a5731dd2cb9176791e3594cdb4073cda",
+  "weights": {
+   "kernel_ch0.mem": "a9480618be6d6041cba865624e571baad2f1209c154ed865aafc571738c4b29f",
+   "kernel_ch1.mem": "69c5594cf186ce567b991c220254fff861c11ef61ac3aa9ac8e4628f15a709a0",
+   "kernel_ch2.mem": "a671d5a394f26786ead97fef96af593b7977aa2beda0dc31d824473541f9434d",
+   "kernel_ch3.mem": "cd31aee3e4078f64c3f6268099160b2f3910d7fcef857838ce60fa6550783ea9"
+  },
+  "notes": "explicit legacy-flat-2 -> canonical-flat-2 conversion; relu_en canonicalized to JSON boolean; weights_file made explicit; bias_width 24 declared (legacy bias_bits=32 declaration was stale); kernel .mem bytes untouched"
+ },
+ "D640": {
+  "profile": "D640",
+  "converted_utc": "2026-09-14",
+  "source_dir": "C:\\Users\\moham\\AppData\\Local\\Temp\\m7_bundle2\\profiles\\D640",
+  "source_channel_config_sha256": "81306030c7bf6f03707ccea791e7e037db3ca9435b4129a3614cbf9df5455c69",
+  "output_channel_config_sha256": "96cff789191b926becda965c444231f3a5731dd2cb9176791e3594cdb4073cda",
+  "weights": {
+   "kernel_ch0.mem": "a9480618be6d6041cba865624e571baad2f1209c154ed865aafc571738c4b29f",
+   "kernel_ch1.mem": "69c5594cf186ce567b991c220254fff861c11ef61ac3aa9ac8e4628f15a709a0",
+   "kernel_ch2.mem": "a671d5a394f26786ead97fef96af593b7977aa2beda0dc31d824473541f9434d",
+   "kernel_ch3.mem": "cd31aee3e4078f64c3f6268099160b2f3910d7fcef857838ce60fa6550783ea9"
+  },
+  "notes": "explicit legacy-flat-2 -> canonical-flat-2 conversion; relu_en canonicalized to JSON boolean; weights_file made explicit; bias_width 24 declared (legacy bias_bits=32 declaration was stale); kernel .mem bytes untouched"
+ }
+}

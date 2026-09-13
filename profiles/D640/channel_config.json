@@ -1,0 +1,37 @@
+{
+ "format_version": 2,
+ "dialect": "canonical-flat-2",
+ "N": 3,
+ "K": 4,
+ "bias_width": 24,
+ "channels": [
+  {
+   "channel": 0,
+   "weights_file": "kernel_ch0.mem",
+   "bias_quantized": 0,
+   "shift": 7,
+   "relu_en": false
+  },
+  {
+   "channel": 1,
+   "weights_file": "kernel_ch1.mem",
+   "bias_quantized": 0,
+   "shift": 8,
+   "relu_en": false
+  },
+  {
+   "channel": 2,
+   "weights_file": "kernel_ch2.mem",
+   "bias_quantized": 0,
+   "shift": 8,
+   "relu_en": false
+  },
+  {
+   "channel": 3,
+   "weights_file": "kernel_ch3.mem",
+   "bias_quantized": 0,
+   "shift": 4,
+   "relu_en": false
+  }
+ ]
+}
