@@ -517,7 +517,7 @@ def cmd_soak(args):
                                                  is not None else None),
                                   "hw_ms": hw_ms[-1], "wall_ms": wall_ms[-1]})
             if (i + 1) % 25 == 0:
-                log(f"  {i + 1}/{args.frames} soak frames bit-exact")
+                print(f"  {i + 1}/{args.frames} soak frames bit-exact", flush=True)
 
         def stats(xs):
             xs = sorted(xs)
