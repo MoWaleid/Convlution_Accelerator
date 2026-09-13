@@ -25,18 +25,20 @@ keyword (§16.7).
       (note: rerun was 58 switches, not 59 — the greedy walk needed no
       extra bridge beyond the A32 establishment)
 
-## 2. 1,000-frame baseline soak (varied inputs/parameters)
-Plan (all machinery exists):
-- [ ] 200 × A32 (library anchor input, --soak A32 200)
-- [ ] 200 × B32 (library anchor input)
-- [ ] 200 × C32 (library anchor input)
-- [ ] 200 × D32 (--image aeroplane demo image through the isolated worker)
-- [ ] 100 × D640 (library anchor input, LANCZOS + per-frame anchor SHA)
-- [ ] 100 × D32 (--image board-probe imported bundle parameters? — no;
-      imported bundles are model metadata. Use the second demo image set or
-      repeat aeroplane with the saturation-lifecycle interleave: run + 1
-      extremes-style reinstall per 25 frames)
-- [ ] Zero mismatches across all; records archived; transcript per profile
+## 2. 1,000-frame baseline soak (varied inputs/parameters) — DONE 2026-09-14
+- [x] 200 × A32 (library anchor input) — PASS, median 0.125 ms
+- [x] 200 × B32 (library anchor input) — PASS, median 0.124 ms
+- [x] 200 × C32 (library anchor input) — PASS, median 0.125 ms
+- [x] 200 × D32 (--image aeroplane through the isolated worker) — PASS,
+      exact-reference per frame, median 0.125 ms
+- [x] 100 × D640 (library anchor input, LANCZOS + per-frame anchor SHA) —
+      PASS, median 3.728 ms
+- [x] 100 × B32 (--image aeroplane through the isolated worker) — PASS,
+      exact-reference per frame, median 0.126 ms
+- [x] Zero mismatches across all; records archived (schema v3); evidence:
+      report/evidence/m9_soak1000_20260914.txt
+      (note: the soak subcommand was added to m8_cli for this; the interleave
+      idea was dropped — extremes mode covers the lifecycle separately)
 
 ## 3. Five cold-boot runs (true power removal per E2 scope note)
 - [ ] Power OFF (remove USB/adapter), wait, power ON

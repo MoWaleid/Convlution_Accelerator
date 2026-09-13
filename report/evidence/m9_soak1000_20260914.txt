@@ -1,0 +1,27 @@
+M9 §2 — 1,000-frame varied baseline soak, all PASS
+Date: 2026-09-14
+Scripts: /home/petalinux/m7_switch.py md5 2fe949ca9040dd3fda990016c78a4474
+         /home/petalinux/m8_cli.py    md5 5542738961b01b2a2b1be4ac18136313
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+| Leg | Profile | Frames | Input | Verification | Median hw | p95 | Record |
+|---|---|---:|---|---|---:|---:|---|
+| 1 | A32 | 200 | library anchor | anchor SHA per frame | 0.125 ms | 0.129 | 20260913T051612Z-soak200-A32-library_alley_cat |
+| 2 | B32 | 200 | library anchor | anchor SHA per frame | 0.124 ms | 0.127 | 20260913T051950Z-soak200-B32-library_alley_cat |
+| 3 | C32 | 200 | library anchor | anchor SHA per frame | 0.125 ms | 0.138 | 20260913T052000Z-soak200-C32-library_alley_cat |
+| 4 | D32 | 200 | aeroplane image (isolated worker decode) | exact reference, value-by-value | 0.125 ms | 0.128 | 20260913T052012Z-soak200-D32-aeroplane_s_000002 |
+| 5 | D640 | 100 | library anchor (LANCZOS recorded) | anchor SHA per frame | 3.728 ms | 3.782 | 20260913T052038Z-soak100-D640-library_alley_cat |
+| 6 | B32 | 100 | aeroplane image (isolated worker decode) | exact reference, value-by-value | 0.126 ms | 0.129 | 20260913T052201Z-soak100-B32-aeroplane_s_000002 |
+
+TOTAL: 1,000 frames, zero mismatches, zero inter-frame resets, zero guard
+errors; every run archived with a schema-v3 record; cleanup to 0x181 after
+every leg; five profiles, two input paths (library anchor + isolated-worker
+decode), varied parameters (K4/K8/K16, N3/N5, 32x32/640x480).
+
+Transport note: the m8_cli soak-mode payload was delivered via the plus-free
+transport (+ -> . locally, tr '.' '+' on board) after the serial/chat path
+dropped a + character from the plain base64 — chunk md5s caught it, the
+repair was systematic, and the whole-payload md5 gate confirmed integrity.
+
+Record IDs carry the board clock (set to 2026-09-13 earlier in the session);
+the host-side date for this evidence is 2026-09-14.
