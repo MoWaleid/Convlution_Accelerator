@@ -91,7 +91,7 @@ is the milestone table — read it before doing milestone work).
 | **M5 qualify one hybrid build end-to-end** | ≥100 frames no inter-frame RESET, extremes, lifecycle, bounded-failure, identity/platform freeze | **PASS** (2026-09-12; `software/m5_qualify.py` + `software/hardware.json`) |
 | **M6 same-image full reload** | 20× A32→A32 via approved lifecycle + cold-boot sample; activation validation per load; no stale state | **PASS** (2026-09-12; `software/m6_reload.py`, FPGA Manager + `m4_accelerator_dma.bin`) |
 | M7 required profiles + model switching | A=N3/K8, B=N3/K16, C=N5/K8, D=N3/K4, D@640×480; switching matrix | **PASS** (2026-09-13 — 5/5 anchors, 58-switch matrix 20/20 ordered pairs, 5×100-frame soaks, cold boot; §10/§16; commit pending user) |
-| M8 reproducible operation and demo | CLI/API, run archive, previews, measurement harness | demo core exists (m3_demo.py); formal M8 pending |
+| M8 reproducible operation and demo | CLI/API, run archive, previews, measurement harness, importer, per-profile extremes | **PASS** (2026-09-14; E2 closed — extremes x5 profiles board-proven + matrix rerun with 20 provably consecutive cycles; all review P1s closed; evidence in report/evidence/e2_extremes_matrix_20260914.txt) |
 | M9 freeze pre-research release | release tag, qualification matrix, 1000-frame soak | pending |
 
 ### Condensed history (the story so far)
@@ -509,7 +509,7 @@ D640 `D640N3K04-260912`); golden anchors unchanged
 (A32 `cb397559…`, B32 `5821c8b1…`, C32 `b6ab2d53…`, D32 `6cb736f6…`,
 D640 `e323defb…`).
 
-### 16.7 PENDING BOARD PUSH — BLOCKREADY (2026-09-14, E2 round)
+### 16.7 PENDING BOARD PUSH — CONSUMED 2026-09-14 (E2 round delivered via BLOCKREADY)
 
 The user is away from the board. On the keyword **BLOCKREADY**, re-emit the
 staged payload blocks exactly and resume injection. State:
@@ -591,8 +591,12 @@ board evidence as historical and listed new blockers; disposition so far:
   hardware mutation; M8-02 partial — byte/dimension/format limits before
   decode, single read, decode of exactly the hashed bytes, image admission
   before the switch.
-- **Still open:** E2 extremes/cycle-precision board session (staged, §16.7).
-  All P1 findings from both reviews are closed.
+- **E2 CLOSED (2026-09-14, board-proven):** extremes x5 profiles (20 stimulus
+  frames, zero-tolerance exact-reference verification, both saturation rails,
+  signed-24 bias endpoints, shift-0, reinstall-revalidate lifecycle) + matrix
+  rerun with 20 provably consecutive A32-B32-A32 cycles (bridge construction;
+  58 switches, 58 reloads, 20/20 pairs, 57.5 s). Evidence:
+  report/evidence/e2_extremes_matrix_20260914.txt. **M8 IS COMPLETE.**
 - **M8-02 CLOSED (2026-09-14, board-proven):** m8_cli --image decoding routes
   through the M2 isolated bounded worker (LinuxDecoder with root-supervisor
   demotion); board evidence in report/evidence/m8_02_worker_isolation_20260914.txt.

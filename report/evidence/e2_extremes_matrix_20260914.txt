@@ -1,0 +1,84 @@
+E2 closure — per-profile extremes (x5) + provably-consecutive matrix rerun
+Date: 2026-09-14
+Scripts: /home/petalinux/m7_switch.py md5 2fe949ca9040dd3fda990016c78a4474
+         /home/petalinux/m8_cli.py    md5 1553ec801557e9defe2fedef83725bce
+         (payload m11fix.tgz 18,319 B; whole b64 md5 42c667cd2b4522da6e26f9f2e18363e0;
+          14 chunks per-chunk verified; installed with --strip-components=2)
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+--- part 1: M5-grade extremes, five profiles (m8_cli extremes) ---
+$ sudo python3 /home/petalinux/m8_cli.py extremes --profile A32
+  admitted A32 parameter bundle 367fb1f5a45a3271
+  live build already A32: parameter re-admission only
+  [A32] activation OK 0.144 ms sha=cb3975593073652b
+M8 EXTREMES 20260913T040546Z-extremes-A32: PASS (4 verified stimulus frames)
+$ sudo python3 /home/petalinux/m8_cli.py extremes --profile B32
+  admitted B32 parameter bundle 952cb13ce0adad04
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.143 ms sha=5821c8b19a88fd34
+M8 EXTREMES 20260913T040614Z-extremes-B32: PASS (4 verified stimulus frames)
+$ sudo python3 /home/petalinux/m8_cli.py extremes --profile C32
+  admitted C32 parameter bundle c9ba0dba0ae7d704
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.143 ms sha=b6ab2d53dd9517f3
+M8 EXTREMES 20260913T040628Z-extremes-C32: PASS (4 verified stimulus frames)
+$ sudo python3 /home/petalinux/m8_cli.py extremes --profile D32
+  admitted D32 parameter bundle d735ca24a505b7f0
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.141 ms sha=6cb736f6a80132d8
+M8 EXTREMES 20260913T040641Z-extremes-D32: PASS (4 verified stimulus frames)
+$ sudo python3 /home/petalinux/m8_cli.py extremes --profile D640
+  admitted D640 parameter bundle d735ca24a505b7f0
+  reprogrammed fabric -> D640 (D640N3K04-260912)
+  [D640] activation OK 3.783 ms sha=e323defbf8ad2616
+M8 EXTREMES 20260913T040652Z-extremes-D640: PASS (4 verified stimulus frames)
+
+Per profile, four stimulus frames, each verified value-by-value against the
+exact on-board reference with zero tolerance:
+  all_zero            - bias/shift/rounding path with zero input
+  all_255             - full-scale positive products
+  saturation_params   - temporary parameters: even channels weights +127 /
+                        bias +8388607 (signed-24 max), odd channels weights
+                        -128 / bias -8388608 (signed-24 min), shift 0 — the
+                        run REQUIRES both +32767 and -32768 to appear in the
+                        output (both saturation rails genuinely exercised)
+  reinstall_activation- canonical bundle explicitly reinstalled
+                        (program_params_accel with readback + PARAM_COMPLETE),
+                        then anchor-checked activation frame per
+                        M1_ACTIVATION_LIFECYCLE (requested parameters
+                        reinstalled and revalidated after procedural tests)
+Note: D32 and D640 share bundle hash d735ca24a505b7f0 — correct: identical
+filter parameters, identical kernel bytes; geometry lives in the hardware
+manifests, not the parameter bundle.
+
+--- part 2: matrix rerun with provably-consecutive cycles ---
+$ sudo python3 /home/petalinux/m7_switch.py --matrix
+PHASE MATRIX: starting from D640, 58 switches
+  admitted A32 parameter bundle 367fb1f5a45a3271        <- bridge (switch 1)
+fpga_manager fpga0: writing m7_A32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32 (M4N3K8W32-260911)
+  [A32] activation OK 0.143 ms sha=cb3975593073652b
+  admitted B32 parameter bundle 952cb13ce0adad04        <- cycle 1 begins (switch 2)
+fpga_manager fpga0: writing m7_B32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.146 ms sha=5821c8b19a88fd34
+  ... (perfect B32/A32 alternation through switch 41 = 20 consecutive
+       full A32->B32->A32 cycles; then the remaining 17 ordered pairs:
+       A32/C32/D32/D640 and B32/C32/D32/D640 chains, every activation
+       anchor-exact; full transcript preserved in the session record) ...
+SUMMARY: 58 switches, 58 full-PL reloads, 20 ordered pairs covered, 57.5 s
+M7 SWITCH MATRIX: PASS
+
+--- verification notes ---
+This rerun closes review finding E2:
+- 20 A32->B32->A32 cycles are now PROVABLY consecutive (the construction
+  bridges to A32 before the counted block; verified in-transcript: switch 1 =
+  bridge, switches 2-41 = cycles 1-20).
+- All 20 ordered pairs covered (script-verified observed transitions before
+  the SUMMARY line), 58 full-PL reloads, 58 anchor-exact activation frames.
+- Per-profile M5-grade extremes coverage established for all five required
+  compiled cases (part 1), including the signed-24 bias endpoints, shift-0
+  bypass, both saturation rails, and the reinstall-revalidate lifecycle.
+Combined with the earlier campaign: 5 x 100-frame soaks, warm-reboot cold-boot
+proof, parameter-only same-build path, incompatible-geometry rejection, and
+148 total full-PL reconfigurations on record (90 prior + 58 here).
