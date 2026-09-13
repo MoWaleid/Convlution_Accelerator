@@ -156,7 +156,13 @@ else.
 - Software additions: `software/edgefree_board.py` (standalone board runner;
   never programs PL or clocks), `software/tests/test_edgefree_release.py`
   (host package check: 16,384 int16 outputs vs reference), README note.
-- `.gitignore` and `AI_HANDOFF.md` updated; `README.md` added.
+- `.gitignore`: `dist/` and regenerated `profile_builds/*/project/` trees
+  are ignored (release outputs are reproduced by `scripts/release.ps1`,
+  never source inputs), while `release/evidence/*.rpt|log` are whitelisted
+  for future sign-off evidence.
+- `AI_HANDOFF.md` gains a banner marking it as the historical upstream
+  handoff and pointing to `README.md` + `release/QUICKSTART.md` /
+  `release/STATUS.md` for this branch; `README.md` is new.
 
 ## 7. Physical implementation result (this branch, `work/release_125/artifacts`)
 
@@ -239,5 +245,6 @@ powershell -ExecutionPolicy Bypass -File scripts/release.ps1
 # transfer package: dist/edgefree125
 ```
 
-Everything the flow needs is in the repository; no private folders, caches,
-network downloads, or pretrained artifacts are used.
+Note: the flow itself requires Vivado 2025.2 with Zynq-7000 device support
+and a valid license; those are workstation prerequisites (see
+`release/QUICKSTART.md`), not repository contents.
