@@ -32,17 +32,29 @@ def source_bounds(byte_count, width, height):
     require(width*height <= MAX_PIXELS, "source pixel limit")
 
 
-def _host_supported():
+def _host_supported(demote_to=None):
     if sys.platform != "linux" or not hasattr(os,"geteuid"):
         raise EnforcementUnavailable("Linux worker enforcement required; no desktop fallback")
-    if os.geteuid() == 0 or os.getuid() != os.geteuid():
-        raise EnforcementUnavailable("run as an explicit ordinary unprivileged user, not root/setuid")
-    try:
-        fields = dict(line.split(":",1) for line in Path("/proc/self/status").read_text().splitlines() if ":" in line)
-        if int(fields["CapEff"].strip(),16) != 0:
-            raise EnforcementUnavailable("decoder supervisor must have no effective capabilities")
-    except (OSError,KeyError,ValueError) as exc:
-        raise EnforcementUnavailable("cannot establish Linux privilege state") from exc
+    if demote_to is None:
+        if os.geteuid() == 0 or os.getuid() != os.geteuid():
+            raise EnforcementUnavailable("run as an explicit ordinary unprivileged user, not root/setuid")
+        try:
+            fields = dict(line.split(":",1) for line in Path("/proc/self/status").read_text().splitlines() if ":" in line)
+            if int(fields["CapEff"].strip(),16) != 0:
+                raise EnforcementUnavailable("decoder supervisor must have no effective capabilities")
+        except (OSError,KeyError,ValueError) as exc:
+            raise EnforcementUnavailable("cannot establish Linux privilege state") from exc
+    else:
+        # Explicit root-supervisor mode: the supervisor holds root only because
+        # the platform's UIO/DMA devices require it; the worker subprocess is
+        # demoted to the given (uid,gid) before exec, so every privilege
+        # guarantee the worker enforces still holds. Fail closed on anything
+        # other than a true root supervisor.
+        require(type(demote_to) is tuple and len(demote_to) == 2 and
+                all(type(v) is int and v > 0 for v in demote_to),
+                "demote_to must be a (uid,gid) tuple of positive ints")
+        if os.geteuid() != 0 or os.getuid() != 0:
+            raise EnforcementUnavailable("demote_to is only valid for a root supervisor")
 
 
 @contextmanager
@@ -68,12 +80,13 @@ def _worker_slot():
         os.close(fd)
 
 
-def _exchange(command, packet, maximum_output, deadline_seconds):
+def _exchange(command, packet, maximum_output, deadline_seconds, preexec=None):
     """Private transport, also exercised by deliberate user-run fault workers."""
     deadline = time.monotonic()+deadline_seconds
     child = subprocess.Popen(command, stdin=subprocess.PIPE,stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,close_fds=True,pass_fds=(),
-                             start_new_session=True,env={"LANG":"C.UTF-8"})
+                             start_new_session=True,env={"LANG":"C.UTF-8"},
+                             preexec_fn=preexec)
     selector = selectors.DefaultSelector()
     output, errors, sent = bytearray(), bytearray(), 0
     try:
@@ -162,8 +175,15 @@ def validate_decoded(result, source, w, h, policy):
 
 
 class LinuxDecoder:
+    def __init__(self, demote_to=None):
+        """demote_to=(uid,gid) enables the root-supervisor mode: the worker
+        subprocess is demoted to that unprivileged identity before exec. The
+        supervisor itself must then be root; any other host state fails
+        closed via _host_supported."""
+        self._demote_to = demote_to
+
     def decode(self, source, w, h, policy):
-        _host_supported()
+        _host_supported(self._demote_to)
         require(type(source) is bytes and 0 < len(source) <= MAX_SOURCE_BYTES,"source byte limit")
         integer(w,1,0xffffffff); integer(h,1,0xffffffff)
         require(w*h <= MAX_CANONICAL_BYTES,"target exceeds signed16 DMA frame bound")
@@ -171,8 +191,17 @@ class LinuxDecoder:
         request = json.dumps({"W":w,"H":h,"policy":policy,"source_length":len(source)},separators=(",",":")).encode()
         packet = struct.pack(">I",len(request))+request+source
         command = [sys.executable,"-I","-B",str(Path(__file__).with_name("_decoder_worker.py"))]
+        preexec = None
+        if self._demote_to is not None:
+            uid,gid = self._demote_to
+            def _demote():   # single-threaded supervisor; runs between fork and exec
+                os.setgroups([])
+                os.setgid(gid)
+                os.setuid(uid)
+            preexec = _demote
         with _worker_slot():
-            output = _exchange(command,packet,4+MAX_RECORD_BYTES+w*h,TIMEOUT_SECONDS)
+            output = _exchange(command,packet,4+MAX_RECORD_BYTES+w*h,TIMEOUT_SECONDS,
+                               preexec=preexec)
         require(len(output) >= 4,"truncated worker output")
         length = struct.unpack(">I",output[:4])[0]
         require(0 < length <= MAX_RECORD_BYTES and len(output) == 4+length+w*h,"worker framing")

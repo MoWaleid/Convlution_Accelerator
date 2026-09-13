@@ -100,67 +100,84 @@ def main():
     assert rec["verification"]["anchor"].startswith("5821c8b1")
     print("MOCK OK: run B32 reload (anchor mode)")
 
-    # 3) file-driven run: exact software reference on a generated image
+    # 3) file-driven run: exact software reference on a generated image.
+    # Windows has no Linux decoder worker; mock the CLI's loader with a
+    # fixture implementation standing in for the isolated worker.
     set_current("A32")
     from PIL import Image
     raw = bytes(range(256)) * 4       # deterministic 32x32 gradient pattern
     custom = ARCHIVE.parent / "m8_mock_custom.png"
     Image.frombytes("L", (32, 32), raw[:1024]).save(custom)
-    CLI.main(["run", "--profile", "A32", "--frames", "1", "--image", str(custom)])
-    rec, _ = newest_record()
-    assert rec["outcome"] == "PASS"
-    assert rec["verification"]["mode"] == "exact_reference"
-    assert rec["input"]["source_sha256"] == hl.sha256(custom.read_bytes()).hexdigest()
-    assert rec["input"]["canonical_sha256"] == hl.sha256(raw[:1024]).hexdigest()
-    assert rec["frames"][0]["mismatches"] == 0
-    print("MOCK OK: run --image (exact reference mode)")
+    real_loader = CLI.load_image_exact
+    import hashlib as hl
 
-    # 3b) M8-01: with the position limit forced to zero, a file run cannot
-    # verify numerically -> outcome must be UNVERIFIED, mismatches null
-    set_current("A32")
-    real_limit = MH.M.REF_POSITION_LIMIT
-    MH.M.REF_POSITION_LIMIT = 0
+    def fake_loader(path, w, h):
+        canonical = Image.open(path).convert("L").tobytes()
+        meta = {"source_path": str(path),
+                "source_sha256": hl.sha256(Path(path).read_bytes()).hexdigest(),
+                "source_format": "PNG", "source_mode": "L",
+                "source_width": w, "source_height": h,
+                "oriented_width": w, "oriented_height": h,
+                "geometry_policy": "exact",
+                "decode_policy": {"resource_strategy": "mock"}}
+        return canonical, meta
+
+    CLI.load_image_exact = fake_loader
     try:
         CLI.main(["run", "--profile", "A32", "--frames", "1", "--image",
                   str(custom)])
+        rec, _ = newest_record()
+        assert rec["outcome"] == "PASS"
+        assert rec["verification"]["mode"] == "exact_reference"
+        assert rec["input"]["source_sha256"] == hl.sha256(custom.read_bytes()).hexdigest()
+        assert rec["input"]["canonical_sha256"] == hl.sha256(raw[:1024]).hexdigest()
+        assert rec["frames"][0]["mismatches"] == 0
+        print("MOCK OK: run --image (exact reference mode)")
+        # 3b) M8-01: with the position limit forced to zero, a file run cannot
+        # verify numerically -> outcome must be UNVERIFIED, mismatches null
+        real_limit = MH.M.REF_POSITION_LIMIT
+        MH.M.REF_POSITION_LIMIT = 0
+        try:
+            CLI.main(["run", "--profile", "A32", "--frames", "1", "--image",
+                      str(custom)])
+            rec, _ = newest_record()
+            assert rec["outcome"] == "UNVERIFIED", rec["outcome"]
+            assert rec["verification"]["mode"] == "sha_only"
+            assert rec["frames"][0]["mismatches"] is None
+        finally:
+            MH.M.REF_POSITION_LIMIT = real_limit
+        print("MOCK OK: sha_only -> UNVERIFIED (never a PASS)")
+        # 3c) M8-04: two runs in the same clock second must not collide
+        real_time = CLI.time
+
+        class FakeTime:
+            @staticmethod
+            def strftime(_fmt, *_a):
+                return "20260913T000000Z"
+
+            @staticmethod
+            def gmtime():
+                return 0
+
+            perf_counter = staticmethod(real_time.perf_counter)
+            monotonic = staticmethod(real_time.monotonic)
+            time = staticmethod(real_time.time)
+
+        CLI.time = FakeTime
+        try:
+            CLI.main(["run", "--profile", "A32", "--frames", "1", "--image",
+                      str(custom)])
+            CLI.main(["run", "--profile", "A32", "--frames", "1", "--image",
+                      str(custom)])
+        finally:
+            CLI.time = real_time
+        recs = sorted(ARCHIVE.glob("20260913T000000Z-*/record.json"))
+        assert len(recs) == 2, [p.parent.name for p in recs]
+        ids = {json.loads(p.read_text())["run_id"] for p in recs}
+        assert len(ids) == 2, ids
+        assert all(json.loads(p.read_text())["outcome"] == "PASS" for p in recs)
     finally:
-        MH.M.REF_POSITION_LIMIT = real_limit
-    rec, _ = newest_record()
-    assert rec["outcome"] == "UNVERIFIED", rec["outcome"]
-    assert rec["verification"]["mode"] == "sha_only"
-    assert rec["frames"][0]["mismatches"] is None
-    print("MOCK OK: sha_only -> UNVERIFIED (never a PASS)")
-
-    # 3c) M8-04: two runs in the same clock second must not collide
-    set_current("A32")
-    real_time = CLI.time
-
-    class FakeTime:
-        @staticmethod
-        def strftime(_fmt, *_a):
-            return "20260913T000000Z"
-
-        @staticmethod
-        def gmtime():
-            return 0
-
-        perf_counter = staticmethod(real_time.perf_counter)
-        monotonic = staticmethod(real_time.monotonic)
-        time = staticmethod(real_time.time)
-
-    CLI.time = FakeTime
-    try:
-        CLI.main(["run", "--profile", "A32", "--frames", "1", "--image",
-                  str(custom)])
-        CLI.main(["run", "--profile", "A32", "--frames", "1", "--image",
-                  str(custom)])
-    finally:
-        CLI.time = real_time
-    recs = sorted(ARCHIVE.glob("20260913T000000Z-*/record.json"))
-    assert len(recs) == 2, [p.parent.name for p in recs]
-    ids = {json.loads(p.read_text())["run_id"] for p in recs}
-    assert len(ids) == 2, ids
-    assert all(json.loads(p.read_text())["outcome"] == "PASS" for p in recs)
+        CLI.load_image_exact = real_loader
     print("MOCK OK: archive collision -> distinct directories")
 
     # 4) benchmark harness

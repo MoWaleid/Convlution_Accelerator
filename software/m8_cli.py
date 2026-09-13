@@ -123,38 +123,30 @@ def pad_bytes(raw, n, w, h):
     return bytes(padded)
 
 
+def _decoder():
+    """The M2 isolated bounded decoder worker (conv_lab.preprocessing):
+    unprivileged RLIMIT-AS subprocess, 30 s supervisor deadline, bounded IPC,
+    no inherited descriptors. Under the sudo backend the supervisor is root,
+    so the worker subprocess is demoted to the board user before exec; the
+    worker still refuses privileged/non-Linux hosts and installs its own
+    limits. Fail closed — there is no in-process decode fallback."""
+    import conv_lab.preprocessing as pp
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        st = os.stat("/home/petalinux")
+        return pp.LinuxDecoder(demote_to=(st.st_uid, st.st_gid))
+    return pp.LinuxDecoder()
+
+
 def load_image_exact(path, w, h):
-    """Admission pipeline: byte limit BEFORE reading, format restriction,
-    dimension/pixel limits on the header BEFORE full decode, single read of
-    the source (decode happens on exactly the hashed bytes), EXIF
-    orientation, grayscale, exact geometry. No resize."""
-    import io
-    from PIL import Image, ImageOps
+    """Approved pipeline via the isolated decoder worker: source read once
+    and hashed by the worker, decoded under the address-space ceiling and
+    supervisor deadline, canonical W*H bytes plus the validated preprocessing
+    record returned. Exact geometry; no resize."""
     p = Path(path)
-    src_size = p.stat().st_size
-    m7.require(0 < src_size <= MAX_SOURCE_BYTES,
-               f"source size {src_size} outside policy")
-    src_bytes = p.read_bytes()
-    im = Image.open(io.BytesIO(src_bytes))
-    m7.require(im.format in ("PNG", "JPEG"), f"unsupported format {im.format}")
-    m7.require(getattr(im, "n_frames", 1) == 1, "animated/multiframe input rejected")
-    m7.require(im.mode in ("L", "RGB"), f"unsupported mode {im.mode}")
-    sw, sh = im.size
-    m7.require(sw <= MAX_DIM and sh <= MAX_DIM and sw * sh <= MAX_PIXELS,
-               f"source geometry {sw}x{sh} outside policy")
-    meta = {"source_path": str(p), "source_sha256": hashlib.sha256(src_bytes).hexdigest(),
-            "source_format": im.format, "source_mode": im.mode,
-            "source_width": sw, "source_height": sh}
-    im.load()
-    im = ImageOps.exif_transpose(im)
-    if im.mode != "L":
-        im = im.convert("L")
-    meta["oriented_width"], meta["oriented_height"] = im.size
-    m7.require(im.size == (w, h),
-               f"exact geometry policy: image {im.size} != compiled {w}x{h} "
-               "(no silent resize; use a prepared image)")
-    meta["geometry_policy"] = "exact"
-    return im.tobytes(), meta
+    result = _decoder().decode(p.read_bytes(), w, h, "exact")
+    meta = json.loads(result.record_json)
+    meta["source_path"] = str(p)
+    return result.canonical, meta
 
 
 def render_plane(values, ch, k, w, h, path):
