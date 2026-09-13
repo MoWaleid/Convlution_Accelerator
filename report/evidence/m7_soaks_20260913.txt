@@ -1,5 +1,17 @@
 M7 per-profile soaks — A32/B32/C32/D32 at 100 frames (PASS), D640 probe
 Date: 2026-09-13
+
+> **CORRECTION (2026-09-13, post-run source reconciliation):** these transcripts
+> were produced by manager md5 `e853933b4d0610881e895be4ff48c3bf` (the pushed
+> board build), NOT the later committed `184d75c0…`. Under `e853933b` every frame
+> is verified value-by-value against the on-board pure-Python exact reference
+> (make_expected, always computed — including D640, which is why D640 frames
+> cost ~35-40 s); golden-anchor SHA is checked on activation frames only.
+> The "anchor-SHA per frame" wording in earlier notes was wrong. The committed
+> `184d75c0…` (gated reference + anchor checks) was reconciled onto the board
+> later the same day and smoke-verified (A32 same-build PASS; D640 reload
+> activation 3.783 ms, anchor-exact, no reference computation).
+
 Script: /home/petalinux/m7_switch.py md5 e853933b4d0610881e895be4ff48c3bf
 Gate: >=100 frames per required compiled case without inter-frame RESET
 (approved M5-grade gate; review finding 12 forbids downgrade).

@@ -388,13 +388,16 @@ our leaner K=8 design; clarify whether competition "throughput" counts pixels or
    STATUS reads `0x19D`; only after RESET does it read `0x181`.
 7. `.bit/.ltx/.dcp` files are gitignored — `bitstreams/*.bit` and `checkpoints/*.dcp`
    exist only on disk (the tested-bitstream hash gate in §4 covers this).
-9. **M7 D640 I/O tax (2026-09-13):** each D640 frame spends ~35–40 s in *untimed*
-   buffer I/O (TX write + TX readback + 2.4 MB RX read via u-dma-buf
-   `os.pread`/`os.pwrite`); the timed datapath is only 3.73 ms. The pause is not a
-   hang. The software reference is intentionally disabled above
-   `REF_POSITION_LIMIT = 65536` — D640 validates per frame against its frozen
-   anchor SHA-256 instead. A future optimization (mmap-based bulk access) must not
-   change the validated script without re-pushing + re-verifying.
+9. **M7 source reconciliation (2026-09-13, E1):** the M7 board evidence (matrix,
+   soaks, cold boot) was produced by manager md5 `e853933b4d0610881e895be4ff48c3bf`
+   (always-compute on-board reference; anchor checked on activation frames only),
+   while commit `3117f0f` contains the later `184d75c07eb96d4b7e64b27b6a05dd31`
+   (adds `REF_POSITION_LIMIT=65536` gating + anchor checks in soak/switch-frames).
+   The board was reconciled to `184d75c0…` the same day: whole-payload md5
+   verified, A32 same-build smoke PASS, D640 reload activation 3.783 ms
+   (anchor-exact, no reference computation). Evidence transcripts carry
+   correction banners where the verification mechanism was originally
+   mislabeled. Do not re-verify with `e853933b`-era assumptions.
 10. **Push-payload lesson (2026-09-13):** the staged Temp payloads had CRLF line
     endings and failed `base64 -d`; always strip CR and re-verify decoded hashes
     locally before handing chunks to the relay.
@@ -522,9 +525,41 @@ D640 `e323defb…`).
   per-profile utilization/timing/FOM table, §8 switching evidence (58-switch matrix
   transcript exists in `report/evidence/`), D-profile Sobel figures.
 
-**Next milestone: M8** (reproducible operation and demo — CLI/API, run archive,
-measurement harness; demo core exists as `m3_demo.py`; formal M8 pending), then M9
-(release freeze). The old per-step M7 push/run instructions below this section were
+**Next milestone: M8** — in progress (2026-09-13). Phase A implemented and
+board-validated: `software/m8_cli.py` (run/benchmark/list/record) + run archive
+at `/var/lib/conv-lab/results/` + display-only previews + measurement harness,
+strictly layered on m7_switch (UI never bypasses the backend). Mock suite
+`verification/m8_cli/mock_cli_test.py` (8 cases) + the M7 manager mocks all PASS.
+
+Second external review (feedback.md top section, 2026-09-13) accepted the M7
+board evidence as historical and listed new blockers; disposition so far:
+- **E1 (source/identity mismatch) RESOLVED:** the M7 board runs used manager
+  md5 `e853933b…` while commit `3117f0f` contains `184d75c0…`; the board was
+  reconciled to `184d75c0…` (payload md5-verified, A32/D640 smokes) and is now
+  byte-identical to the repo. Evidence transcripts carry correction banners.
+- **Fixed, mock-tested, board-validated:** M7-R1 flock-based exclusive
+  ownership (kernel-released, pid recorded, `/run/lock` preferred); M7-R2
+  approved four-guard layout (RX at 5440/5568/313728, 22-bit bounds, physical
+  alignment, runtime allocation honored, D640 manifest rx_offset corrected to
+  313728); M7-R3 cleanup RESET only from IDLE/FAULT **and QUIESCENT**, final
+  `0x181` required, PASS printed only after cleanup in all modes; M8-01
+  sha-only runs are UNVERIFIED (never PASS), mismatches=null; M8-03 cleanup +
+  persistence outcomes recorded, terminal PASS gated on both, lock released in
+  outermost finally; M8-04 exclusive run-dir allocation + atomic record
+  publication; M8-05 record-command run-id validation + containment; M8-06
+  storage admission (256 MiB disposable budget, 512 MiB headroom) before any
+  hardware mutation; M8-02 partial — byte/dimension/format limits before
+  decode, single read, decode of exactly the hashed bytes, image admission
+  before the switch.
+- **Still open:** M8-02 full decoder-worker isolation (RLIMIT_AS/unprivileged
+  worker integration), M7-R4 strict format-3 whole-bundle admission, M8-07
+  record completeness (model/config hashes, immutable snapshots), M8-08
+  timing-scope naming (hw_ms is a host-clock poll interval, not cycle count),
+  E2 exact-cycle-coverage precision + M5-grade per-profile extremes coverage,
+  E3 stale foundation tests + report corrections (report due 2026-09-15!).
+  Phase B (bundle importer via FAT transport, concurrent/cancel cases) pending.
+
+The old per-step M7 push/run instructions below this section were
 executed and are preserved only in git history / the amendment note that follows.
 
 ## M7 foundation amendment — 2026-09-12 (SUPERSEDED)

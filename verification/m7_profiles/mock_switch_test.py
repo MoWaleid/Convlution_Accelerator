@@ -232,9 +232,51 @@ def fake_pread(fd, count, off):
     return b"\x00" * count
 
 
-fake_os = types.SimpleNamespace(
-    getpid=_real_os.getpid,
-    pwrite=fake_pwrite, pread=fake_pread, close=lambda fd: None)
+class _FakeOs:
+    """Fakes pwrite/pread/close for the fake u-dma-buf fd; everything else
+    (lock files, O_* constants, ftruncate, replace) passes through to the
+    real os module."""
+
+    O_RDWR = _real_os.O_RDWR
+    O_CREAT = _real_os.O_CREAT
+    O_EXCL = _real_os.O_EXCL
+    O_TRUNC = _real_os.O_TRUNC
+    O_WRONLY = _real_os.O_WRONLY
+    O_RDONLY = _real_os.O_RDONLY
+
+    def getpid(self):
+        return _real_os.getpid()
+
+    def open(self, *a):
+        return _real_os.open(*a)
+
+    def stat(self, *a):
+        return _real_os.stat(*a)
+
+    def replace(self, *a):
+        return _real_os.replace(*a)
+
+    def ftruncate(self, *a):
+        return _real_os.ftruncate(*a)
+
+    def write(self, fd, data):
+        if fd == FAKE_FD:
+            raise AssertionError("os.write to the fake u-dma-buf fd")
+        return _real_os.write(fd, data)
+
+    def close(self, fd):
+        if fd == FAKE_FD:
+            return None
+        return _real_os.close(fd)
+
+    def pwrite(self, fd, data, off):
+        return fake_pwrite(fd, data, off)
+
+    def pread(self, fd, count, off):
+        return fake_pread(fd, count, off)
+
+
+fake_os = _FakeOs()
 
 M.open_handles = fake_open_handles
 M.program_fpga = fake_program

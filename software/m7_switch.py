@@ -27,7 +27,13 @@ import m4_filebackend as fb
 # ─── Paths ────────────────────────────────────────────────────────────────────
 BASE = Path("/home/petalinux/profiles")
 FW_DIR = Path("/lib/firmware")
-LOCK_FILE = Path("/tmp/m7_switch.lock")
+try:
+    import fcntl
+except ImportError:  # mock hosts only; the board is Linux
+    fcntl = None
+LOCK_FILE = (Path("/run/lock/m7_switch.lock") if Path("/run/lock").is_dir()
+             else Path("/tmp/m7_switch.lock"))
+_lock_fd = None
 FW_NAME = {"A32": "m7_A32.bin", "B32": "m7_B32.bin", "C32": "m7_C32.bin",
            "D32": "m7_D32.bin", "D640": "m7_D640.bin"}
 ORDER = ["A32", "B32", "C32", "D32", "D640"]
@@ -169,28 +175,27 @@ def load_input(n, w, h):
 # ─── Layout computation (per-profile, derived from M4 validated layout) ──────
 
 def compute_layout(tx_bytes, rx_bytes, buffer_size):
-    """Compute guarded TX/RX layout. Returns dict with offsets and capacity.
-    Uses the M1_DMA_CAPACITY approved formula: 64-byte alignment, TX at 4096,
-    RX after TX with guard separation."""
+    """Approved M1_DMA_CAPACITY guarded layout: G=64, TX_OFFSET=0x1000,
+    RX_OFFSET = ALIGN_UP(TX_OFFSET + TX_BYTES + 2*G, 64), four 64-byte
+    guards, RX DMA capacity exactly RX_BYTES, both transfer lengths bounded
+    by the 22-bit DMA length field."""
+    g = GUARD_SIZE
     require(tx_bytes > 0 and rx_bytes > 0, "TX/RX sizes must be positive")
-    tx_start = 0x1000
-    tx_end = tx_start + tx_bytes
-    # RX starts after TX with at least 64-byte guard gap, 64-byte aligned
-    rx_start = ((tx_end + GUARD_SIZE + 63) // 64) * 64
-    # Guard regions: 64 bytes before and after RX
-    rx_guard_before = rx_start - GUARD_SIZE
-    rx_end = rx_start + rx_bytes
-    rx_tail_guard_end = rx_end + GUARD_SIZE
-    total_needed = rx_tail_guard_end
-    require(total_needed <= buffer_size,
-            f"layout needs {total_needed} B but buffer is {buffer_size} B")
-    require((rx_start % 64) == 0, f"RX start {rx_start} not 64-byte aligned")
+    require(tx_bytes <= (1 << 22) - 1 and rx_bytes <= (1 << 22) - 1,
+            "transfer exceeds the 22-bit DMA length field")
+    tx_offset = TX_OFFSET
+    require(tx_offset >= g, "TX leading guard would fall below buffer start")
+    rx_offset = ((tx_offset + tx_bytes + 2 * g + 63) // 64) * 64
+    extent = rx_offset + rx_bytes + g
+    require(extent <= buffer_size,
+            f"layout needs {extent} B but buffer is {buffer_size} B")
+    require(tx_offset % 64 == 0 and rx_offset % 64 == 0, "payload alignment")
     return {
-        "tx_offset": tx_start, "tx_bytes": tx_bytes,
-        "rx_offset": rx_start, "rx_bytes": rx_bytes,
-        "rx_capacity": rx_bytes,
-        "lead_guard_offset": rx_start - GUARD_SIZE,
-        "tail_guard_offset": rx_end,
+        "tx_offset": tx_offset, "tx_bytes": tx_bytes,
+        "tx_lead_guard": tx_offset - g, "tx_tail_guard": tx_offset + tx_bytes,
+        "rx_offset": rx_offset, "rx_bytes": rx_bytes,
+        "rx_lead_guard": rx_offset - g, "rx_tail_guard": rx_offset + rx_bytes,
+        "extent": extent,
     }
 
 
@@ -314,8 +319,15 @@ def run_frame(dma, accel, buf_fd, phys, layout, padded, expected, k):
     tx_bytes = layout["tx_bytes"]
     rx_offset = layout["rx_offset"]
     rx_bytes = layout["rx_bytes"]
+    require((phys + tx_offset) % 64 == 0 and (phys + rx_offset) % 64 == 0,
+            "physical payload alignment")
 
-    # Write TX frame
+    # Write all four guards, then the TX payload
+    guard = b"\xA5" * GUARD_SIZE
+    require(os.pwrite(buf_fd, guard, layout["tx_lead_guard"]) == GUARD_SIZE,
+            "TX lead guard write failed")
+    require(os.pwrite(buf_fd, guard, layout["tx_tail_guard"]) == GUARD_SIZE,
+            "TX tail guard write failed")
     require(os.pwrite(buf_fd, padded, tx_offset) == len(padded), "TX write failed")
     # Verify TX readback
     require(os.pread(buf_fd, len(padded), tx_offset) == padded, "TX readback failed")
@@ -392,11 +404,15 @@ def run_frame(dma, accel, buf_fd, phys, layout, padded, expected, k):
     require(not (status & (STATUS_FAULT | STATUS_ERROR)),
             f"accelerator fault after frame: 0x{status:08X}")
 
-    # Read output and verify guards
+    # Read output and verify all four guards
     output = os.pread(buf_fd, rx_bytes, rx_offset)
-    require(os.pread(buf_fd, GUARD_SIZE, rx_offset - GUARD_SIZE) == b"\xA5" * GUARD_SIZE,
+    require(os.pread(buf_fd, GUARD_SIZE, layout["tx_lead_guard"]) == b"\xA5" * GUARD_SIZE,
+            "TX lead guard corrupted")
+    require(os.pread(buf_fd, GUARD_SIZE, layout["tx_tail_guard"]) == b"\xA5" * GUARD_SIZE,
+            "TX tail guard corrupted")
+    require(os.pread(buf_fd, GUARD_SIZE, layout["rx_lead_guard"]) == b"\xA5" * GUARD_SIZE,
             "RX lead guard corrupted")
-    require(os.pread(buf_fd, GUARD_SIZE, rx_offset + rx_bytes) == b"\xA5" * GUARD_SIZE,
+    require(os.pread(buf_fd, GUARD_SIZE, layout["rx_tail_guard"]) == b"\xA5" * GUARD_SIZE,
             "RX tail guard corrupted")
 
     values = struct.unpack(f"<{rx_bytes // 2}h", output)
@@ -418,7 +434,6 @@ def switch_to(profile, catalog, anchors, ctx):
     h = acc["image_h"]
     tx_bytes = acc["expected_input_bytes"]
     rx_bytes = acc["expected_output_bytes"]
-    buffer_size = acc.get("buffer_bytes", 4194304)
 
     # Phase: VALIDATING — candidate firmware + parameter files + live identity
     firmware = FW_DIR / FW_NAME[profile]
@@ -428,7 +443,8 @@ def switch_to(profile, catalog, anchors, ctx):
             f"{profile}: firmware hash mismatch")
     channels = load_params(profile, n, k)
 
-    layout = compute_layout(tx_bytes, rx_bytes, buffer_size)
+    require(ctx.get("buffer_size"), "runtime buffer size not discovered")
+    layout = compute_layout(tx_bytes, rx_bytes, ctx["buffer_size"])
 
     # VALIDATING: read live identity (safe, read-only)
     if ctx["handles"] is None:
@@ -565,13 +581,36 @@ def build_matrix_sequence(start_profile):
 # ─── Modes ────────────────────────────────────────────────────────────────────
 
 def acquire_lock():
-    if LOCK_FILE.exists():
-        raise RuntimeError(f"another instance holds {LOCK_FILE}")
-    LOCK_FILE.write_text(str(os.getpid()))
+    """OS-backed exclusive ownership (M1_ACTIVATION_LIFECYCLE): an flock is
+    held for the process lifetime and released by the kernel even on abrupt
+    exit; release never unlinks by name. Hosts without fcntl (mock tests)
+    get pid recording only - no exclusivity there."""
+    global _lock_fd
+    require(_lock_fd is None, "lock already held by this process")
+    if fcntl is not None:
+        fd = os.open(LOCK_FILE, os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(fd)
+            raise RuntimeError(f"another instance holds {LOCK_FILE}")
+        os.ftruncate(fd, 0)
+        os.write(fd, str(os.getpid()).encode())
+        _lock_fd = fd
+    else:
+        fd = os.open(LOCK_FILE, os.O_RDWR | os.O_CREAT, 0o600)
+        os.write(fd, str(os.getpid()).encode())
+        _lock_fd = fd
 
 
 def release_lock():
-    LOCK_FILE.unlink(missing_ok=True)
+    global _lock_fd
+    if _lock_fd is None:
+        return
+    try:
+        os.close(_lock_fd)
+    finally:
+        _lock_fd = None
 
 
 def main():
@@ -580,6 +619,7 @@ def main():
 
     acquire_lock()
     ctx = None
+    mode_result = {"label": None, "ok": False}
     try:
         catalog = json.loads((BASE / "m7_profiles.json").read_text())["profiles"]
         anchors = json.loads((BASE / "anchors_m7.json").read_text())
@@ -599,8 +639,9 @@ def main():
             require(profile in catalog, f"unknown profile {profile}")
             reloaded = switch_to(profile, catalog, anchors, ctx)
             do_switch_frames(profile, catalog, anchors, ctx, frames)
-            print(f"M7_SWITCH {profile}: PASS ({frames} frames, "
-                  f"reload={'yes' if reloaded else 'no'})", flush=True)
+            mode_result["label"] = (f"M7_SWITCH {profile}: PASS ({frames} frames, "
+                                    f"reload={'yes' if reloaded else 'no'})")
+            mode_result["ok"] = True
 
         elif mode == "--matrix":
             # Determine starting profile from live hardware
@@ -638,6 +679,7 @@ def main():
                 log(f"SUMMARY: {len(sequence)} switches, {reloaded_count} full-PL "
                     f"reloads, {len(observed_transitions)} ordered pairs covered, "
                     f"{time.monotonic() - started:.1f} s")
+                mode_result["label"] = "M7 SWITCH MATRIX: PASS"
             except BaseException:
                 if ctx["handles"]:
                     print(f"FAILURE SNAPSHOT: MM2S=0x{read32(ctx['handles'][0], 4):08X}, "
@@ -646,15 +688,21 @@ def main():
             finally:
                 if ctx["handles"]:
                     dma_halt(ctx["handles"][0])
-                    write32(ctx["handles"][1], REG_COMMAND, CMD_RESET)
-                    wait_for(lambda: read32(ctx["handles"][1], REG_STATUS) &
-                             (STATUS_IDLE | STATUS_QUIESCENT), "final RESET", 2.0)
                     status = read32(ctx["handles"][1], REG_STATUS)
-                    require(status == 0x181, f"final state 0x{status:08X} != 0x181")
-                    print("M7 SWITCH MATRIX: PASS", flush=True)
+                    if ((status & (STATUS_IDLE | STATUS_FAULT))
+                            and (status & STATUS_QUIESCENT)):
+                        write32(ctx["handles"][1], REG_COMMAND, CMD_RESET)
+                        wait_for(lambda: read32(ctx["handles"][1], REG_STATUS) &
+                                 STATUS_IDLE, "final RESET", 2.0)
+                        final = read32(ctx["handles"][1], REG_STATUS)
+                        require(final == 0x181, f"final state 0x{final:08X} != 0x181")
+                        mode_result["ok"] = True
+                    else:
+                        print(f"final state unresolved 0x{status:08X} - recovery "
+                              f"required; PASS withheld", flush=True)
                     close_handles(ctx["handles"])
                     ctx["handles"] = None
-                    print("final state clean, handles closed", flush=True)
+                    print("handles closed", flush=True)
 
         elif mode == "--soak":
             require(len(sys.argv) >= 4, "usage: --soak X frames")
@@ -686,9 +734,14 @@ def main():
                 if (frame + 1) % 10 == 0:
                     log(f"  {frame + 1}/{frames} frames bit-exact")
             med = statistics.median(latencies)
-            log(f"M7 SOAK {profile}: PASS — {frames} frames, "
+            log(f"M7 SOAK {profile}: SUMMARY — {frames} frames, "
                 f"median {med * 1000:.3f} ms, min {min(latencies) * 1000:.3f}, "
                 f"max {max(latencies) * 1000:.3f}")
+            mode_result["label"] = (f"M7 SOAK {profile}: PASS — {frames} frames, "
+                                    f"median {med * 1000:.3f} ms, "
+                                    f"min {min(latencies) * 1000:.3f}, "
+                                    f"max {max(latencies) * 1000:.3f}")
+            mode_result["ok"] = True
 
         else:
             print("usage: m7_switch.py --profile X [frames] | --soak X N | --matrix")
@@ -698,26 +751,35 @@ def main():
             safe_cleanup(ctx)
         except Exception as exc:
             print(f"cleanup issue: {exc}", flush=True)
+            mode_result["ok"] = False
         release_lock()
+        if mode_result["label"] and mode_result["ok"]:
+            print(mode_result["label"], flush=True)
 
 
 def safe_cleanup(ctx):
-    """Guaranteed post-run cleanup: halt DMA, then CVH1 RESET only from a legal
-    state (IDLE or FAULT). RESET while RUN would SLVERR and kill the process,
-    so a mid-frame crash leaves the state for the next run's entry check."""
+    """Guaranteed post-run cleanup: halt DMA, then CVH1 RESET only from a
+    legal quiescent state (IDLE or FAULT *with* QUIESCENT) - the ABI admits
+    RESET only there, and resetting faulted-but-unquiescent fabric risks the
+    known SLVERR/SIGBUS behavior. Unresolved states are refused and left for
+    qualified recovery instead of being silently reset."""
     if not ctx or not ctx.get("handles"):
         return
     dma, accel, buf_fd, _fds = ctx["handles"]
     try:
         dma_halt(dma)
         status = read32(accel, REG_STATUS)
-        if status & (STATUS_IDLE | STATUS_FAULT):
+        if (status & (STATUS_IDLE | STATUS_FAULT)) and (status & STATUS_QUIESCENT):
             write32(accel, REG_COMMAND, CMD_RESET)
             wait_for(lambda: read32(accel, REG_STATUS) & STATUS_IDLE,
                      "cleanup RESET", 2.0)
-            log(f"  cleanup: final STATUS 0x{read32(accel, REG_STATUS):08X}")
+            final = read32(accel, REG_STATUS)
+            require(final == 0x181, f"cleanup final state 0x{final:08X} != 0x181")
+            log(f"  cleanup: final STATUS 0x{final:08X}")
         else:
-            log(f"  cleanup: accelerator in RUN (0x{status:08X}) - left for next entry check")
+            raise RuntimeError(
+                f"cleanup refused: illegal reset state 0x{status:08X} "
+                "- recovery required")
     finally:
         close_handles(ctx["handles"])
         ctx["handles"] = None

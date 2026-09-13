@@ -38,10 +38,13 @@
   },
   "layout": {
     "tx_offset": 4096,
-    "rx_offset": 65536,
+    "tx_bytes": 309444,
+    "rx_offset": 313728,
     "rx_capacity": 2457600,
     "guard_size": 64,
-    "guard_byte": 165
+    "guard_byte": 165,
+    "extent": 2771392,
+    "note": "approved M1_DMA_CAPACITY layout: RX_OFFSET = ALIGN_UP(TX_OFFSET + TX_BYTES + 2*G, 64), four 64-byte guards; the former rx_offset 65536 overlapped TX and was never used by the repaired runtime"
   },
   "artifacts": {
     "bitstream_sha256": "6484913270795428dc9c3705e1359f8dcc663a61eb3f63084cfc2f90b9e6aaa5",
