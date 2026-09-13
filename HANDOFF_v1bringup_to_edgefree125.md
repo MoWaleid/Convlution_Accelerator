@@ -182,8 +182,27 @@ else.
 
 Direct apples-to-apples: the same CFGLUT5 architecture at 100 MHz
 (sibling release branch `feature/k16-cfglut5-edgefree-100mhz`) measures
-WNS +0.061 at 10 ns, 1.791 W, 12,966 LUTs - see `release/STATUS.md` on each
-branch and the FOM table in the 120MHz plan document.
+WNS +0.061, WHS +0.008 at 10 ns, 12,966 LUTs / 11,721 FFs, 1.791 W - see
+`release/STATUS.md` on each branch. D640 routed evidence on `v1-bringup`
+exists only as transcripts and figures under `report/` (different
+geometry: K=4, 640x480), so it is not numerically comparable.
+
+FOM (announcement form: FoM = Throughput / (P x (LUT + 50 DSP + 100 BRAM)),
+throughput in output pixels per cycle; weighted resources 13,266 at
+100 MHz vs 13,372 here; sustained 4 px/cycle through the serializer,
+peak 16 px/cycle at the core):
+
+| Basis | 100 MHz | 125 MHz | Delta |
+| --- | ---: | ---: | --- |
+| Announcement units, system, sustained | 1.684e-4 | 1.658e-4 | -1.5% |
+| Announcement units, system, peak core | 6.736e-4 | 6.632e-4 | -1.5% |
+| Announcement units, core-only (8,569 vs 8,241 LUTs) | 9.93e-3 | 1.011e-2 | +1.8% |
+| Per-second basis (px/s per W-resource), system | 16,837 | 20,727 | +23.1% |
+
+In the announcement's literal px/cycle units the FoM is
+frequency-independent, so 125 MHz is flat to -1.5% system-wide (power
+1.791 -> 1.804 W, LUTs +106). On the per-second basis the gain is +23.1%
+(400 M -> 500 M output pixels/s). State the chosen basis in any report.
 
 ## 8. How 125 MHz was reached (the journey, including the failed attempt)
 
