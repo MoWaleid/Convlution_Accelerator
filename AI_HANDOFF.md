@@ -555,11 +555,22 @@ board evidence as historical and listed new blockers; disposition so far:
   decode, single read, decode of exactly the hashed bytes, image admission
   before the switch.
 - **Still open:** M8-02 full decoder-worker isolation (RLIMIT_AS/unprivileged
-  worker integration), M7-R4 strict format-3 whole-bundle admission inside the
-  manager's load path, M8-07 remainder (immutable snapshot binding beyond
+  worker integration), M8-07 remainder (immutable snapshot binding beyond
   recorded hashes), E2 exact-cycle-coverage precision + M5-grade per-profile
-  extremes coverage, E3 report regen done — stale foundation tests FIXED
-  (reconciled anchors + D640 projection assertion, 8/8 PASS 2026-09-14).
+  extremes coverage.
+- **M7-R4 CLOSED (2026-09-14, board-proven):** explicit legacy conversion of
+  all five parameter bundles to the canonical-flat-2 dialect
+  (`scripts/convert_legacy_profiles.py`, receipts in
+  `profiles/history/legacy_conversion_20260914.json`, canonical bundles tracked
+  under `profiles/<P>/`); `load_params` strictly admits only that dialect via
+  conv_lab.strict (exact field sets, boolean relu_en, coefficient grammar over
+  hashed bytes, bundle-declared signed-24 bias width) and returns an immutable
+  whole-bundle SHA-256 logged at admission; `switch_to` cross-validates
+  manifest vs catalog before hardware writes; `validate_identity` checks
+  WIDTHS_0/WIDTHS_1. Board evidence:
+  `report/evidence/m7_r4_strict_admission_20260914.txt`. Board copies:
+  m7_switch md5 `8b4315b8…`, m8_cli md5 `bfdbb39b…`, canonical configs pushed
+  (payload m9fix.tgz 18,048 B, b64 `f5ca1a8b…`).
 - **M8 Phase B importer BOARD-PROVEN (2026-09-14):** `software/m8_import.py`
   (md5 `899f65e3…`, needs `/home/petalinux/conv_lab/` = 3-file grammar package
   `__init__/errors/strict` — pushed; keep in sync with repo's conv_lab) imports
