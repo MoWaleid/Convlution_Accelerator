@@ -666,3 +666,89 @@ metadata was already 32 hexadecimal digits in the inspected file; it is unchange
 the original is preserved under profiles/history. No deployed-file verification.
 The full per-profile M5 gate (>=100 frames without inter-frame RESET) and M7
 switching/cold-boot requirements remain; this amendment claims no qualification.
+---
+
+## 17. CURRENT STATE — 2026-09-14 evening (context-reset safe; supersedes older sections)
+
+### 17.1 Where the program stands
+- M0–M7: closed (evidence in §10 + report/evidence/). M8: functionally
+  complete and board-proven (E2 closed, ac84c3e) BUT Codex review R14-02/03
+  found P1 defects in the NEW soak path and exit-code semantics — M8
+  acceptance is CONDITIONAL on the repair batch below. M9: §1 done,
+  §2 done (1,000-frame varied soak, 6/6 legs PASS, ef5c614), §3 done (five
+  true power-cycle boots, a3f31a5), §4 (clean-build reproduction) and §5
+  (tag v1-m9-release + known-limits) OPEN. The tag must NOT be applied
+  until Gate 0 closes (see 17.4).
+- User directive: deadline pressure is OFF (user's own business). Quality
+  and evidence discipline govern sequencing.
+- Branch `v1-bringup` is 17+ commits ahead of origin/v1-bringup — PUSH
+  pending (user action, do at next convenience; Codex FP-01 Gate 0 item).
+
+### 17.2 Codex review (feedback.md, three parts) — dispositions committed
+`INTEGRATION_PLAN_M10_M12.md` Addendum A (ba1b3ef) records verified
+dispositions for: FP-01..08 (feasibility), IP-01..11 (integration-plan
+corrections), R14-01..10 (current-work findings). Key verified facts:
+- R14-01 [P1, RTL, OUR BASELINE]: conv_channel S4 rounding overflows at
+  shift 24 / mis-rounds 25-31 (fixed-width constant at C_FULL_W=25).
+  Containment decision PENDING USER: (b recommended) freeze baseline with
+  admission-restricted shift range + documented limit, real fix rides M11
+  (teammate S4/S5 implements the contract's discarded-bit alternative);
+  or (a) rebuild+requalify all five profiles now.
+- R14-02/03/04/05 [P1, sw]: soak admits image AFTER hardware switch;
+  cleanup/persistence failure exits 0; bias validated vs bundle width not
+  hardware width; unbounded supervisor read_bytes. ALL ACCEPTED — repair
+  batch queued (17.4 step 1), mock suite must gain the negative cases.
+- R14-06..10 [P2]: accepted, scoped post-repair batch.
+- Integration corrections: 00a6e11 is a DIRECT child of fb66066 (selective
+  transplant onto mainline, never wholesale merge); EF125 physical numbers
+  PROVISIONAL (no artifacts on the remote branch; +0.201 vs +0.178 WNS
+  discrepancy unresolved); CFGLUT5 engine is N3-specialized but K-GENERIC
+  (A32/D32/D640 = config rebuilds; only C32/N5 needs a new generator);
+  teammate release package ships OLD permissive manager + legacy dialect —
+  never adopt it; unit discipline: results vs positions vs beats.
+
+### 17.3 Research branch (feature/k16-cfglut5-edgefree-125mhz @ 00a6e11)
+Teammate handoff committed: HANDOFF_v1bringup_to_edgefree125.md.
+EF125K16N3W32R01, 125 MHz WNS(provisional), CFGLUT5/Dadda bitheap, edge-free
+windowing (judge bonus), 5-stage pipeline, host-only qualification
+(1,007 tests + A-H wrapper incl. edge-bubble metrics; Board NOT_RUN).
+M10-M12 plan committed with Addendum A corrections: Gate 0 baseline
+recoverable → Gate 1 research build contract → Gate 2 B32_CFGLUT125 first
+(N3 K4/K8 variants after; C32/N5 stays legacy) → Gate 3 board qualification
+→ Gate 4 matched comparison (MAC100/CFGLUT100/CFGLUT125).
+
+### 17.4 ACTION QUEUE (exact order, awaiting user GO per item)
+1. **Repair batch (host-only, no board):** R14-02 (shared finalization +
+   nonzero exit + lock in outermost finally), R14-03 (hoist soak image
+   admission before switch_to), R14-04 (hw bias_width into load_params),
+   R14-05 (bounded read MAX+1 in supervisor), mock negative cases for each.
+   Commit. (R14-01 RTL containment: user decision pending — recommended
+   option (b): admission-restrict legacy profiles to shift<=8 + document.)
+2. **Board session — artifact recovery + revalidation:** recover
+   /lib/firmware/m7_A32.bin (b59378e4…) + runtime hardware_A32.json to the
+   repo (FP-02: A32 .bit 8bc608… exists nowhere else); revalidate repaired
+   soak/run paths (1 short soak + 1 image run); pull the true schema-v3
+   records for the 1,000-frame soak + full matrix log (Codex: current
+   evidence files are excerpts).
+3. **R14-01 RTL fix** (per user decision) or admission restriction.
+4. **M9 §4:** clean-build reproduction (user-executed Vivado; D640
+   projection reproduces dn3k04_w640480 hash 64849132…; or A32 via
+   prepare_profile) + §5 tag v1-m9-release + known-limits (incl. R14-01
+   containment if (b)).
+5. **Push branch to origin** (17+ commits).
+6. **M10** per INTEGRATION_PLAN (Addendum A order): baseline recoverable →
+   research build contract → B32_CFGLUT125 first → board qual → matched
+   comparison (M12). C32/N5 stays legacy until an N5 generator exists.
+
+### 17.5 Operational lessons added this session
+- Serial/chat transport can DROP '+' characters from base64 (m13f round):
+  transport payloads as PLUS-FREE base64 (tr '+' '.' locally, tr '.' '+'
+  on board before decode); chunk md5 gates caught it both times.
+- Tarballs containing directory entries extracted with sudo clobber live
+  dir ownership (chown -R petalinux:petalinux /home/petalinux fixed it);
+  extract as petalinux or use --strip-components.
+- Mock suites must exceed thresholds that real runs hit (soak progress
+  print at frame 25 crashed with 5-frame mocks; log() vs print()).
+- Cleanup scan buffered: CLEANUP_SCAN_20260914.md (do not delete anything
+  without re-running it; Temp holds the only legacy bundle sources —
+  archive to profiles/history first).
