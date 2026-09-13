@@ -7,6 +7,12 @@ talk to the user** (§15). Every claim below was verified first-hand; state as o
 **2026-09-13**, HEAD commit `9f6f68a` ("M6: qualify same-image full-PL reload");
 all M7 work (now **board-qualified**, §16) is uncommitted in the working tree.
 
+> **⚡ CURRENT STATE POINTER (2026-09-14, context-reset safe): read §17 first.**
+> The sections below are historical layers; §17 supersedes all status prose in
+> §3/§16/§16.6/§16.7 where they conflict (including this stale header line).
+> Authoritative companions: INTEGRATION_PLAN_M10_M12.md (+ Addendum A, ba1b3ef),
+> feedback.md (FP/IP/R14 review series), M9_CHECKLIST.md, CLEANUP_SCAN_20260914.md.
+
 ---
 
 ## 1. What this project is
