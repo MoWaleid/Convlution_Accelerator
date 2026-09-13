@@ -5,24 +5,26 @@
 --
 -- Actual compiled profile:
 --   N = 3
---   K = 8
+--   K = 16
 --   padded input  = 34 x 34 = 1156 bytes
 --   logical output = 32 x 32
---   output = 32 x 32 x 8 x int16 = 16384 bytes
+--   output = 32 x 32 x 16 x int16 = 32768 bytes
 --
 -- Numerical setup:
---   every pixel       = +1
+--   pixel(r,c)        = r + c
 --   every coefficient = +1
 --   bias              = 0
 --   shift             = 0
 --   ReLU              = 0
 --
--- Therefore every channel of every output pixel must be signed16 value 9.
+-- Therefore every channel at logical output (r,c) must be signed16 value
+-- 9 * (r + c) + 18.  The spatially varying result makes a dropped, duplicated,
+-- or reordered position at any row-edge bubble visible to the scoreboard.
 --
 -- Coverage
 -- --------
 -- A. Reset, discovery, pre-START stream gating
--- B. Complete K=8 parameter admission through AXI-Lite
+-- B. Complete K=16 parameter admission through AXI-Lite
 -- C. Full frame through REAL frontend/core/serializer under backpressure
 --      * strict 1156-byte framing
 --      * numerical output
@@ -59,6 +61,11 @@ use work.conv_pkg.all;
 
 
 entity tb_conv_axis_wrapper is
+    generic (
+        G_WINDOW_PREFETCH : boolean := true;
+        G_REQUIRE_CONTINUOUS : boolean := true;
+        G_STRESS : boolean := false
+    );
 end entity tb_conv_axis_wrapper;
 
 
@@ -105,6 +112,10 @@ architecture sim of tb_conv_axis_wrapper is
         positive :=
             C_EXPECTED_OUTPUT_BYTES / 8;
 
+    constant C_OUTPUT_BEATS_PER_POSITION :
+        positive :=
+            (C_K * 2) / 8;
+
     constant C_FULL_INPUT_BEATS :
         natural :=
             C_EXPECTED_INPUT_BYTES / 8;
@@ -114,9 +125,68 @@ architecture sim of tb_conv_axis_wrapper is
             C_EXPECTED_INPUT_BYTES mod 8;
 
 
-    constant C_EXPECTED_OUTPUT_WORD :
-        std_logic_vector(63 downto 0) :=
-            x"0009000900090009";
+    function input_pixel_value(
+        pixel_index : natural
+    ) return natural is
+    begin
+        if G_STRESS then
+            return (pixel_index*73 + (pixel_index/7)*29 + (pixel_index mod 11)*113) mod 256;
+        end if;
+        return
+            (pixel_index / C_PAD_W)
+            + (pixel_index mod C_PAD_W);
+    end function input_pixel_value;
+
+
+    function coefficient_value(channel : natural; tap : natural) return integer is
+    begin
+        if not G_STRESS then return 1; end if;
+        if channel = 0 and tap = 0 then return -128; end if;
+        if channel = C_K-1 and tap = 8 then return 127; end if;
+        return ((channel*13 + tap*7) mod 17)-8;
+    end function;
+
+    function coefficient_word(channel : natural; word_index : natural) return std_logic_vector is
+        variable word : std_logic_vector(31 downto 0) := (others => '0');
+    begin
+        for lane in 0 to 3 loop
+            if word_index*4+lane < 9 then
+                word(lane*8+7 downto lane*8) := std_logic_vector(to_signed(coefficient_value(channel,word_index*4+lane),8));
+            end if;
+        end loop;
+        return word;
+    end function;
+
+    function expected_output_value(
+        position_index : natural;
+        channel : natural := 0
+    ) return integer is
+
+        variable output_row :
+            natural;
+
+        variable output_column :
+            natural;
+        variable total : integer := 0;
+
+    begin
+
+        output_row :=
+            position_index / C_LOG_W;
+
+        output_column :=
+            position_index mod C_LOG_W;
+
+        for r in 0 to 2 loop
+            for c in 0 to 2 loop
+                total := total + input_pixel_value((output_row+r)*C_PAD_W+output_column+c)*coefficient_value(channel,r*3+c);
+            end loop;
+        end loop;
+        if total > 32767 then return 32767; end if;
+        if total < -32768 then return -32768; end if;
+        return total;
+
+    end function expected_output_value;
 
 
     -- ========================================================================
@@ -255,6 +325,16 @@ architecture sim of tb_conv_axis_wrapper is
     signal output_ready_mode :
         natural range 0 to 2 := 0;
 
+    -- Frames driven with guaranteed gapless input supply and a permanently
+    -- ready sink.  Only these frames may be held to the no-output-gap rule.
+    signal continuous_frame :
+        std_logic := '0';
+
+    -- Timestamp of the most recent accepted COMMAND.START write, used for
+    -- START-to-first-output and START-to-DONE latency measurements.
+    signal start_command_time :
+        time := 0 ns;
+
 
     -- ========================================================================
     -- Regression bookkeeping
@@ -279,9 +359,9 @@ begin
     -- Basic geometry sanity for this regression
     -- ========================================================================
 
-    assert C_K = 8
+    assert C_K = 16
         report
-            "tb_conv_axis_wrapper expects current K=8 profile"
+            "tb_conv_axis_wrapper expects current K=16 profile"
         severity failure;
 
     assert C_N = 3
@@ -294,7 +374,7 @@ begin
             "Unexpected compiled input byte count"
         severity failure;
 
-    assert C_EXPECTED_OUTPUT_BYTES = 16384
+    assert C_EXPECTED_OUTPUT_BYTES = 32768
         report
             "Unexpected compiled output byte count"
         severity failure;
@@ -302,6 +382,16 @@ begin
     assert C_FINAL_INPUT_BYTES = 4
         report
             "Current profile must end with four valid input bytes"
+        severity failure;
+
+    assert C_K mod 4 = 0
+        report
+            "K16 regression requires an integral number of AXIS64 beats per output position"
+        severity failure;
+
+    assert C_OUTPUT_BEATS_PER_POSITION = 4
+        report
+            "K16 regression expects four AXIS64 beats per output position"
         severity failure;
 
 
@@ -320,6 +410,7 @@ begin
     dut :
         entity work.conv_axis_wrapper
         generic map (
+            C_WINDOW_PREFETCH => G_WINDOW_PREFETCH,
             C_K =>
                 CFG_K,
 
@@ -345,7 +436,7 @@ begin
                 32,
 
             C_BUILD_ID =>
-                x"4D344E334B385733322D323630393131",
+                CFG_BUILD_ID,
 
             C_DMA_LENGTH_WIDTH =>
                 22
@@ -558,16 +649,31 @@ begin
     -- ========================================================================
     -- Output protocol + numerical monitor
     --
-    -- Every emitted scalar must be signed16 9.
+    -- Every emitted scalar is checked against its logical (row,column)
+    -- position.  The monitor advances only on a real AXIS handshake, so the
+    -- window generator's row-edge valid bubbles and output backpressure are
+    -- both tolerated without weakening ordering coverage.
     --
-    -- K=8 means every logical output pixel becomes exactly two full 64-bit
-    -- beats, so a complete frame contains exactly 2048 beats, all TKEEP=FF.
+    -- K=16 means every logical output pixel becomes exactly four full 64-bit
+    -- beats, so a complete frame contains exactly 4096 beats, all TKEEP=FF.
     -- ========================================================================
 
     output_monitor : process(clk)
 
         variable frame_beat_count :
             natural := 0;
+
+        variable position_index :
+            natural := 0;
+
+        variable expected_scalar :
+            std_logic_vector(15 downto 0) :=
+                (others => '0');
+
+        variable row_transitions_seen :
+            natural := 0;
+        variable output_gap_cycles : natural := 0;
+        variable first_output_time : time := 0 ns;
 
     begin
 
@@ -578,19 +684,42 @@ begin
                 frame_beat_count :=
                     0;
 
+                row_transitions_seen :=
+                    0;
+
                 output_success_frames <=
                     0;
+                output_gap_cycles := 0;
 
 
             else
 
                 if monitor_clear = '1' then
+                    output_gap_cycles := 0;
 
                     frame_beat_count :=
                         0;
 
+                    row_transitions_seen :=
+                        0;
+
                 end if;
 
+
+                -- Ready-but-invalid cycles between the first and last accepted
+                -- output beat, measured on EVERY monitored frame.  The
+                -- zero-gap requirement is asserted only for the adequately
+                -- supplied, continuously ready benchmark (frame D); other
+                -- frames report the measured count without asserting.
+                if frame_beat_count > 0 and
+                   m_axis_tready = '1' and m_axis_tvalid = '0' then
+                    output_gap_cycles := output_gap_cycles + 1;
+                    if continuous_frame = '1' and output_ready_mode = 1 then
+                        assert not G_REQUIRE_CONTINUOUS
+                            report "Unexpected output gap at beat " & integer'image(frame_beat_count)
+                            severity failure;
+                    end if;
+                end if;
 
                 if
                     m_axis_tvalid = '1'
@@ -599,17 +728,70 @@ begin
 
                     assert m_axis_tkeep = x"FF"
                         report
-                            "Wrapper emitted non-full K=8 output beat"
+                            "Wrapper emitted non-full K=16 output beat"
                         severity failure;
 
 
-                    assert m_axis_tdata = C_EXPECTED_OUTPUT_WORD
+                    position_index :=
+                        frame_beat_count /
+                        C_OUTPUT_BEATS_PER_POSITION;
+                    if frame_beat_count = 0 then
+                        first_output_time := now;
+                        output_gap_cycles := 0;
+                    end if;
+
+
+                    expected_scalar :=
+                        std_logic_vector(
+                            to_signed(
+                                expected_output_value(position_index),
+                                16
+                            )
+                        );
+
+
+                    for lane in 0 to 3 loop
+                        expected_scalar := std_logic_vector(to_signed(expected_output_value(
+                            position_index, (frame_beat_count mod C_OUTPUT_BEATS_PER_POSITION)*4+lane),16));
+
+                        assert
+                            m_axis_tdata(
+                                (lane + 1) * 16 - 1 downto lane * 16
+                            ) = expected_scalar
                         report
-                            "Wrapper numerical/packing mismatch: expected four signed16 values of 9"
+                            "K16 wrapper numerical/order mismatch at output position "
+                            & integer'image(position_index)
+                            & ", channel group "
+                            & integer'image(
+                                frame_beat_count mod
+                                C_OUTPUT_BEATS_PER_POSITION
+                            )
                         severity failure;
+
+                    end loop;
+
+
+                    if
+                        frame_beat_count mod
+                        C_OUTPUT_BEATS_PER_POSITION = 0
+                        and position_index > 0
+                        and position_index mod C_LOG_W = 0
+                    then
+
+                        row_transitions_seen :=
+                            row_transitions_seen + 1;
+
+                    end if;
 
 
                     if m_axis_tlast = '1' then
+                        report "EDGE_METRICS prefetch=" & boolean'image(G_WINDOW_PREFETCH) &
+                            " ready_mode=" & integer'image(output_ready_mode) &
+                            " gaps=" & integer'image(output_gap_cycles) &
+                            " first_to_last=" & time'image(now - first_output_time);
+
+                        report "EDGE_LATENCY start_to_first_output=" &
+                            time'image(first_output_time - start_command_time);
 
                         assert
                             frame_beat_count =
@@ -619,10 +801,20 @@ begin
                         severity failure;
 
 
+                        assert
+                            row_transitions_seen = C_LOG_H - 1
+                        report
+                            "K16 wrapper did not preserve all logical row transitions across row-edge bubbles"
+                        severity failure;
+
+
                         output_success_frames <=
                             output_success_frames + 1;
 
                         frame_beat_count :=
+                            0;
+
+                        row_transitions_seen :=
                             0;
 
 
@@ -975,7 +1167,7 @@ begin
 
 
         ------------------------------------------------------------------------
-        -- Program all eight channels:
+        -- Program all sixteen channels:
         --
         --   nine coefficients = +1
         --   bias              = 0
@@ -998,19 +1190,19 @@ begin
 
                 axi_write(
                     base + 16#00#,
-                    x"01010101"
+                    coefficient_word(channel,0)
                 );
 
 
                 axi_write(
                     base + 16#04#,
-                    x"01010101"
+                    coefficient_word(channel,1)
                 );
 
 
                 axi_write(
                     base + 16#08#,
-                    x"00000001"
+                    coefficient_word(channel,2)
                 );
 
 
@@ -1096,12 +1288,47 @@ begin
         ------------------------------------------------------------------------
 
         procedure send_full_input_frame is
+
+            variable data_word :
+                std_logic_vector(63 downto 0);
+
+            variable pixel_index :
+                natural := 0;
+            variable gap_state : unsigned(15 downto 0) := x"ACE1";
+
         begin
 
             for beat in 0 to C_FULL_INPUT_BEATS - 1 loop
+                if G_STRESS and continuous_frame = '0' then
+                    gap_state := gap_state(14 downto 0) & (gap_state(15) xor gap_state(13) xor gap_state(12) xor gap_state(10));
+                    for gap_cycle in 1 to to_integer(gap_state(5 downto 0)) loop
+                        wait until falling_edge(clk);
+                    end loop;
+                end if;
+
+                data_word :=
+                    (others => '0');
+
+
+                for lane in 0 to 7 loop
+
+                    data_word(
+                        (lane + 1) * 8 - 1 downto lane * 8
+                    ) :=
+                        std_logic_vector(
+                            to_unsigned(
+                                input_pixel_value(pixel_index),
+                                8
+                            )
+                        );
+
+                    pixel_index :=
+                        pixel_index + 1;
+
+                end loop;
 
                 send_input_beat(
-                    x"0101010101010101",
+                    data_word,
                     x"FF",
                     '0'
                 );
@@ -1112,8 +1339,36 @@ begin
             -- 1156 mod 8 = 4:
             --
             -- lanes 0..3 valid, contiguous low-lane mask.
+            data_word :=
+                (others => '0');
+
+
+            for lane in 0 to C_FINAL_INPUT_BYTES - 1 loop
+
+                data_word(
+                    (lane + 1) * 8 - 1 downto lane * 8
+                ) :=
+                    std_logic_vector(
+                        to_unsigned(
+                            input_pixel_value(pixel_index),
+                            8
+                        )
+                    );
+
+                pixel_index :=
+                    pixel_index + 1;
+
+            end loop;
+
+
+            assert pixel_index = C_EXPECTED_INPUT_BYTES
+                report
+                    "K16 input generator did not pack exactly one padded frame"
+                severity failure;
+
+
             send_input_beat(
-                x"0101010101010101",
+                data_word,
                 x"0F",
                 '1'
             );
@@ -1130,12 +1385,39 @@ begin
                 in positive
         ) is
 
+            variable data_word :
+                std_logic_vector(63 downto 0);
+
+            variable pixel_index :
+                natural := 0;
+
         begin
 
             for beat in 1 to count loop
 
+                data_word :=
+                    (others => '0');
+
+
+                for lane in 0 to 7 loop
+
+                    data_word(
+                        (lane + 1) * 8 - 1 downto lane * 8
+                    ) :=
+                        std_logic_vector(
+                            to_unsigned(
+                                input_pixel_value(pixel_index),
+                                8
+                            )
+                        );
+
+                    pixel_index :=
+                        pixel_index + 1;
+
+                end loop;
+
                 send_input_beat(
-                    x"0101010101010101",
+                    data_word,
                     x"FF",
                     '0'
                 );
@@ -1182,6 +1464,9 @@ begin
             variable status_word :
                 std_logic_vector(31 downto 0);
 
+            variable status_poll_count :
+                natural := 0;
+
         begin
 
             while
@@ -1214,12 +1499,29 @@ begin
                     severity failure;
 
 
+                status_poll_count :=
+                    status_poll_count + 1;
+
+
+                assert status_poll_count <= 256
+                    report
+                        "Complete K16 output frame did not transition the controller to DONE/IDLE; check input/output acceptance accounting"
+                    severity failure;
+
+
                 exit when
                     status_word(0) = '1'
                     and status_word(4) = '1'
                     and status_word(8) = '1';
 
             end loop;
+
+            -- Software-visible completion latency for the benchmark frame
+            -- (guaranteed supply, continuously ready sink).
+            if continuous_frame = '1' and output_ready_mode = 1 then
+                report "EDGE_LATENCY start_to_done=" &
+                    time'image(now - start_command_time);
+            end if;
 
 
             assert status_word(1) = '0'
@@ -1541,6 +1843,50 @@ begin
             severity failure;
 
 
+        axi_read(
+            16#4150#,
+            rd
+        );
+
+        assert rd = CFG_BUILD_ID(31 downto 0)
+            report
+                "K16 BUILD_ID word 0 mismatch"
+            severity failure;
+
+
+        axi_read(
+            16#4154#,
+            rd
+        );
+
+        assert rd = CFG_BUILD_ID(63 downto 32)
+            report
+                "K16 BUILD_ID word 1 mismatch"
+            severity failure;
+
+
+        axi_read(
+            16#4158#,
+            rd
+        );
+
+        assert rd = CFG_BUILD_ID(95 downto 64)
+            report
+                "K16 BUILD_ID word 2 mismatch"
+            severity failure;
+
+
+        axi_read(
+            16#415C#,
+            rd
+        );
+
+        assert rd = CFG_BUILD_ID(127 downto 96)
+            report
+                "K16 BUILD_ID word 3 mismatch"
+            severity failure;
+
+
         -- ------------------------------------------------------------
         -- Offer legal-looking input BEFORE START.
         --
@@ -1597,7 +1943,7 @@ begin
         -- ====================================================================
 
         report
-            "--- WRAPPER B: complete K=8 parameter admission ---";
+            "--- WRAPPER B: complete K=16 parameter admission ---";
 
 
         program_all_channels;
@@ -1620,20 +1966,20 @@ begin
             rd
         );
 
-        assert rd = x"01010101"
+        assert rd = coefficient_word(0,0)
             report
                 "Channel 0 coefficient readback mismatch"
             severity failure;
 
 
         axi_read(
-            7 * 16#100# + 16#08#,
+            (C_K - 1) * 16#100# + 16#08#,
             rd
         );
 
-        assert rd = x"00000001"
+        assert rd = coefficient_word(C_K-1,2)
             report
-                "Channel 7 coefficient tail readback mismatch"
+                "Final K16 channel coefficient tail readback mismatch"
             severity failure;
 
 
@@ -1664,6 +2010,8 @@ begin
             16#4110#,
             x"00000001"
         );
+
+        start_command_time <= now;
 
 
         send_full_input_frame;
@@ -1704,11 +2052,18 @@ begin
         report
             "--- WRAPPER D: repeated START with NO RESET ---";
 
+        -- Sustained input bandwidth and no sink backpressure: once the first
+        -- output appears, every subsequent clock must deliver the next beat.
+        output_ready_mode <= 1;
+        continuous_frame <= '1';
+
 
         axi_write(
             16#4110#,
             x"00000001"
         );
+
+        start_command_time <= now;
 
 
         send_full_input_frame;
@@ -1724,6 +2079,7 @@ begin
 
         report
             "--- WRAPPER D PASS: repeated full chain works WITHOUT RESET ---";
+        continuous_frame <= '0';
 
 
         -- ====================================================================
@@ -1750,6 +2106,8 @@ begin
             16#4110#,
             x"00000001"
         );
+
+        start_command_time <= now;
 
 
         send_input_beat(
@@ -1930,6 +2288,8 @@ begin
             16#4110#,
             x"00000001"
         );
+
+        start_command_time <= now;
 
 
         -- Ten legal full input beats = 80 physical pixels.
@@ -2244,7 +2604,7 @@ begin
         );
 
 
-        assert rd = x"01010101"
+        assert rd = coefficient_word(0, 0)
             report
                 "Recovery RESET corrupted parameter storage"
             severity failure;
@@ -2270,6 +2630,8 @@ begin
             16#4110#,
             x"00000001"
         );
+
+        start_command_time <= now;
 
 
         send_full_input_frame;
@@ -2320,7 +2682,7 @@ begin
     timeout_proc : process
     begin
 
-        wait for 500 us;
+        wait for 2 ms;
 
 
         assert false

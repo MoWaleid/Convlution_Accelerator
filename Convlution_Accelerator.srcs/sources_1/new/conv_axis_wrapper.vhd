@@ -25,6 +25,7 @@ use work.conv_pkg.all;
 
 entity conv_axis_wrapper is
     generic (
+        C_WINDOW_PREFETCH : boolean := true;
         C_K :
             positive := CFG_K;
 
@@ -51,7 +52,7 @@ entity conv_axis_wrapper is
 
         C_BUILD_ID :
             std_logic_vector(127 downto 0) :=
-                CFG_BUILD_ID;
+            CFG_BUILD_ID;
 
         C_DMA_LENGTH_WIDTH :
             positive := 22
@@ -228,6 +229,7 @@ architecture rtl of conv_axis_wrapper is
 
     signal core_ce :
         std_logic;
+    signal input_pixel_ready : std_logic;
 
     signal serializer_in_ready :
         std_logic;
@@ -490,7 +492,7 @@ begin
                 input_pixel_valid,
 
             out_ready =>
-                core_ce,
+                input_pixel_ready,
 
             out_last =>
                 input_pixel_last
@@ -504,6 +506,7 @@ begin
     conv_top_inst :
         entity work.conv_top
         generic map (
+            C_WINDOW_PREFETCH => C_WINDOW_PREFETCH,
             C_K =>
                 C_K,
 
@@ -648,6 +651,8 @@ begin
 
             pixel_in =>
                 input_pixel,
+
+            pixel_ready => input_pixel_ready,
 
             valid_in =>
                 input_pixel_valid,

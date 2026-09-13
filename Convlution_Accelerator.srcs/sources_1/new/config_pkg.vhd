@@ -4,6 +4,10 @@ use IEEE.MATH_REAL.ALL;
 
 package config_pkg is
 
+    -- Release identity must change when publishing a different hardware build.
+    constant CFG_PROFILE : string := "EF100";
+    constant CFG_BUILD_ID : std_logic_vector(127 downto 0) := x"45463130304B31364E33573332523031";
+
     -- ========================================================================
     -- Helper Functions (used for constant elaboration)
     -- ========================================================================
@@ -12,25 +16,18 @@ package config_pkg is
 
     -- ========================================================================
     -- Master Hardware Configuration
-    -- Catalog authority: profiles/m7_profiles.json; selected constants below are a projection.
+    -- Change these constants to globally update the architecture at compile-time
     -- ========================================================================
 
-    -- BEGIN SELECTED PROFILE: derived from profiles/m7_profiles.json.
-    -- Use scripts/prepare_profile.py for an explicit isolated selection.
-    constant CFG_PROFILE : string := "D640";
-    constant CFG_BUILD_ID : std_logic_vector(127 downto 0) :=
-        x"443634304e334b30342d323630393132";
-
     -- Number of parallel output channels (K).
-    constant CFG_K : integer := 4;
+    constant CFG_K : integer := 16;
 
     -- Kernel spatial dimension (N x N).
     constant CFG_N : integer := 3;
 
     -- Image spatial dimensions.
-    constant CFG_UNPADDED_WIDTH  : integer := 640;
-    constant CFG_UNPADDED_HEIGHT : integer := 480;
-    -- END SELECTED PROFILE
+    constant CFG_UNPADDED_WIDTH  : integer := 32;
+    constant CFG_UNPADDED_HEIGHT : integer := 32;
 
     -- Hardware receives an externally zero-padded image.
     constant CFG_IMAGE_WIDTH  : integer :=
@@ -47,6 +44,11 @@ package config_pkg is
 
     -- signed int8 kernel coefficients.
     constant CFG_WEIGHT_WIDTH : integer := 8;
+
+    -- This branch uses exact CFGLUT5 constant-coefficient multiplication.
+    -- Retain the legacy capability field at zero so software and reports
+    -- identify that no activation bits are discarded.
+    constant CFG_APPROX_PIXEL_LSB_DROP : natural := 0;
 
     -- CVH1 default: signed 24-bit bias.
     constant CFG_BIAS_WIDTH : integer := 24;

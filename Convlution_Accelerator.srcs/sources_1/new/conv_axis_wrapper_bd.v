@@ -47,8 +47,6 @@ module conv_axis_wrapper_bd (
     (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 M_AXIS TLAST" *) output wire m_axis_tlast
 );
 
-    // No geometry/ID override: defaults travel together from config_pkg.
-    // Do not pin an A32 identifier in the BD adapter.
     conv_axis_wrapper accelerator_i (
         .clk(clk),
         .resetn(resetn),
