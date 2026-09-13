@@ -1,0 +1,93 @@
+M8 CLI Phase A board validation + first archived record
+Date: 2026-09-13
+Scripts: /home/petalinux/m7_switch.py md5 503969ada81a3f85fc46a300c9b3fe03
+         /home/petalinux/m8_cli.py    md5 7dd35c9d8e6e0dd2ca0aa4dc40b10a0d
+         (post-review-revision build; installed from payload m8fix.tgz,
+          whole-payload md5 b3ff92ee18e94ceb770c7c85345a9319 verified)
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+--- board session (abridged to commands + outcomes) ---
+$ sudo python3 /home/petalinux/m8_cli.py run --profile A32 --frames 2
+  live build already A32: parameter re-admission only
+  [A32] activation OK 0.143 ms sha=cb3975593073652b
+  cleanup: final STATUS 0x00000181
+M8 RUN 20260913T033239Z-A32-library_alley_cat: PASS (2 frames, median 0.138 ms)
+  -> /var/lib/conv-lab/results/20260913T033239Z-A32-library_alley_cat
+
+$ sudo python3 /home/petalinux/m8_cli.py run --profile D32 --frames 2 \
+    --image /home/petalinux/demo_images/aeroplane_s_000002.png
+fpga_manager fpga0: writing m7_D32.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.144 ms sha=6cb736f6a80132d8
+  cleanup: final STATUS 0x00000181
+M8 RUN 20260913T033252Z-D32-aeroplane_s_000002: PASS (2 frames, median 0.139 ms)
+
+$ sudo python3 /home/petalinux/m8_cli.py benchmark --profile A32 --frames 100 --warmup 5
+M8 BENCH 20260913T030901Z-bench-A32: PASS (100 frames)
+  hw median 0.124 ms / p95 0.126 / min 0.121 / max 0.190
+  (pre-revision CLI; scope: host-clock MM2S-release-to-completion poll interval)
+
+$ sudo python3 /home/petalinux/m8_cli.py list
+archive: /var/lib/conv-lab/results (9 runs)
+  20260913T022414Z-A32-library_alley_cat: FAILED A32 frames=0   <- crash-era
+  20260913T022441Z-A32-library_alley_cat: FAILED A32 frames=0   <- records
+  20260913T022517Z-A32-library_alley_cat: FAILED A32 frames=0   <- preserved
+  20260913T030711Z-A32-library_alley_cat: PASS A32 frames=3
+  20260913T030849Z-D32-aeroplane_s_000002: PASS D32 frames=2
+  20260913T030901Z-bench-A32: PASS A32 bench frames=100
+  20260913T033156Z-A32-library_alley_cat: PASS A32 frames=2
+  20260913T033239Z-A32-library_alley_cat: PASS A32 frames=2
+  20260913T033252Z-D32-aeroplane_s_000002: PASS D32 frames=2
+
+--- full archived record (schema m8-run-record/2) ---
+{
+  "schema": "m8-run-record/2",
+  "run_id": "20260913T033252Z-D32-aeroplane_s_000002",
+  "outcome": "PASS",
+  "started_utc": "2026-09-13T03:32:52Z",
+  "profile": {"name": "D32", "build_id_ascii": "DN3K04W32-260912",
+              "build_id_hex": "444e334b30345733322d323630393132",
+              "N": 3, "K": 4, "W": 32, "H": 32,
+              "tx_bytes": 1156, "rx_bytes": 8192},
+  "image_tag": "aeroplane_s_000002",
+  "input": {"source_path": "/home/petalinux/demo_images/aeroplane_s_000002.png",
+            "source_sha256": "aeab0552cbe4a4055c25edb478375c7df7f47ab721f575a07c4759050404aec6",
+            "source_format": "PNG", "source_mode": "L",
+            "source_width": 32, "source_height": 32,
+            "oriented_width": 32, "oriented_height": 32,
+            "geometry_policy": "exact",
+            "canonical_sha256": "b73461dedc87d3e6372d54e4ad908712abc740cb4f187538d8abcbc5073b7145",
+            "padded_tx_sha256": "9c5e7e72e9d06eb02cf1f26abc4394942a953e44f5f54c24f6a89b7a7b614956"},
+  "switch": {"reloaded": true, "wall_s": 0.45015133899960347},
+  "verification": {"mode": "exact_reference"},
+  "cleanup": {"ok": true},
+  "frames": [
+    {"index": 1, "sha256": "d7c2cc9c579988ffb974beb394e3d358c75106fddb7e1aaa5c340b330587d6ba",
+     "mismatches": 0, "hw_ms": 0.14775399995414773, "wall_ms": 8.67922500037821},
+    {"index": 2, "sha256": "d7c2cc9c579988ffb974beb394e3d358c75106fddb7e1aaa5c340b330587d6ba",
+     "mismatches": 0, "hw_ms": 0.13077499988867203, "wall_ms": 8.545538000362285}
+  ],
+  "timings": {"preprocess_s": 0.5680459549994339,
+              "reference_s": 0.24595068500002526,
+              "frames_total_s": 0.017224763000740495},
+  "previews": [],
+  "versions": {"m8_cli_md5": "7dd35c9d8e6e0dd2ca0aa4dc40b10a0d",
+               "m7_switch_md5": "503969ada81a3f85fc46a300c9b3fe03"},
+  "environment": {"kernel": "6.12.40-xilinx-g31626ef92ff1", "machine": "armv7l",
+                  "python": "3.12.11", "cpu_governor": null,
+                  "bogomips": 324.99, "fclk0_hz": 100000000},
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "counters_final": {"input_accept": 1156, "input_consumed": 1156,
+                     "core_accept": 1024, "output_accept": 8192,
+                     "status": 413, "error_flags": 0}
+}
+
+--- notes ---
+counters_final.status 413 = 0x19D: the correct post-frame sticky-event state
+(IDLE|CORE_COMPLETE|OUTPUT_DRAINED|DONE|PARAM_COMPLETE|QUIESCENT) before the
+cleanup RESET. Verification mode exact_reference: both frames compared
+value-by-value against the on-board arbitrary-precision reference computed
+from the same admitted input; zero mismatches. This run proves the M8
+file-driven path end-to-end on a non-library image through the
+exclusive-owner backend.

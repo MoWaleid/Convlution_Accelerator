@@ -509,21 +509,24 @@ D640 `D640N3K04-260912`); golden anchors unchanged
 (A32 `cb397559…`, B32 `5821c8b1…`, C32 `b6ab2d53…`, D32 `6cb736f6…`,
 D640 `e323defb…`).
 
-### 16.6 Report correction queue (still open — apply when the user re-opens the report)
+### 16.6 Report corrections — APPLIED 2026-09-13 (report/report.md, uncommitted)
 
-- **Throughput/FOM overstated (review P1 #10):** the 64-bit output stream needs ≥2
-  beats per K8 output position (K16: 4) → sustained ≤0.5 (0.25) positions/cycle,
-  not 1. Recompute report §3/§9/§11: FOM ≈ 2.2×10⁻⁵ full-system / ≈ 3.5×10⁻³ core
-  at 0.5 px/cycle.
-- **Bias/accumulator widths:** implemented policy is signed-24 bias, 25-bit
-  accumulator (`config_pkg.vhd`), not the 32/33-bit text in report §3/§6 and
-  `report/figures/generate_figures.py`.
-- **Citation freeze:** the A32 timing citation points into the live run directory
-  (now D640 content); cite the frozen `report/profile_builds/<P>/` copies and
-  label intermediate (pre-physopt) reports as such.
-- **M7 report updates (M7_CONTINUATION §7 queue):** multi-profile architecture §,
-  per-profile utilization/timing/FOM table, §8 switching evidence (58-switch matrix
-  transcript exists in `report/evidence/`), D-profile Sobel figures.
+- **Throughput/FOM:** done — 4/K is now labeled an output-interface ceiling
+  (theoretical upper bound) in §3/§9.1/§11/§12; the 10.24 µs / 1,024-cycle
+  datapath claim removed; measured wall-clock scopes kept explicit.
+- **Bias/accumulator widths:** already corrected (25-bit accumulator text).
+- **Citation freeze:** S1/S2 carry the A32-overwritten caveat; D640 final
+  post-physopt timing reports frozen at `report/profile_builds/D640/final/`
+  (S20); archived D32/D640 intermediates labeled pre-physopt.
+- **M7 updates applied:** §1/§8.2 totals (876 frames, 20+ runs, 90 reloads),
+  new §10.1 multi-profile section (five profiles, BUILD_IDs, WNS, models,
+  matrix/soak/cold-boot evidence), §5 approved four-guard buffer layout,
+  §7 profile-scoped identity, §9.1 rows, §13 sources S16–S20, §14 reproduction,
+  Appendix B.
+- **Still open (tomorrow):** optional D-profile Sobel figure from the board
+  preview PNGs; `report.html` regeneration if used; E3 stale foundation tests
+  (`software/tests/test_m7_profiles.py`); remaining review items (M8-02 worker
+  isolation, M7-R4 strict admission, M8 Phase B importer).
 
 **Next milestone: M8** — in progress (2026-09-13). Phase A implemented and
 board-validated: `software/m8_cli.py` (run/benchmark/list/record) + run archive
