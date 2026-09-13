@@ -564,11 +564,20 @@ def make_expected(padded, n, w, h, channels):
 # ─── Matrix construction (with termination guarantee) ─────────────────────────
 
 def build_matrix_sequence(start_profile):
-    """Build a switch sequence: 20× A32→B32→A32, then every other ordered pair.
-    Greedy walk with bridge jumps. Returns list of profile names."""
+    """Build a switch sequence: establish A32, then 20 consecutive
+    A32→B32→A32 cycles, then every other ordered pair. Greedy walk with
+    bridge jumps; returns list of profile names. The initial bridge makes the
+    twenty cycles provably consecutive regardless of the live start profile."""
     sequence = []
     current = start_profile
     covered = set()
+
+    # Establish A32 before the counted block (E2: without this, a non-A32
+    # start yields only 19 consecutive full cycles).
+    if current != "A32":
+        sequence.append("A32")
+        covered.add((current, "A32"))
+        current = "A32"
 
     # 20 consecutive A32→B32→A32 cycles
     for _ in range(20):

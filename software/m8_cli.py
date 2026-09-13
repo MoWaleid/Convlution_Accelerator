@@ -433,6 +433,144 @@ def cmd_run(args):
                   f"check) -> {rec['archive_root']}/{rec['run_id']}", flush=True)
 
 
+def cmd_extremes(args):
+    """M5-grade per-profile extremes (E2): all-zero and all-255 stimulus
+    frames under the profile's admitted parameters, a temporary saturation
+    parameter stimulus (weights ±full-scale, biases at the signed-24
+    endpoints, shift 0 — proving genuine ±32768 saturation), then explicit
+    reinstallation of the canonical bundle with an anchor-checked activation
+    frame (M1_ACTIVATION_LIFECYCLE: requested parameters reinstalled and
+    revalidated after procedural tests). Every frame is verified against the
+    exact on-board reference with zero tolerance."""
+    m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
+    catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
+    m7.require(args.profile in catalog, f"unknown profile {args.profile}")
+    anchors = json.loads((m7.BASE / "anchors_m7.json").read_text())
+    hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
+    n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
+
+    rec = new_record(args.profile, hw, "extremes")
+    rec["extremes"] = {"stimuli": ["all_zero", "all_255", "saturation_params",
+                                   "reinstall_activation"]}
+    root, root_name = archive_root()
+    rec["archive_root"] = root_name
+    run_dir = allocate_run_dir(root, time.strftime("%Y%m%dT%H%M%SZ",
+                                                   time.gmtime())
+                               + f"-extremes-{args.profile}")
+    rec["run_id"] = run_dir.name
+
+    m7.acquire_lock()
+    ctx = None
+    t_start = time.perf_counter()
+    try:
+        info = m7.Path("/sys/class/u-dma-buf/udmabuf0")
+        ctx = {"phys": int((info / "phys_addr").read_text(), 0),
+               "buffer_size": int((info / "size").read_text(), 0),
+               "anchors": anchors, "handles": None, "digests": []}
+        channels, pbundle = m7.load_params(args.profile, n, k)
+        rec["parameters"] = {**parameter_identity(args.profile),
+                             "bundle_sha256": pbundle}
+        storage_admission(root, 8 * (hw["expected_output_bytes"] + 4096)
+                          + 1048576)
+
+        t0 = time.perf_counter()
+        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
+        dma, accel, buf_fd, _fds = ctx["handles"]
+        layout = m7.compute_layout(hw["expected_input_bytes"],
+                                   hw["expected_output_bytes"],
+                                   ctx["buffer_size"])
+        anchor = anchors.get(args.profile, {}).get("output_sha256")
+        m7.require(anchor, f"{args.profile}: no golden anchor")
+
+        tx_bytes = hw["expected_input_bytes"]
+        stimuli = (("all_zero", bytes(tx_bytes)),
+                   ("all_255", b"\xff" * tx_bytes))
+        for tag, padded in stimuli:
+            expected = m7.make_expected(padded, n, w, h, channels)
+            w0 = time.perf_counter()
+            values, mismatches, sha, hw_ms = m7.run_frame(
+                dma, accel, buf_fd, ctx["phys"], layout, padded, expected, k)
+            m7.require(mismatches == 0,
+                       f"{tag}: {mismatches} mismatches vs exact reference")
+            rec["frames"].append({"stimulus": tag, "sha256": sha,
+                                  "mismatches": mismatches,
+                                  "hw_ms": hw_ms * 1000.0,
+                                  "wall_ms": (time.perf_counter() - w0) * 1000.0})
+            (run_dir / f"frame_{tag}.s16le").write_bytes(
+                struct.pack(f"<{len(values)}h", *values))
+
+        # Temporary saturation parameters: even channels saturate +32767
+        # (weights +127, bias at the signed-24 maximum, shift 0), odd channels
+        # saturate -32768 (weights -128, bias at the signed-24 minimum).
+        sat_channels = []
+        for c in range(k):
+            if c % 2 == 0:
+                sat_channels.append(([127] * (n * n), (1 << 23) - 1, 0, 0))
+            else:
+                sat_channels.append(([-128] * (n * n), -(1 << 23), 0, 0))
+        m7.program_params_accel(accel, n, sat_channels)
+        sat_expected = m7.make_expected(stimuli[1][1], n, w, h, sat_channels)
+        values, mismatches, sha, hw_ms = m7.run_frame(
+            dma, accel, buf_fd, ctx["phys"], layout, stimuli[1][1],
+            sat_expected, k)
+        m7.require(mismatches == 0,
+                   f"saturation_params: {mismatches} mismatches")
+        m7.require(32767 in values and -32768 in values,
+                   "saturation stimulus did not exercise both rails")
+        rec["frames"].append({"stimulus": "saturation_params", "sha256": sha,
+                              "mismatches": mismatches,
+                              "hw_ms": hw_ms * 1000.0,
+                              "wall_ms": 0.0})
+        (run_dir / "frame_saturation_params.s16le").write_bytes(
+            struct.pack(f"<{len(values)}h", *values))
+
+        # Reinstall the admitted canonical bundle and revalidate the requested
+        # model with an anchor-checked activation frame.
+        m7.program_params_accel(accel, n, channels)
+        padded = m7.load_input(n, w, h)
+        values, mismatches, sha, hw_ms = m7.run_frame(
+            dma, accel, buf_fd, ctx["phys"], layout, padded, None, k)
+        m7.require(sha == anchor,
+                   f"reinstall_activation: output sha {sha[:16]} != anchor")
+        rec["frames"].append({"stimulus": "reinstall_activation",
+                              "sha256": sha, "mismatches": 0,
+                              "hw_ms": hw_ms * 1000.0, "wall_ms": 0.0})
+        rec["counters_final"] = counter_snapshot(accel)
+        rec["outcome"] = "PASS"
+    except BaseException as exc:
+        rec["outcome"] = ("CANCELLED" if isinstance(exc, KeyboardInterrupt)
+                          else "FAILED")
+        rec["failure"] = {"type": type(exc).__name__, "message": str(exc)}
+        raise
+    finally:
+        rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
+        try:
+            m7.safe_cleanup(ctx)
+            rec["cleanup"] = {"ok": True}
+        except BaseException as cexc:
+            rec["cleanup"] = {"ok": False, "error": repr(cexc)}
+            if rec["outcome"] == "PASS":
+                rec["outcome"] = "FAILED"
+            if not isinstance(cexc, Exception):
+                try:
+                    write_record(run_dir, rec)
+                except Exception:
+                    pass
+                raise
+        persisted = True
+        try:
+            write_record(run_dir, rec)
+        except Exception as pexc:
+            persisted = False
+            print(f"M8: record persistence failed: {pexc}", flush=True)
+        m7.release_lock()
+        if (rec["outcome"] == "PASS" and rec["cleanup"].get("ok") and persisted):
+            print(f"M8 EXTREMES {rec['run_id']}: PASS ({len(rec['frames'])} "
+                  f"verified stimulus frames) -> "
+                  f"{rec['archive_root']}/{rec['run_id']}", flush=True)
+
+
 def cmd_benchmark(args):
     m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
     catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
@@ -584,12 +722,15 @@ def main(argv=None):
     b.add_argument("--frames", type=int, default=200)
     b.add_argument("--warmup", type=int, default=10)
 
+    e = sub.add_parser("extremes", help="M5-grade per-profile extremes (E2)")
+    e.add_argument("--profile", required=True)
+
     sub.add_parser("list", help="list archived runs")
     c = sub.add_parser("record", help="print one archived record")
     c.add_argument("run_id")
 
     args = p.parse_args(argv)
-    {"run": cmd_run, "benchmark": cmd_benchmark,
+    {"run": cmd_run, "benchmark": cmd_benchmark, "extremes": cmd_extremes,
      "list": cmd_list, "record": cmd_record}[args.cmd](args)
 
 

@@ -189,6 +189,19 @@ def main():
     assert rec["timings"]["io_overhead_ms_median"] >= 0
     print("MOCK OK: benchmark (stats + environment recorded)")
 
+    # 4b) E2 extremes: all-zero, all-255, saturation stimulus (both rails),
+    # canonical reinstall + anchor revalidation
+    set_current("A32")
+    CLI.main(["extremes", "--profile", "A32"])
+    rec, run_dir = newest_record()
+    assert rec["outcome"] == "PASS", rec
+    tags = [f["stimulus"] for f in rec["frames"]]
+    assert tags == ["all_zero", "all_255", "saturation_params",
+                    "reinstall_activation"], tags
+    assert all(f["mismatches"] == 0 for f in rec["frames"])
+    assert (run_dir / "frame_saturation_params.s16le").is_file()
+    print("MOCK OK: extremes (4 stimulus frames, saturation rails exercised)")
+
     # 5) failure path: injected frame error must still produce a record
     real_run_frame = MH.M.run_frame
 
@@ -215,7 +228,7 @@ def main():
     listing = out.getvalue()
     n_runs = len(list(ARCHIVE.glob("*/record.json")))
     assert f"({n_runs} runs)" in listing, listing
-    assert listing.count(": PASS") == 6, listing
+    assert listing.count(": PASS") == 7, listing
     assert "UNVERIFIED" in listing and "FAILED" in listing, listing
     rec, _ = newest_record()
     out = io.StringIO()

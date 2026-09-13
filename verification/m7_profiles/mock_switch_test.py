@@ -291,6 +291,21 @@ M.Path = fake_path
 M.os = fake_os
 
 
+# The fake fabric computes golden results from the ACTUALLY INSTALLED
+# parameters, like real silicon: intercept program_params_accel so the
+# emulated output tracks parameter installations (saturation stimuli,
+# reinstallation) instead of a stale snapshot.
+_real_ppa = M.program_params_accel
+
+
+def fake_program_params(accel, n, channels):
+    CURRENT["channels"] = channels
+    return _real_ppa(accel, n, channels)
+
+
+M.program_params_accel = fake_program_params
+
+
 def run(argv):
     profile = argv[1]
     hw = json.loads((STAGE / f"hardware_{profile}.json").read_text())["accelerator"]
