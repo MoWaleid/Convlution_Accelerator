@@ -14,12 +14,15 @@ from conv_lab.types import Allocation, Layout
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "profiles/m7_profiles.json"
 # Independent approved geometry/layout anchors. These are not generated.
+# C32/D32/D640 identities are the reconciled frozen IDs matching the built
+# artifacts' manifests (feedback finding 4, fix PHASE 2.1); the former
+# 4d37... placeholders never shipped in any bitstream.
 CASES = {
     "A32": (32,32,3,8,1156,5440,16384,21888,"4d344e334b385733322d323630393131"),
     "B32": (32,32,3,16,1156,5440,32768,38272,"424e334b31365733322d323630393132"),
-    "C32": (32,32,5,8,1296,5568,16384,22016,"4d374e354b385733322d323630393132"),
-    "D32": (32,32,3,4,1156,5440,8192,13696,"4d374e334b345733322d323630393132"),
-    "D640": (640,480,3,4,309444,313728,2457600,2771392,"4d374e334b3457363430483438300001"),
+    "C32": (32,32,5,8,1296,5568,16384,22016,"434e354b30385733322d323630393132"),
+    "D32": (32,32,3,4,1156,5440,8192,13696,"444e334b30345733322d323630393132"),
+    "D640": (640,480,3,4,309444,313728,2457600,2771392,"443634304e334b30342d323630393132"),
 }
 
 
@@ -121,7 +124,7 @@ class M7Profiles(unittest.TestCase):
         with self.assertRaises(AdmissionError):
             validate_discovery(p,r)
 
-    def test_render_all_configs_and_current_b32_projection(self):
+    def test_render_all_configs_and_current_d640_projection(self):
         spec = importlib.util.spec_from_file_location("prepare_profile",ROOT/"scripts/prepare_profile.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -133,5 +136,8 @@ class M7Profiles(unittest.TestCase):
             for key,value in (("CFG_K",p.K),("CFG_N",p.N),
                               ("CFG_UNPADDED_WIDTH",p.W),("CFG_UNPADDED_HEIGHT",p.H)):
                 self.assertRegex(rendered,rf"{key}\s*: integer := {value};")
-        self.assertEqual(template,module.render_config(template,self.profiles["B32"]))
+        # The checked-in config_pkg.vhd is the D640 projection (CFG_PROFILE
+        # "D640" per the frozen build input); render_config must be a no-op
+        # against it.
+        self.assertEqual(template,module.render_config(template,self.profiles["D640"]))
 

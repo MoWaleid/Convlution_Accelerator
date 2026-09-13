@@ -214,10 +214,11 @@ def counter_snapshot(accel):
 
 def new_record(profile, hw, image_tag):
     return {
-        "schema": "m8-run-record/2",
+        "schema": "m8-run-record/3",
         "run_id": None,
         "outcome": None,
         "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "command": " ".join(sys.argv),
         "profile": {"name": profile, "build_id_ascii": hw["build_id_ascii"],
                     "build_id_hex": hw["build_id_hex"], "N": hw["kernel_n"],
                     "K": hw["channels_k"], "W": hw["image_w"], "H": hw["image_h"],
@@ -225,11 +226,16 @@ def new_record(profile, hw, image_tag):
                     "rx_bytes": hw["expected_output_bytes"]},
         "image_tag": image_tag,
         "input": {},
+        "parameters": {},
         "switch": {},
         "verification": {},
         "cleanup": {},
         "frames": [],
-        "timings": {},
+        "timings": {"scope": "hw_ms = host-clock interval from MM2S length "
+                            "release to completion-poll success (includes "
+                            "polling); wall_ms = whole run_frame call; "
+                            "neither is a hardware cycle count; fabric clock "
+                            "100 MHz"},
         "previews": [],
         "versions": {"m8_cli_md5": file_md5(Path(__file__)),
                      "m7_switch_md5": file_md5(m7.__file__)},
@@ -237,6 +243,21 @@ def new_record(profile, hw, image_tag):
         "archive_root": None,
         "failure": None,
     }
+
+
+def file_sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def parameter_identity(profile):
+    """Content identity of the admitted parameter bundle (M8-07 partial):
+    the channel config and every kernel mem file the manager will load."""
+    d = m7.BASE / profile
+    out = {"channel_config_sha256": file_sha256(d / "channel_config.json"),
+           "weights": {}}
+    for f in sorted(d.glob("kernel_*.mem")):
+        out["weights"][f.name] = file_sha256(f)
+    return out
 
 
 def write_record(run_dir, rec):
@@ -269,7 +290,10 @@ def cmd_run(args):
 
     m7.acquire_lock()
     ctx = None
+    t_start = time.perf_counter()
     try:
+        rec["catalog_sha256"] = file_sha256(m7.BASE / "m7_profiles.json")
+        rec["anchors_sha256"] = file_sha256(m7.BASE / "anchors_m7.json")
         info = m7.Path("/sys/class/u-dma-buf/udmabuf0")
         ctx = {"phys": int((info / "phys_addr").read_text(), 0),
                "buffer_size": int((info / "size").read_text(), 0),
@@ -277,6 +301,7 @@ def cmd_run(args):
 
         # --- admission BEFORE any hardware mutation (M8-02/M8-06) ---------
         channels = m7.load_params(args.profile, n, k)   # read-only files
+        rec["parameters"] = parameter_identity(args.profile)
         t0 = time.perf_counter()
         if args.image:
             raw, meta = load_image_exact(args.image, w, h)
@@ -381,6 +406,7 @@ def cmd_run(args):
                 pass
         raise
     finally:
+        rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
         try:
             m7.safe_cleanup(ctx)
             rec["cleanup"] = {"ok": True}
@@ -435,6 +461,7 @@ def cmd_benchmark(args):
 
     m7.acquire_lock()
     ctx = None
+    t_start = time.perf_counter()
     try:
         info = m7.Path("/sys/class/u-dma-buf/udmabuf0")
         ctx = {"phys": int((info / "phys_addr").read_text(), 0),
@@ -489,6 +516,7 @@ def cmd_benchmark(args):
         rec["failure"] = {"type": type(exc).__name__, "message": str(exc)}
         raise
     finally:
+        rec["timings"]["total_wall_s"] = time.perf_counter() - t_start
         try:
             m7.safe_cleanup(ctx)
             rec["cleanup"] = {"ok": True}
