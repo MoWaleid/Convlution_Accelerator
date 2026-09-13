@@ -227,7 +227,7 @@
             "value": "10.000000"
           },
           "PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ": {
-            "value": "100.000000"
+            "value": "125.000000"
           },
           "PCW_ACT_FPGA1_PERIPHERAL_FREQMHZ": {
             "value": "10.000000"
@@ -284,7 +284,7 @@
             "value": "650"
           },
           "PCW_CLK0_FREQ": {
-            "value": "100000000"
+            "value": "125000000"
           },
           "PCW_CLK1_FREQ": {
             "value": "10000000"
@@ -353,7 +353,7 @@
             "value": "1"
           },
           "PCW_FPGA0_PERIPHERAL_FREQMHZ": {
-            "value": "100"
+            "value": "125"
           },
           "PCW_FPGA_FCLK0_ENABLE": {
             "value": "1"
@@ -1472,6 +1472,10 @@
                 "value": "AXI4LITE",
                 "value_src": "constant"
               },
+              "FREQ_HZ": {
+                "value": "125000000",
+                "value_src": "constant"
+              },
               "ID_WIDTH": {
                 "value": "0",
                 "value_src": "constant"
@@ -1712,6 +1716,10 @@
                 "value": "1",
                 "value_src": "constant"
               },
+              "FREQ_HZ": {
+                "value": "125000000",
+                "value_src": "constant"
+              },
               "CLK_DOMAIN": {
                 "value": "accelerator_dma_processing_system7_0_0_FCLK_CLK0",
                 "value_src": "default_prop"
@@ -1781,6 +1789,10 @@
                 "value": "1",
                 "value_src": "constant"
               },
+              "FREQ_HZ": {
+                "value": "125000000",
+                "value_src": "constant"
+              },
               "CLK_DOMAIN": {
                 "value": "accelerator_dma_processing_system7_0_0_FCLK_CLK0",
                 "value_src": "default_prop"
@@ -1828,7 +1840,7 @@
                 "value_src": "constant"
               },
               "FREQ_HZ": {
-                "value": "100000000",
+                "value": "125000000",
                 "value_src": "constant"
               },
               "CLK_DOMAIN": {
@@ -1956,8 +1968,8 @@
       "const_one_dout": {
         "ports": [
           "const_one/dout",
-          "rst_100m/dcm_locked",
-          "rst_100m/aux_reset_in"
+          "rst_100m/aux_reset_in",
+          "rst_100m/dcm_locked"
         ]
       },
       "const_zero_dout": {

@@ -1,5 +1,7 @@
 # Conv Lab: hardware-independent M2 implementation
 
+> EdgeFree release users: start with ../release/QUICKSTART.md and the generated standalone package. This document describes retained upstream history; its old hardware.json/profile IDs and private paths are not the active release's deployment configuration.
+
 Implementation added 2026-09-09; extended with explicit conversion/offline tooling.
 Historical host A/B results are preserved in [reports/HOST_EVIDENCE.md](reports/HOST_EVIDENCE.md).
 **New C tests, current-revision A/B reruns, conversion and offline validation are NOT RUN.**

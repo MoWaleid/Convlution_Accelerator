@@ -92,3 +92,9 @@ desktop.ini
 *.bda
 /Convlution_Accelerator.srcs/sources_1/bd/*/ip/
 dfx_runtime.txt
+
+# Release outputs are reproduced by scripts/release.ps1, never source inputs.
+/dist/
+/profile_builds/*/project/
+!release/evidence/*.rpt
+!release/evidence/*.log

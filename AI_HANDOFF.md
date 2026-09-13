@@ -1,5 +1,7 @@
 # AI_HANDOFF.md — Complete Project Context
 
+> HISTORICAL UPSTREAM HANDOFF: the active branch is now Exact CFGLUT5 K16 EdgeFree 125 MHz. Use README.md and release/QUICKSTART.md / release/STATUS.md for current commands, identities and qualification. The historical profile/status/paths below were retained for provenance, not adopted as instructions or as validation of this new branch.
+
 **Purpose:** This is the single self-contained briefing for any AI assistant or engineer
 continuing this project. If you have this file plus repository access, you need nothing
 else to work effectively — it covers the system, the history, the workflow, and **how to

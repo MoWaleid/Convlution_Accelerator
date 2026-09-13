@@ -39,7 +39,10 @@ architecture rtl of window_generator is
     type window_row_t is array (0 to C_N - 1) of std_logic_vector(7 downto 0);
     type window_regs_t is array (0 to C_N - 1) of window_row_t;
     signal window_regs : window_regs_t := (others => (others => (others => '0')));
-    
+
+    -- Channel fanout is handled by the engine's local registered window
+    -- banks. Do not replicate the complete line-buffer arrays here.
+
     -- Counters to track image boundaries for valid_out generation
     signal col_cnt : integer range 0 to C_IMAGE_WIDTH - 1 := 0;
     signal row_cnt : integer range 0 to C_IMAGE_HEIGHT - 1 := 0;

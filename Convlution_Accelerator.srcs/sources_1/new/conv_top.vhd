@@ -24,6 +24,9 @@ use work.config_pkg.all;
 
 entity conv_top is
     generic (
+        -- Direct pixel-stream users retain the legacy CE contract by default.
+        -- The AXIS wrapper enables elastic prefetch and obeys pixel_ready.
+        C_WINDOW_PREFETCH : boolean := false;
         C_K : integer := CFG_K;
         C_N : integer := CFG_N;
 
@@ -36,7 +39,7 @@ entity conv_top is
         C_S_AXI_DATA_WIDTH : integer := 32;
         C_S_AXI_ADDR_WIDTH : integer := 32;
 
-        -- Frozen identity of the explicitly selected integrated profile.
+        -- Frozen identity of this M4 release build.
         C_BUILD_ID : std_logic_vector(127 downto 0) :=
             CFG_BUILD_ID;
 
@@ -136,6 +139,7 @@ entity conv_top is
         -- ====================================================================
         pixel_in : in std_logic_vector(CFG_PIXEL_WIDTH - 1 downto 0);
         valid_in : in std_logic;
+        pixel_ready : out std_logic := '0';
 
         -- ====================================================================
         -- K-channel convolution output
@@ -190,6 +194,18 @@ architecture rtl of conv_top is
     signal production_enable_wire :
         std_logic;
 
+    signal coeff_write_pulse_wire :
+        std_logic;
+
+    signal coeff_write_addr_wire :
+        std_logic_vector(31 downto 0);
+
+    signal coeff_write_data_wire :
+        std_logic_vector(31 downto 0);
+
+    signal config_ready_wire :
+        std_logic;
+
     signal datapath_resetn :
         std_logic;
 
@@ -198,6 +214,7 @@ architecture rtl of conv_top is
 
     signal datapath_valid_in :
         std_logic;
+    signal window_ce : std_logic;
 
 begin
 
@@ -238,6 +255,68 @@ begin
     -- pixel production outside RUN, but conv_top does not rely on that alone.
     datapath_valid_in <=
         valid_in and run_enable_wire;
+
+    -- The existing window registers are a one-entry elastic buffer. An
+    -- occupied valid window may only be replaced when the engine advances.
+    -- An invalid window can advance while the engine is stalled: this hides
+    -- the N-1 row-start pixels in the K16 serializer's otherwise idle clocks.
+    window_ce <= run_enable_wire and (ce or not window_valid_wire)
+                 when C_WINDOW_PREFETCH else datapath_ce;
+    pixel_ready <= window_ce;
+
+    -- synthesis translate_off
+    window_protocol_check : process(clk)
+        variable held_window : pixel_array_t(0 to C_N*C_N-1);
+        variable was_held : boolean := false;
+        variable windows_seen : natural := 0;
+        variable invalid_advances : natural := 0;
+        variable first_window_time : time := 0 ns;
+        -- Cumulative completed-frame counter giving each WINDOW_METRICS
+        -- record a stable identity in the regression log checker.
+        variable metric_records : natural := 0;
+    begin
+        if rising_edge(clk) then
+            if datapath_resetn = '0' then
+                was_held := false;
+                windows_seen := 0;
+                invalid_advances := 0;
+            else
+                if was_held then
+                    assert window_valid_wire = '1' and window_wire = held_window
+                        report "Pending elastic window changed without acceptance"
+                        severity failure;
+                end if;
+                was_held := window_valid_wire = '1' and datapath_ce = '0';
+                held_window := window_wire;
+                if C_WINDOW_PREFETCH then
+                    assert input_consumed_pulse = (window_ce and datapath_valid_in)
+                        report "Frontend consumption and window advancement disagree"
+                        severity failure;
+                end if;
+                if datapath_ce = '1' then
+                    if window_valid_wire = '1' then
+                        if windows_seen = 0 then
+                            first_window_time := now;
+                        end if;
+                        if windows_seen = (C_IMAGE_WIDTH-C_N+1)*(C_IMAGE_HEIGHT-C_N+1)-1 then
+                            metric_records := metric_records + 1;
+                            report "WINDOW_METRICS seq=" & integer'image(metric_records) &
+                                " prefetch=" & boolean'image(C_WINDOW_PREFETCH) &
+                                " invalid_advances=" & integer'image(invalid_advances) &
+                                " first_to_last=" & time'image(now-first_window_time);
+                            windows_seen := 0;
+                            invalid_advances := 0;
+                        else
+                            windows_seen := windows_seen + 1;
+                        end if;
+                    elsif windows_seen > 0 then
+                        invalid_advances := invalid_advances + 1;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process;
+    -- synthesis translate_on
 
 
     -- ========================================================================
@@ -368,6 +447,9 @@ begin
             internal_error_in =>
                 internal_error_in,
 
+            datapath_config_ready =>
+                config_ready_wire,
+
             start_pulse =>
                 start_pulse_wire,
 
@@ -379,6 +461,15 @@ begin
 
             production_enable =>
                 production_enable_wire,
+
+            coeff_write_pulse =>
+                coeff_write_pulse_wire,
+
+            coeff_write_addr =>
+                coeff_write_addr_wire,
+
+            coeff_write_data =>
+                coeff_write_data_wire,
 
             coeffs_out =>
                 coeffs_wire,
@@ -418,7 +509,7 @@ begin
                 datapath_resetn,
 
             ce =>
-                datapath_ce,
+                window_ce,
 
             pixel_in =>
                 pixel_in,
@@ -454,6 +545,9 @@ begin
             resetn =>
                 datapath_resetn,
 
+            cfg_resetn =>
+                resetn,
+
             ce =>
                 datapath_ce,
 
@@ -463,9 +557,6 @@ begin
             valid_in =>
                 window_valid_wire,
 
-            coeffs_all =>
-                coeffs_wire,
-
             bias_all =>
                 bias_wire,
 
@@ -474,6 +565,18 @@ begin
 
             relu_en_all =>
                 relu_en_wire,
+
+            coeff_write_pulse =>
+                coeff_write_pulse_wire,
+
+            coeff_write_addr =>
+                coeff_write_addr_wire,
+
+            coeff_write_data =>
+                coeff_write_data_wire,
+
+            cfg_ready =>
+                config_ready_wire,
 
             results_out =>
                 results_out,
