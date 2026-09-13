@@ -40,11 +40,13 @@ keyword (§16.7).
       (note: the soak subcommand was added to m8_cli for this; the interleave
       idea was dropped — extremes mode covers the lifecycle separately)
 
-## 3. Five cold-boot runs (true power removal per E2 scope note)
-- [ ] Power OFF (remove USB/adapter), wait, power ON
-- [ ] Per boot: date set, persistence md5 (m7_switch/m8_cli/profiles),
-      one full switch with anchor-exact activation
-- [ ] Transcript per boot → report/evidence/
+## 3. Five cold-boot runs (true power removal per E2 scope note) — DONE 2026-09-14
+- [x] 5 x physical power OFF/ON by the user (B32, C32, D32, D640 reloads +
+      A32 parameter-only from factory identity on boot 5)
+- [x] Per boot: date set, persistence md5 verified (boots 2-5 captured in
+      transcript; boot 1 md5 check not relayed), one full switch with
+      anchor-exact activation, cleanup 0x181
+- [x] Evidence: report/evidence/m9_coldboots_20260914.txt
 
 ## 4. Reproducible release
 - [ ] Clean-build reproduction: scripted BD + Vivado 2025.2 → bitstream hash

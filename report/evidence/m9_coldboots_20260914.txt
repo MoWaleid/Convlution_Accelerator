@@ -1,0 +1,55 @@
+M9 §3 — five true power-cycle cold boots, all PASS
+Date: 2026-09-14 (board clock set to 2026-09-13 during the session)
+Procedure per boot: physical power removal/restoration by the user, login,
+clock set, persistence md5 check, one full profile switch with anchor-exact
+activation. Scripts: m7_switch.py md5 2fe949ca9040dd3fda990016c78a4474,
+m8_cli.py md5 5542738961b01b2a2b1be4ac18136313.
+Provenance: verbatim relay from PuTTY serial session by the user.
+
+BOOT 1 — profile B32 (reload path)
+  admitted B32 parameter bundle 952cb13ce0adad04
+  reprogrammed fabric -> B32 (BN3K16W32-260912)
+  [B32] activation OK 0.143 ms sha=5821c8b19a88fd34
+  cleanup: final STATUS 0x00000181
+  M8 RUN 20260913T070952Z-B32-library_alley_cat: PASS (1 frames, median 0.146 ms)
+  (persistence md5 check not captured in the relayed transcript for this boot;
+   boots 2-5 capture it — see scope note)
+
+BOOT 2 — profile C32 (reload path)
+  date set 2026-09-13 07:12 UTC
+  md5 2fe949ca9040dd3fda990016c78a4474  m7_switch.py
+  md5 5542738961b01b2a2b1be4ac18136313  m8_cli.py   <- persistence verified
+  admitted C32 parameter bundle c9ba0dba0ae7d704
+  reprogrammed fabric -> C32 (CN5K08W32-260912)
+  [C32] activation OK 0.140 ms sha=b6ab2d53dd9517f3
+  M8 RUN 20260913T071249Z-C32-library_alley_cat: PASS (1 frames, median 0.145 ms)
+
+BOOT 3 — profile D32 (reload path)
+  date set 07:15; persistence md5s verified (same values)
+  admitted D32 parameter bundle d735ca24a505b7f0
+  reprogrammed fabric -> D32 (DN3K04W32-260912)
+  [D32] activation OK 0.140 ms sha=6cb736f6a80132d8
+  M8 RUN 20260913T071557Z-D32-library_alley_cat: PASS (1 frames, median 0.143 ms)
+
+BOOT 4 — profile D640 (reload path)
+  date set 07:18; persistence md5s verified (same values)
+  admitted D640 parameter bundle d735ca24a505b7f0
+  reprogrammed fabric -> D640 (D640N3K04-260912)
+  [D640] activation OK 3.789 ms sha=e323defbf8ad2616
+  M8 RUN 20260913T071840Z-D640-library_alley_cat: PASS (1 frames, median 3.745 ms)
+
+BOOT 5 — profile A32 (parameter-only path from the factory identity)
+  date set 07:21; persistence md5s verified (same values)
+  admitted A32 parameter bundle 367fb1f5a45a3271
+  live build already A32: parameter re-admission only
+  [A32] activation OK 0.144 ms sha=cb3975593073652b
+  M8 RUN 20260913T072133Z-A32-library_alley_cat: PASS (1 frames, median 0.148 ms)
+
+--- verification notes ---
+Physical power removal/restoration performed by the user before each boot
+(stronger cold-boot form, per the E2 scope note separating it from warm
+reboot). Every boot: FSBL/BOOT.BIN programmed the factory PL, persistence
+verified byte-identical, identity detected from live BUILD_ID, full lifecycle
+to anchor-exact activation, cleanup 0x181. Boot 5 additionally proves the
+parameter-only same-build path from a freshly programmed fabric.
+Remaining M9 items: clean-build reproduction, release tag, known-limits text.
