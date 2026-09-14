@@ -1380,6 +1380,26 @@ Next routed build is D32_CFGLUT125 (render verified pristine: only
 `78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92`), then the
 uniform-provenance B32 rebuild per §19.6.
 
+### 18.16 D32_CFGLUT125 routed build accepted (2026-09-15)
+
+The D32_CFGLUT125 build passed from clean commit
+`fcc3ed1ba0cdf232a7959b1e3836ac8c2d831aa3`: 125 MHz, WNS +0.093, WHS +0.014,
+zero setup/hold failures, clean routing, zero DRC errors, zero methodology
+checks and a source-bound build manifest. Preserved BIT SHA-256 is
+`b02fc59ce9e463f77c1b79ac9094b3d6c38dda9f3948b18bff4897cf2c4786dd`;
+XSA SHA-256 is
+`096927f40b54dd054f253c3038e74f8fcdf471c7f3ae76d72c065598143f6a67`.
+Reports are under `report/research_builds/D32_CFGLUT125/`; the XSA is tracked
+at `bitstreams/d32_cfglut125_125mhz.xsa` and the BIT stays ignored with its
+hash bound in tracked records. D32 remains BUILT / BOARD_VALIDATION=NOT_RUN.
+All 16 RTL source hashes in its manifest are identical to the A32 build's
+(uniform generalized-source provenance across the two builds).
+
+All four first-build routed builds are now accepted (C32, D640, A32, D32).
+Remaining per §19.6: archive the old B32 work directory and artifacts, then
+the uniform-provenance B32 rebuild. After that, §19.7 firmware/catalog/board
+qualification.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1456,34 +1476,25 @@ evidence only; exclude them from the active catalog/library/image/demo.
    Reports `report/research_builds/A32_CFGLUT125/`; evidence recorded in the
    commit carrying §18.15. PSU-1..4 warnings dispositioned as the known
    ZedBoard-preset artifact (§18.15).
-5. B32 has older routed/board-qualified 125 MHz evidence. Preserve it, but
+5. D32 BUILT / board NOT_RUN: 125 MHz, WNS `+0.093`, WHS `+0.014`, clean route,
+   zero DRC errors, zero methodology checks. Source `fcc3ed1`; BIT SHA
+   `b02fc59ce9e463f77c1b79ac9094b3d6c38dda9f3948b18bff4897cf2c4786dd`;
+   XSA SHA `096927f40b54dd054f253c3038e74f8fcdf471c7f3ae76d72c065598143f6a67`.
+   Reports `report/research_builds/D32_CFGLUT125/`; evidence recorded in the
+   commit carrying §18.16.
+6. B32 has older routed/board-qualified 125 MHz evidence. Preserve it, but
    rebuild B32 last for uniform generalized-source provenance.
 
-C32/D640/A32 BITs are ignored under `bitstreams/` with hashes in tracked
+C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — D32
+### 19.4 Immediate action — B32 archive, then rebuild
 
-A32 is accepted (§18.15). Observed: `work/research_D32_CFGLUT125/` contains
-only `src/config_pkg.vhd`, SHA
-`78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92`.
-After confirming clean state, give the user:
-
-```tcl
-if {[llength [get_projects -quiet]]} { close_project }
-cd {D:/MyProjects/Convlution_Accelerator}
-set research_release_id D32_CFGLUT125
-set build_rc [catch { source {scripts/research_release/research_build.tcl} } build_msg build_opts]
-puts "BUILD RESULT: $build_rc"
-puts "BUILD MESSAGE: $build_msg"
-if {$build_rc} { puts [dict get $build_opts -errorinfo] }
-```
-
-Accept only `RESEARCH_BUILD_OK: D32_CFGLUT125` with nonnegative WNS/WHS and
-`BUILD RESULT: 0`. On failure inspect the preserved run; never rerun blindly.
-PSU-1..4 negative-DQS-skew critical warnings are expected (ZedBoard preset;
-§18.15).
+A32 and D32 are accepted (§18.15, §18.16). The next action is the §19.6 B32
+flow: verify tracked B32 evidence and hashes, archive the old work directory
+and final artifacts under dated/recovery names, re-render, then rebuild.
+No B32 build command is issued until the archive steps are accepted.
 
 ### 19.5 Mandatory post-build acceptance
 
@@ -1513,11 +1524,9 @@ Final names: A32 `a32_cfglut125_125mhz.bit/.xsa`; D32
 
 ### 19.6 Remaining order and B32 trap
 
-After A32 build D32, then B32. D32 is pristine with one render, SHA
-`78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92`.
-
-B32 is **not pristine**: `work/research_B32_CFGLUT125/` has the older full build
-(787 files). Do not delete it or weaken the guard. After A32/D32 commits:
+C32, D640, A32 and D32 are all built and accepted. B32 remains, but it is
+**not pristine**: `work/research_B32_CFGLUT125/` has the older full build
+(787 files). Do not delete it or weaken the guard. Archive sequence:
 
 1. Verify tracked B32 build/board evidence and hashes.
 2. Hash/archive the entire old work directory to a unique recovery path;
