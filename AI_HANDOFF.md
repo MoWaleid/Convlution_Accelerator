@@ -1340,3 +1340,20 @@ Next routed build is D640_CFGLUT125, followed by A32, D32 and a B32 rebuild
 for uniform provenance. Only the historical B32 125 MHz CFGLUT5 artifact is
 board-qualified at this checkpoint; do not infer board qualification for C32
 or the three unbuilt profiles from simulator or routed-build evidence.
+
+### 18.14 D640_CFGLUT125 routed build accepted (2026-09-15)
+
+The risk-second D640_CFGLUT125 build passed from clean commit
+`180c2fafc5ec9d36344b101ca9ea7d5569b24002`: 125 MHz, WNS +0.001 ns,
+WHS +0.022 ns, zero timing failures, clean routing, zero DRC errors and a
+source-bound build manifest. Preserved BIT SHA-256 is
+`6e95188e197f402bf9029295b3d4584111aa7b5afbb06802045596f49f41cca3`;
+XSA SHA-256 is
+`371a420baf8b20d1ad2cb0ad072bde8f101a232df0dc691e72f79b37742c9457`.
+Reports are under `report/research_builds/D640_CFGLUT125/`; immutable artifacts
+are under `bitstreams/`. D640 remains BUILT / BOARD_VALIDATION=NOT_RUN, and
+the required 640×480 static-image plus 4 MiB DMA board gates remain open.
+
+Next routed build is A32_CFGLUT125, then D32 and the uniform-provenance B32
+rebuild. Firmware generation, final-manifest hash binding, catalog cutover and
+board qualification follow only after the five routed builds are frozen.

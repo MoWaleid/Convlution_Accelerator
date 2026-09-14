@@ -1,8 +1,8 @@
 # Profile-matrix wrapper simulations — 2026-09-14 (CFGLUT125 releases)
 
 Status: **official user-executed simulator evidence passes for all five releases;
-C32 now has a routed 125 MHz build; three first physical builds plus the
-uniform-provenance B32 rebuild remain open.** Fixture: the A-H
+C32 and D640 now have routed 125 MHz builds; two first physical builds plus
+the uniform-provenance B32 rebuild remain open.** Fixture: the A-H
 comprehensive wrapper regression (`sim_1/imports/new/tb_conv_axis_wrapper.vhd`,
 generalized 2026-09-14 to take all geometry from config_pkg), run per release
 against the rendered `work/research_<ID>/src/config_pkg.vhd` in isolated
