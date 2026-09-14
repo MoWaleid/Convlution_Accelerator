@@ -47,9 +47,6 @@ HEADROOM_REQUIRED = 536870912        # 512 MiB free after the reservation
 D_PROFILES = ("D32", "D640")   # channels 1,2 are Sobel X/Y by construction
 DEFAULT_RESULTS = Path("/var/lib/conv-lab/results")
 FALLBACK_RESULTS = Path("/home/petalinux/runs")
-FCLK0_HZ = 100000000           # frozen BD constant, one 100 MHz domain
-
-
 def file_md5(path):
     return hashlib.md5(Path(path).read_bytes()).hexdigest()
 
@@ -182,7 +179,7 @@ def render_sobel(values, k, w, h, path):
                                                 Image.NEAREST).save(path)
 
 
-def environment():
+def environment(clock_mhz):
     gov = None
     bogomips = None
     try:
@@ -199,7 +196,9 @@ def environment():
         pass
     return {"kernel": platform.release(), "machine": platform.machine(),
             "python": platform.python_version(), "cpu_governor": gov,
-            "bogomips": bogomips, "fclk0_hz": FCLK0_HZ}
+            "bogomips": bogomips,
+            "fclk0_hz": int(clock_mhz * 1_000_000),
+            "fclk0_source": "release manifest; not a live measurement"}
 
 
 def counter_snapshot(accel):
@@ -214,6 +213,7 @@ def counter_snapshot(accel):
 
 def new_record(profile, hw, image_tag, catalog=None):
     rel = (catalog or {}).get("releases", {}).get(profile) if catalog else None
+    clock_mhz = hw["clock_mhz"]
     return {
         "schema": "m8-run-record/3",
         "run_id": None,
@@ -237,12 +237,12 @@ def new_record(profile, hw, image_tag, catalog=None):
         "timings": {"scope": "hw_ms = host-clock interval from MM2S length "
                             "release to completion-poll success (includes "
                             "polling); wall_ms = whole run_frame call; "
-                            "neither is a hardware cycle count; fabric clock "
-                            "100 MHz"},
+                            "neither is a hardware cycle count; declared "
+                            f"fabric clock {clock_mhz} MHz"},
         "previews": [],
         "versions": {"m8_cli_md5": file_md5(Path(__file__)),
                      "m7_switch_md5": file_md5(m7.__file__)},
-        "environment": environment(),
+        "environment": environment(clock_mhz),
         "archive_root": None,
         "failure": None,
     }

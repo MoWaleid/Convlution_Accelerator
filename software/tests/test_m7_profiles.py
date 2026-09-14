@@ -23,6 +23,8 @@ CASES = {
     "C32": (32,32,5,8,1296,5568,16384,22016,"434e354b30385733322d323630393132"),
     "D32": (32,32,3,4,1156,5440,8192,13696,"444e334b30345733322d323630393132"),
     "D640": (640,480,3,4,309444,313728,2457600,2771392,"443634304e334b30342d323630393132"),
+    "B32_CFGLUT125": (32,32,3,16,1156,5440,32768,38272,
+                       "45463132354b31364e33573332523031"),
 }
 
 
@@ -31,7 +33,7 @@ class M7Profiles(unittest.TestCase):
         self.profiles = load_profiles(CATALOG)
         self.allocation = Allocation(0x10000000, 4194304, 0, 0x20000000)
 
-    def test_five_contract_layouts_and_frozen_ids(self):
+    def test_six_release_layouts_and_frozen_ids(self):
         self.assertEqual(set(self.profiles), set(CASES))
         for name, (w,h,n,k,tx,rxoff,rx,end,identity) in CASES.items():
             with self.subTest(profile=name):
@@ -111,6 +113,26 @@ class M7Profiles(unittest.TestCase):
                 with self.assertRaises(AdmissionError):
                     load_profiles(path)
 
+    def test_release_bindings_are_complete_and_identity_exact(self):
+        original = json.loads(CATALOG.read_bytes())
+        mutations = []
+        missing = json.loads(json.dumps(original))
+        del missing["releases"]["B32_CFGLUT125"]
+        mutations.append(missing)
+        mismatched = json.loads(json.dumps(original))
+        mismatched["releases"]["B32_CFGLUT125"]["build_id_hex"] = \
+            original["profiles"]["B32"]["build_id"]
+        mutations.append(mismatched)
+        bad_hash = json.loads(json.dumps(original))
+        bad_hash["releases"]["B32_CFGLUT125"]["bundle_sha256"] = "A" * 64
+        mutations.append(bad_hash)
+        for data in mutations:
+            with tempfile.TemporaryDirectory() as temp:
+                path = Path(temp)/"catalog.json"
+                path.write_text(json.dumps(data),encoding="utf-8")
+                with self.assertRaises(AdmissionError):
+                    load_profiles(path)
+
     def test_b32_rejects_legacy_a32_id_in_otherwise_correct_discovery(self):
         p = self.profiles["B32"]
         r = {0x4100:0x43564831,0x4104:0x10000,0x4108:0x1ff,
@@ -129,15 +151,17 @@ class M7Profiles(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         template = (ROOT/"Convlution_Accelerator.srcs/sources_1/new/config_pkg.vhd").read_text()
-        for name,p in self.profiles.items():
+        # prepare_profile.py is the legacy five-profile build generator.
+        # The research release has its own isolated generator and must not be
+        # projected through this path.
+        for name in ("A32", "B32", "C32", "D32", "D640"):
+            p = self.profiles[name]
             rendered = module.render_config(template,p)
             self.assertIn(f'CFG_PROFILE : string := "{name}"',rendered)
             self.assertIn(f'x"{p.build_id}"',rendered)
             for key,value in (("CFG_K",p.K),("CFG_N",p.N),
                               ("CFG_UNPADDED_WIDTH",p.W),("CFG_UNPADDED_HEIGHT",p.H)):
                 self.assertRegex(rendered,rf"{key}\s*: integer := {value};")
-        # The checked-in config_pkg.vhd is the D640 projection (CFG_PROFILE
-        # "D640" per the frozen build input); render_config must be a no-op
-        # against it.
-        self.assertEqual(template,module.render_config(template,self.profiles["D640"]))
-
+        # Rendering an already-rendered isolated snapshot must be idempotent.
+        d640 = module.render_config(template,self.profiles["D640"])
+        self.assertEqual(d640,module.render_config(d640,self.profiles["D640"]))

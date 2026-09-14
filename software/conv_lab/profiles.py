@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 
 from .dma import layout, validate_layout
-from .strict import integer, obj, parse_json, require
+from .strict import hex_string, integer, obj, parse_json, require, string
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,13 +23,14 @@ class Profile:
 
 def load_profiles(path):
     data = parse_json(Path(path).read_bytes())
-    obj(data, "schema_version profiles")
-    require(type(data["schema_version"]) is int and data["schema_version"] == 1,
+    obj(data, "schema_version profiles releases")
+    require(type(data["schema_version"]) is int and data["schema_version"] == 2,
             "profile schema")
     entries = data["profiles"]
     require(type(entries) is dict and
-            set(entries) == {"A32", "B32", "C32", "D32", "D640"},
-            "explicit five-profile catalog required")
+            set(entries) == {"A32", "B32", "C32", "D32", "D640",
+                             "B32_CFGLUT125"},
+            "explicit six-release catalog required")
     result = {}
     ids = set()
     for name, entry in entries.items():
@@ -44,6 +45,25 @@ def load_profiles(path):
         require(identity not in ids, "duplicate profile identity")
         ids.add(identity)
         result[name] = Profile(name, **entry)
+
+    releases = data["releases"]
+    require(type(releases) is dict and set(releases) == set(entries),
+            "release bindings must exactly cover profiles")
+    for name, release in releases.items():
+        obj(release, "shape_id bundle_sha256 manifest build_id_hex", "bundle_dir")
+        string(release["shape_id"])
+        hex_string(release["bundle_sha256"])
+        require(type(release["manifest"]) is str and
+                re.fullmatch(r"hardware_[A-Za-z0-9_]+\.json",
+                             release["manifest"]) is not None,
+                "release manifest basename")
+        hex_string(release["build_id_hex"], 32)
+        require(release["build_id_hex"] == entries[name]["build_id"],
+                "release/profile build ID mismatch")
+        if "bundle_dir" in release:
+            string(release["bundle_dir"])
+            require(release["bundle_dir"] in entries,
+                    "release bundle_dir must name a profile")
     return result
 
 
@@ -80,4 +100,3 @@ def validate_discovery(profile, registers):
         require(registers.get(address) == value,
                 f"{profile.name} discovery mismatch at 0x{address:04x}")
     return profile
-

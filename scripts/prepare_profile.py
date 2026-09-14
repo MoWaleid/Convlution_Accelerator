@@ -20,26 +20,36 @@ RTL_NAMES = (
 
 
 def render_config(template, profile):
-    block = f"""    -- BEGIN SELECTED PROFILE: derived from profiles/m7_profiles.json.
-    -- Use scripts/prepare_profile.py for an explicit isolated selection.
-    constant CFG_PROFILE : string := "{profile.name}";
-    constant CFG_BUILD_ID : std_logic_vector(127 downto 0) :=
-        x"{profile.build_id}";
+    text = template
 
-    -- Number of parallel output channels (K).
-    constant CFG_K : integer := {profile.K};
+    def replace_one(label, pattern, replacement):
+        nonlocal text
+        text, count = re.subn(pattern, replacement, text, flags=re.M)
+        if count != 1:
+            raise ValueError(f"expected exactly one {label}, replaced {count}")
 
-    -- Kernel spatial dimension (N x N).
-    constant CFG_N : integer := {profile.N};
-
-    -- Image spatial dimensions.
-    constant CFG_UNPADDED_WIDTH  : integer := {profile.W};
-    constant CFG_UNPADDED_HEIGHT : integer := {profile.H};
-    -- END SELECTED PROFILE"""
-    text, count = re.subn(r"    -- BEGIN SELECTED PROFILE:.*?    -- END SELECTED PROFILE",
-                         lambda _: block, template, flags=re.S)
-    if count != 1:
-        raise ValueError("exactly one selected-profile block required")
+    replace_one(
+        "CFG_PROFILE",
+        r'^(\s*constant CFG_PROFILE\s*:\s*string\s*:=\s*)"[^"]*"\s*;',
+        rf'\g<1>"{profile.name}";',
+    )
+    replace_one(
+        "CFG_BUILD_ID",
+        r'^(\s*constant CFG_BUILD_ID\s*:\s*std_logic_vector\s*'
+        r'\(127 downto 0\)\s*:=\s*)x"[0-9A-Fa-f]{32}"\s*;',
+        rf'\g<1>x"{profile.build_id}";',
+    )
+    for label, value in (
+        ("CFG_K", profile.K),
+        ("CFG_N", profile.N),
+        ("CFG_UNPADDED_WIDTH", profile.W),
+        ("CFG_UNPADDED_HEIGHT", profile.H),
+    ):
+        replace_one(
+            label,
+            rf'^(\s*constant {label}\s*:\s*integer\s*:=\s*)\d+\s*;',
+            rf'\g<1>{value};',
+        )
     return text
 
 
@@ -92,4 +102,3 @@ if __name__ == "__main__":
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
     prepare(args.profile, args.out)
-

@@ -5,7 +5,7 @@ Historical host A/B results are preserved in [reports/HOST_EVIDENCE.md](reports/
 
 **Status 2026-09-14:** host groups A/B/C have PASS evidence on Windows, Linux
 x86-64 and the ARM board (M2/M2-P closed); this package is the qualified runtime
-beneath the board campaigns M3–M9 (file-driven inference, five-profile switching,
+beneath the board campaigns M3–M9 (file-driven inference, release/profile switching,
 CLI/run archive), with the frozen parameter library under `profiles/`
 (canonical-flat-2; conversion receipts in `profiles/history/legacy_conversion_20260914.json`)
 and the board entry points `m7_switch.py` / `m8_cli.py` / `m8_import.py`. The
