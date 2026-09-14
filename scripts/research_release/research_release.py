@@ -45,7 +45,8 @@ def parse_spec(release_id):
     for m in re.finditer(r"^set spec\((\w+)\)\s+(.+?)\s*$", text, re.M):
         key, val = m.group(1), m.group(2)
         if val.startswith("{") and val.endswith("}"):
-            val = val[1:-1].split()
+            inner = val[1:-1].split()
+            val = inner[0] if len(inner) == 1 else inner
         spec[key] = val
     missing = [k for k in SPEC_KEYS if k not in spec]
     if missing:
@@ -119,7 +120,7 @@ def do_check(release_id):
     for p in paths:
         if p.is_file():
             continue
-        if p.name == "config_pkg.vhd" and p.parent.parent == out_dir(release_id) / "src":
+        if p == out_dir(release_id) / "src" / "config_pkg.vhd":
             continue   # rendered by prepare/build, not required at check time
         missing.append(str(p))
     if missing:
@@ -129,8 +130,11 @@ def do_check(release_id):
           f"clock={spec['clock_mhz']} MHz, build_id {spec['build_id_hex'][:16]}…")
     print(f"catalog binding: {rel['shape_id']} / {rel['bundle_sha256'][:16]}…")
     for p in paths:
-        print(f"  {hashlib.sha256(p.read_bytes()).hexdigest()[:16]}…  "
-              f"{p.relative_to(ROOT)}")
+        if p == out_dir(release_id) / "src" / "config_pkg.vhd":
+            print("  (rendered at prepare/build)  config_pkg.vhd")
+        else:
+            print(f"  {hashlib.sha256(p.read_bytes()).hexdigest()[:16]}…  "
+                  f"{p.relative_to(ROOT)}")
     if (out_dir(release_id)).exists():
         print(f"WARNING: build dir exists: {out_dir(release_id)} "
               "(archive before rebuilding)")

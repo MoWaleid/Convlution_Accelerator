@@ -46,6 +46,8 @@ Integration-branch commits (all pushed):
 - `d6768a4` bitheap provenance byte-identical + D4 testbench staged
 - `10e2a3f` D4 closed: R14-01 confirmed by xsim
 - `c2d639d` D3+D5: research build flow stood up; WNS discrepancy resolved
+- `fce2771` Gate 2 transplant (RTL/BD/testbenches/scripts from 00a6e11)
+- `86327de` Gate 2 release plumbing (B32_CFGLUT125 catalog/anchor/manifest)
 
 Authoritative planning docs on this branch: `INTEGRATION_PLAN_M10_M12.md`
 (+ Addendum A dispositions), `M10_DECISION_RECORD.md` (D1–D5 decisions and
@@ -88,12 +90,13 @@ narrative but does NOT know about Gate-2 progress (§4 below).
    `report/evidence/schema_v3_records_20260913/` (six M9 soak records +
    revalidation records + MANIFEST.md documenting remaining gaps).
 
-## 4. UNCOMMITTED working tree — Gate 2 transplant (verify then commit FIRST)
+## 4. Gate 2 transplant state (COMMITTED, verification still pending)
 
-`git status` on `integration/m10-cfglut5` currently holds the selective
-transplant, taken file-by-file with `git checkout 00a6e11 -- <paths>`
-(NEVER merge their commit — it deletes the root XPR, both bitstream XSAs
-and the platform XSA; F2):
+The selective transplant is committed on this branch — taken file-by-file
+with `git checkout 00a6e11 -- <paths>` (NEVER merge their commit — it
+deletes the root XPR, both bitstream XSAs and the platform XSA; F2):
+RTL+BD+testbenches+scripts in `fce2771`, release plumbing
+(catalog/anchor/manifest/m7_switch/research_release fix) in `86327de`.
 
 - RTL (now the teammate versions): `cfglut5_kcm.vhd`, `cfglut5_bitheap_3x3.vhd`
   (new), `conv_channel.vhd`, `conv_engine.vhd`, `conv_top.vhd`,
@@ -120,7 +123,7 @@ and the platform XSA; F2):
   - `scripts/research_release/research_release.py`: `check` no longer
     requires the rendered config_pkg to pre-exist.
 
-**Resumption steps for this tree:**
+**Resumption steps (the transplant is committed but NOT yet verified):**
 1. `python scripts/research_release/research_release.py check
    B32_CFGLUT125` (venv) — should print SPEC OK + source hashes.
 2. Re-run both mock suites (they exercise the changed m7_switch):
