@@ -371,6 +371,35 @@ def main():
     shutil.rmtree(wider)
     print("MOCK OK: R14-01 containment - defective shifts rejected at admission")
 
+    # 4k) Gate-1 identity binding: the release's bundle sha and shape are
+    # enforced by switch_to before any hardware write
+    set_current("A32")
+    cat_p2 = STAGE_COPY / "m7_profiles.json"
+    cat2 = json.loads(cat_p2.read_text())
+    real_rel = cat2["releases"]["A32"]
+    cat2["releases"]["A32"] = dict(real_rel, bundle_sha256="0" * 64)
+    cat_p2.write_text(json.dumps(cat2))
+    try:
+        CLI.main(["run", "--profile", "A32", "--frames", "1"])
+        raise AssertionError("wrong release bundle admitted")
+    except RuntimeError as exc:
+        assert "release-bound" in str(exc), exc
+    cat2["releases"]["A32"] = dict(real_rel, shape_id="N3K8W32H33-CVH1")
+    cat_p2.write_text(json.dumps(cat2))
+    try:
+        CLI.main(["run", "--profile", "A32", "--frames", "1"])
+        raise AssertionError("wrong shape admitted")
+    except RuntimeError as exc:
+        assert "shape" in str(exc), exc
+    cat2["releases"]["A32"] = real_rel
+    cat_p2.write_text(json.dumps(cat2))
+    CLI.main(["run", "--profile", "A32", "--frames", "1"])
+    rec, _ = newest_record()
+    assert rec["outcome"] == "PASS"
+    assert rec["profile"]["release_id"] == "A32"
+    assert rec["profile"]["shape_id"] == "N3K8W32H32-CVH1"
+    print("MOCK OK: release identity binding (bundle sha + shape enforced)")
+
     # 5) failure path: injected frame error must still produce a record
     real_run_frame = MH.M.run_frame
 

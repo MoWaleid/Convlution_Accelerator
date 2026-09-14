@@ -48,6 +48,31 @@ sys.modules["m4_filebackend"] = fb
 sys.path.insert(0, str(REPO / "software"))
 import m7_switch as M  # noqa: E402
 
+
+def _ensure_stage_releases():
+    """Gate-1 D2 fixture: the stage catalog gains the releases section the
+    manager now requires (same binding computation as the repo catalog)."""
+    M.BASE = STAGE
+    cat_p = STAGE / "m7_profiles.json"
+    cat = json.loads(cat_p.read_text())
+    if "releases" in cat:
+        return
+    cat["releases"] = {}
+    for name, prof in cat["profiles"].items():
+        _chans, sha = M.load_params(name, prof["N"], prof["K"])
+        cat["releases"][name] = {
+            "shape_id": f"N{prof['N']}K{prof['K']}W{prof['W']}H{prof['H']}-CVH1",
+            "bundle_sha256": sha,
+            "manifest": f"hardware_{name}.json",
+            "build_id_hex": json.loads(
+                (STAGE / f"hardware_{name}.json").read_text()
+            )["accelerator"]["build_id_hex"],
+        }
+    cat_p.write_text(json.dumps(cat, indent=2))
+
+
+_ensure_stage_releases()
+
 # --- fake hardware state -------------------------------------------------------
 buf = bytearray(BUFSZ)          # u-dma-buf contents
 FAKE_FD = 0x5D0                 # stand-in fd for /dev/udmabuf0

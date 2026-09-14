@@ -212,14 +212,17 @@ def counter_snapshot(accel):
         ("error_flags", m7.REG_ERROR_FLAGS))}
 
 
-def new_record(profile, hw, image_tag):
+def new_record(profile, hw, image_tag, catalog=None):
+    rel = (catalog or {}).get("releases", {}).get(profile) if catalog else None
     return {
         "schema": "m8-run-record/3",
         "run_id": None,
         "outcome": None,
         "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "command": " ".join(sys.argv),
-        "profile": {"name": profile, "build_id_ascii": hw["build_id_ascii"],
+        "profile": {"name": profile, "release_id": profile,
+                    "shape_id": (rel or {}).get("shape_id"),
+                    "build_id_ascii": hw["build_id_ascii"],
                     "build_id_hex": hw["build_id_hex"], "N": hw["kernel_n"],
                     "K": hw["channels_k"], "W": hw["image_w"], "H": hw["image_h"],
                     "tx_bytes": hw["expected_input_bytes"],
@@ -305,14 +308,15 @@ def finalize_run(rec, ctx, run_dir):
 
 def cmd_run(args):
     m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
-    catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
+    catalog_doc = json.loads((m7.BASE / "m7_profiles.json").read_text())
+    catalog = catalog_doc["profiles"]
     m7.require(args.profile in catalog, f"unknown profile {args.profile}")
     anchors = json.loads((m7.BASE / "anchors_m7.json").read_text())
     hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
     n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
 
     image_tag = Path(args.image).stem if args.image else "library_alley_cat"
-    rec = new_record(args.profile, hw, image_tag)
+    rec = new_record(args.profile, hw, image_tag, catalog_doc)
     root, root_name = archive_root()
     rec["archive_root"] = root_name
     run_dir = allocate_run_dir(root, time.strftime("%Y%m%dT%H%M%SZ",
@@ -383,7 +387,7 @@ def cmd_run(args):
 
         # --- exclusive-owner switch (may reload the PL) --------------------
         t0 = time.perf_counter()
-        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        reloaded = m7.switch_to(args.profile, catalog_doc, anchors, ctx)
         rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
         dma, accel, buf_fd, _fds = ctx["handles"]
         layout = m7.compute_layout(hw["expected_input_bytes"],
@@ -461,14 +465,15 @@ def cmd_soak(args):
     verifies every frame value-by-value against the exact reference computed
     once from the worker-decoded canonical bytes (32x32 profiles only)."""
     m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
-    catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
+    catalog_doc = json.loads((m7.BASE / "m7_profiles.json").read_text())
+    catalog = catalog_doc["profiles"]
     m7.require(args.profile in catalog, f"unknown profile {args.profile}")
     anchors = json.loads((m7.BASE / "anchors_m7.json").read_text())
     hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
     n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
 
     image_tag = Path(args.image).stem if args.image else "library_alley_cat"
-    rec = new_record(args.profile, hw, image_tag)
+    rec = new_record(args.profile, hw, image_tag, catalog_doc)
     rec["soak"] = {"frames": args.frames}
     root, root_name = archive_root()
     rec["archive_root"] = root_name
@@ -518,7 +523,7 @@ def cmd_soak(args):
         rec["timings"]["preprocess_s"] = time.perf_counter() - t0
 
         t0 = time.perf_counter()
-        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        reloaded = m7.switch_to(args.profile, catalog_doc, anchors, ctx)
         rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
         dma, accel, buf_fd, _fds = ctx["handles"]
         layout = m7.compute_layout(hw["expected_input_bytes"],
@@ -579,7 +584,8 @@ def cmd_extremes(args):
     revalidated after procedural tests). Every frame is verified against the
     exact on-board reference with zero tolerance."""
     m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
-    catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
+    catalog_doc = json.loads((m7.BASE / "m7_profiles.json").read_text())
+    catalog = catalog_doc["profiles"]
     m7.require(args.profile in catalog, f"unknown profile {args.profile}")
     anchors = json.loads((m7.BASE / "anchors_m7.json").read_text())
     hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
@@ -611,7 +617,7 @@ def cmd_extremes(args):
                           + 1048576)
 
         t0 = time.perf_counter()
-        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        reloaded = m7.switch_to(args.profile, catalog_doc, anchors, ctx)
         rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
         dma, accel, buf_fd, _fds = ctx["handles"]
         layout = m7.compute_layout(hw["expected_input_bytes"],
@@ -691,7 +697,8 @@ def cmd_extremes(args):
 
 def cmd_benchmark(args):
     m7.require(fb.platform.machine() == "armv7l", "Run on the ZedBoard")
-    catalog = json.loads((m7.BASE / "m7_profiles.json").read_text())["profiles"]
+    catalog_doc = json.loads((m7.BASE / "m7_profiles.json").read_text())
+    catalog = catalog_doc["profiles"]
     m7.require(args.profile in catalog, f"unknown profile {args.profile}")
     anchors = json.loads((m7.BASE / "anchors_m7.json").read_text())
     hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
@@ -721,7 +728,7 @@ def cmd_benchmark(args):
         storage_admission(root, 1048576)   # record only; no frame payloads
 
         t0 = time.perf_counter()
-        reloaded = m7.switch_to(args.profile, catalog, anchors, ctx)
+        reloaded = m7.switch_to(args.profile, catalog_doc, anchors, ctx)
         rec["switch"] = {"reloaded": reloaded, "wall_s": time.perf_counter() - t0}
         dma, accel, buf_fd, _fds = ctx["handles"]
         layout = m7.compute_layout(hw["expected_input_bytes"],

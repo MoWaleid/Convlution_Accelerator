@@ -456,17 +456,37 @@ def run_frame(dma, accel, buf_fd, phys, layout, padded, expected, k):
 
 # ─── Profile switch (full lifecycle) ──────────────────────────────────────────
 
+def resolve_release(release_id, catalog):
+    """Gate-1 identity resolution (M10 D2): a hardware release binds one
+    shape/ABI ID, one firmware manifest and one admitted parameter bundle.
+    Releases are orthogonal to model bundles; the bundle's content hash is
+    cross-checked at admission time against the release binding."""
+    rel = (catalog.get("releases") or {}).get(release_id)
+    require(rel is not None, f"{release_id}: no release entry in catalog")
+    for key in ("shape_id", "bundle_sha256", "manifest", "build_id_hex"):
+        require(key in rel, f"{release_id}: release entry missing {key}")
+    return rel
+
+
 def switch_to(profile, catalog, anchors, ctx):
     """One full profile request through the seven-phase lifecycle.
     Returns True if the PL was reprogrammed, False for parameter-only change."""
     hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
     acc = hw["accelerator"]
-    cat = catalog.get(profile) or {}
+    profs = catalog.get("profiles", catalog)
+    cat = profs.get(profile) or {}
     require(cat, f"{profile}: missing catalog entry")
     require((acc["image_w"], acc["image_h"], acc["kernel_n"], acc["channels_k"],
              acc["build_id_hex"]) ==
             (cat["W"], cat["H"], cat["N"], cat["K"], cat["build_id"]),
             f"{profile}: manifest disagrees with catalog")
+    rel = resolve_release(profile, catalog)
+    require(rel["build_id_hex"] == acc["build_id_hex"],
+            f"{profile}: release build_id disagrees with manifest")
+    shape = (f"N{acc['kernel_n']}K{acc['channels_k']}"
+             f"W{acc['image_w']}H{acc['image_h']}-CVH1")
+    require(rel["shape_id"] == shape,
+            f"{profile}: release shape {rel['shape_id']} != manifest shape {shape}")
     n = acc["kernel_n"]
     k = acc["channels_k"]
     w = acc["image_w"]
@@ -482,6 +502,9 @@ def switch_to(profile, catalog, anchors, ctx):
             f"{profile}: firmware hash mismatch")
     channels, bundle_hash = load_params(profile, n, k,
                                         hw_bias_width=acc["bias_width"])
+    require(bundle_hash == rel["bundle_sha256"],
+            f"{profile}: admitted bundle {bundle_hash[:16]} != release-bound "
+            f"bundle {rel['bundle_sha256'][:16]}")
     log(f"  admitted {profile} parameter bundle {bundle_hash[:16]}")
 
     require(ctx.get("buffer_size"), "runtime buffer size not discovered")
@@ -671,7 +694,8 @@ def main():
     ctx = None
     mode_result = {"label": None, "ok": False}
     try:
-        catalog = json.loads((BASE / "m7_profiles.json").read_text())["profiles"]
+        catalog_doc = json.loads((BASE / "m7_profiles.json").read_text())
+        catalog = catalog_doc["profiles"]
         anchors = json.loads((BASE / "anchors_m7.json").read_text())
         info = Path("/sys/class/u-dma-buf/udmabuf0")
         ctx = {
@@ -687,7 +711,7 @@ def main():
             profile = sys.argv[2]
             frames = int(sys.argv[3]) if len(sys.argv) > 3 else 3
             require(profile in catalog, f"unknown profile {profile}")
-            reloaded = switch_to(profile, catalog, anchors, ctx)
+            reloaded = switch_to(profile, catalog_doc, anchors, ctx)
             do_switch_frames(profile, catalog, anchors, ctx, frames)
             mode_result["label"] = (f"M7_SWITCH {profile}: PASS ({frames} frames, "
                                     f"reload={'yes' if reloaded else 'no'})")
@@ -714,7 +738,7 @@ def main():
             prev = start_profile
             try:
                 for i, target in enumerate(sequence):
-                    was_reload = switch_to(target, catalog, anchors, ctx)
+                    was_reload = switch_to(target, catalog_doc, anchors, ctx)
                     observed_transitions.add((prev, target))
                     reloaded_count += 1 if was_reload else 0
                     prev = target
@@ -758,7 +782,7 @@ def main():
             require(len(sys.argv) >= 4, "usage: --soak X frames")
             profile, frames = sys.argv[2], int(sys.argv[3])
             require(profile in catalog, f"unknown profile {profile}")
-            switch_to(profile, catalog, anchors, ctx)
+            switch_to(profile, catalog_doc, anchors, ctx)
             hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
             acc = hw["accelerator"]
             n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
