@@ -92,9 +92,18 @@ any transplant.
 
 ## Gate-1 remainder (after sign-off)
 
-1. Implement D2 in catalog + manager + run record (+ mock cases).
-2. Stand up D3's research build flow; generate + byte-compare the bitheap
-   (`generate_cfglut_bitheap.py` vs committed `cfglut5_bitheap_3x3.vhd`).
-3. F1 xsim confirmation (D4 above).
+1. **DONE 2026-09-14 (85c077a):** D2 implemented — catalog v2 `releases`
+   section (content-bound bundle hashes; note D32/D640 intentionally share
+   one bundle hash: same model, two geometries), `resolve_release` +
+   `switch_to` enforcement (build_id, shape, bundle sha), run records carry
+   `release_id`/`shape_id`, mock suites 17→18 cases all PASS.
+2. **Bitheap provenance DONE 2026-09-14:** the committed
+   `cfglut5_bitheap_3x3.vhd` on `00a6e11` regenerates **byte-identically**
+   from `scripts/generate_cfglut_bitheap.py` (sha256 `ad49b540…`). The
+   research build-flow stand-up (D3 scripts) remains.
+3. **F1 xsim confirmation staged:** `tb_conv_channel_shifts.vhd` drives the
+   four minimal counterexamples (zero-window, bias 0/−1, shifts 8/25/26/31)
+   against hand-computed reference values; expected outcome on the baseline
+   is 3 mismatches = R14-01 CONFIRMED by simulation. Awaiting GUI xsim run.
 4. Teammate artifact/evidence package request (resolve +0.201/+0.178 WNS —
    IP-02) or clean rebuild of the research line.
