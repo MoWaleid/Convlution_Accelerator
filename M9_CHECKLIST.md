@@ -6,9 +6,10 @@ documented setup reproduce results; five cold-boot runs pass; 1,000-frame
 baseline soak passes with selected varied inputs/parameters; no unresolved
 critical correctness/switching issue; known limits explicit."
 
-Status inputs: M0–M7 closed (AI_HANDOFF §3). M8 in progress — all P1 review
-findings closed; remaining E2 board session is staged behind the BLOCKREADY
-keyword (§16.7).
+Status inputs: M0–M8 closed (M8 commit ac84c3e; the R14-02..05 repair batch and
+the R14-01 containment shipped in 73bb803 and were board-revalidated 2026-09-14 —
+see AI_HANDOFF §17). M9 §1–§3 done; §4 (clean-build reproduction, tag,
+known-limits) remains open.
 
 ## 1. M8 closeout (precondition) — DONE 2026-09-14
 - [x] BLOCKREADY: push m11fix payload (m7_switch consecutive-cycle bridge,
@@ -62,6 +63,7 @@ keyword (§16.7).
   measured wall-clock frame times reported separately
 - D640 frames: untimed buffer/reference I/O dominates; anchor-SHA validation
 - Legacy→canonical bundle conversion is recorded, not format-3
-- Warm-reboot cold-boot evidence; physical power-cycle evidence from M9 §3
+- M7-era cold-boot evidence was warm reboot (`sudo reboot`); true physical
+  power-cycle evidence is the five M9 §3 boots (m9_coldboots_20260914.txt)
 - Extremes coverage currently excludes per-profile arbitrary-image LANCZOS
   (resize_exact admitted only for the recorded D640 library preprocessing)

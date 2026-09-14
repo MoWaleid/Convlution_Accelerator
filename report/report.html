@@ -276,13 +276,39 @@ are included verbatim in <code>report/evidence/</code>:</p>
 <td>PASS, records in <code>/var/lib/conv-lab/results</code></td>
 <td>[S18]</td>
 </tr>
+<tr>
+<td><strong>E2 extremes ×5 profiles + provably-consecutive matrix rerun</strong> (58 full-PL reloads, 20 consecutive A32→B32→A32 cycles)</td>
+<td style="text-align: right;">78</td>
+<td>PASS, zero-tolerance exact-reference stimulus, both saturation rails</td>
+<td>[S21]</td>
+</tr>
+<tr>
+<td><strong>M9 1,000-frame varied soak</strong> (200×A32/B32/C32/D32 + 100×D640 + 100×B32; library-anchor + isolated-worker image paths)</td>
+<td style="text-align: right;">1000</td>
+<td>PASS, zero mismatches, zero inter-frame resets</td>
+<td>[S22]</td>
+</tr>
+<tr>
+<td><strong>M9 five physical power-cycle boots</strong> (B32/C32/D32/D640 reload paths + A32 parameter-only from factory identity)</td>
+<td style="text-align: right;">5</td>
+<td>PASS, anchor-exact activation, cleanup 0x181</td>
+<td>[S23]</td>
+</tr>
+<tr>
+<td><strong>R14 repair-batch board revalidation</strong> (short soak + image run on the repaired runtime)</td>
+<td style="text-align: right;">7</td>
+<td>PASS, strict admission + shared finalization live</td>
+<td>[S24]</td>
+</tr>
 </tbody>
 </table>
-<p><strong>Total: 876 transcript-recorded bit-exact frames across 20+ runs, zero
-mismatches</strong> — 185 through M6 in the runs above, plus 691 in the M7
-profile-switching campaign and M8 CLI validation — together with <strong>90 verified
-full-PL reconfigurations</strong> [S5]–[S8], [S16]–[S18] (plus the M4 integration
-bring-up run documented in the project record). Corner-case
+<p><strong>Total: 1,966 transcript-recorded bit-exact frames across 35+ runs, zero
+mismatches</strong> — 876 through M8 (185 through M6 in the runs above, plus 691 in
+the M7 profile-switching campaign and M8 CLI validation), then 78 in the E2
+extremes/matrix rerun, 1,000 in the M9 varied soak, 5 across the M9 physical
+power-cycle boots, and 7 in the repair-batch revalidation — together with
+<strong>148 verified full-PL reconfigurations</strong> [S5]–[S8], [S16]–[S24] (plus the M4
+integration bring-up run documented in the project record). Corner-case
 coverage demonstrated on silicon includes ±32768 saturation, the all-zero input
 (including the bias-rounding case: channel bias +179 with shift 8 correctly produces
 output 1), the all-255 input, and signed Sobel outputs with ReLU disabled [S5][S8].</p>
@@ -450,9 +476,9 @@ die center-left by construction.</em></p>
 </tr>
 <tr>
 <td>Verification status</td>
-<td>bit-exact vs golden model: 876 transcript-recorded board frames across 20+ runs (five profiles), 0 mismatches + full simulation regressions</td>
+<td>bit-exact vs golden model: 1,966 transcript-recorded board frames across 35+ runs (five profiles), 0 mismatches + full simulation regressions</td>
 <td>—</td>
-<td>[S4]–[S8], [S16]–[S18]</td>
+<td>[S4]–[S8], [S16]–[S24]</td>
 </tr>
 <tr>
 <td>FOM</td>
@@ -534,7 +560,11 @@ evidence [S16][S17]: a 58-switch matrix covering <strong>all 20 ordered profile 
 with every activation frame anchor-exact; five 100-frame soaks (one per profile,
 zero inter-frame resets); a cold-boot fallback proof (persistence hash verified,
 then factory-identity → B32 reload → anchor-exact frames). Combined with M6 this
-gives <strong>90 verified full-PL reconfigurations</strong> on record. Incompatible geometry is
+gave <strong>90 verified full-PL reconfigurations</strong> through M7; the E2 matrix rerun
+added 58 (20 provably consecutive A32→B32→A32 cycles), for <strong>148 on record</strong>
+[S21], and the five M9 physical power-cycle boots added four further reload-path
+activations plus one parameter-only activation from factory identity [S23].
+Incompatible geometry is
 admitted only with explicit recorded preprocessing — D640's LANCZOS resize of the
 library image (hash-recorded in <code>profiles/anchors_m7.json</code>) is such a record; D640
 frames are validated per frame against their frozen golden-output SHA-256.</p>
@@ -696,7 +726,7 @@ accelerator.</p>
 </tr>
 <tr>
 <td>S18</td>
-<td><code>report/evidence/m8_cli_board_validation_20260913.txt</code> (M8 CLI board runs, benchmark, and archived record schema <code>m8-run-record/2</code>)</td>
+<td><code>report/evidence/m8_cli_board_validation_20260913.txt</code> (M8 CLI board runs, benchmark; the archived record schema later evolved to <code>m8-run-record/3</code>)</td>
 </tr>
 <tr>
 <td>S19</td>
@@ -705,6 +735,22 @@ accelerator.</p>
 <tr>
 <td>S20</td>
 <td><code>report/profile_builds/D640/final/accelerator_dma_wrapper_timing_summary_postroute_physopted.rpt</code> — D640 final post-physopt routing (WNS +0.001 ns, WHS +0.028 ns, 0 failing endpoints of 30,797), frozen 2026-09-13</td>
+</tr>
+<tr>
+<td>S21</td>
+<td><code>report/evidence/e2_extremes_matrix_20260914.txt</code> (E2: per-profile extremes ×5 + provably-consecutive matrix rerun)</td>
+</tr>
+<tr>
+<td>S22</td>
+<td><code>report/evidence/m9_soak1000_20260914.txt</code> (M9 1,000-frame varied soak summary; true schema-v3 records recovered)</td>
+</tr>
+<tr>
+<td>S23</td>
+<td><code>report/evidence/m9_coldboots_20260914.txt</code> (five true power-cycle cold boots)</td>
+</tr>
+<tr>
+<td>S24</td>
+<td><code>report/evidence/schema_v3_records_20260913/</code> (recovered schema-v3 records + repair-batch revalidation records; see its MANIFEST.md)</td>
 </tr>
 </tbody>
 </table>

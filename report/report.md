@@ -212,12 +212,18 @@ are included verbatim in `report/evidence/`:
 | **M7 profile switching** (first switch, 4 singles, 58-switch matrix, cold boot) | 76 | PASS, 58+ full-PL reconfigurations, all 20 ordered profile pairs covered, every activation anchor-exact | [S16] |
 | **M7 per-profile soaks** (A32/B32/C32/D32/D640, 100 frames each + D640 probe) | 501 | PASS, zero inter-frame resets | [S17] |
 | **M8 CLI file-driven runs + benchmark** (archived records) | 114 | PASS, records in `/var/lib/conv-lab/results` | [S18] |
+| **E2 extremes ×5 profiles + provably-consecutive matrix rerun** (58 full-PL reloads, 20 consecutive A32→B32→A32 cycles) | 78 | PASS, zero-tolerance exact-reference stimulus, both saturation rails | [S21] |
+| **M9 1,000-frame varied soak** (200×A32/B32/C32/D32 + 100×D640 + 100×B32; library-anchor + isolated-worker image paths) | 1000 | PASS, zero mismatches, zero inter-frame resets | [S22] |
+| **M9 five physical power-cycle boots** (B32/C32/D32/D640 reload paths + A32 parameter-only from factory identity) | 5 | PASS, anchor-exact activation, cleanup 0x181 | [S23] |
+| **R14 repair-batch board revalidation** (short soak + image run on the repaired runtime) | 7 | PASS, strict admission + shared finalization live | [S24] |
 
-**Total: 876 transcript-recorded bit-exact frames across 20+ runs, zero
-mismatches** — 185 through M6 in the runs above, plus 691 in the M7
-profile-switching campaign and M8 CLI validation — together with **90 verified
-full-PL reconfigurations** [S5]–[S8], [S16]–[S18] (plus the M4 integration
-bring-up run documented in the project record). Corner-case
+**Total: 1,966 transcript-recorded bit-exact frames across 35+ runs, zero
+mismatches** — 876 through M8 (185 through M6 in the runs above, plus 691 in
+the M7 profile-switching campaign and M8 CLI validation), then 78 in the E2
+extremes/matrix rerun, 1,000 in the M9 varied soak, 5 across the M9 physical
+power-cycle boots, and 7 in the repair-batch revalidation — together with
+**148 verified full-PL reconfigurations** [S5]–[S8], [S16]–[S24] (plus the M4
+integration bring-up run documented in the project record). Corner-case
 coverage demonstrated on silicon includes ±32768 saturation, the all-zero input
 (including the bias-rounding case: channel bias +179 with shift 8 correctly produces
 output 1), the all-255 input, and signed Sobel outputs with ReLU disabled [S5][S8].
@@ -283,7 +289,7 @@ die center-left by construction.*
 | FPGA utilization | full system: 12,362 LUT (23.24%), 9,787 FF, 3 BRAM (DMA FIFOs), 0 DSP; accelerator core alone: 7,967 LUT, 3,541 FF, 0 BRAM, 0 DSP | — | [S3] |
 | Maximum frequency | 100 MHz met with WNS +0.066 ns (Fmax ≈ 100.7 MHz, derived) | MHz | [S1] |
 | Power estimate | 1.765 W full system (accelerator core block 0.018 W) | W | [S2] |
-| Verification status | bit-exact vs golden model: 876 transcript-recorded board frames across 20+ runs (five profiles), 0 mismatches + full simulation regressions | — | [S4]–[S8], [S16]–[S18] |
+| Verification status | bit-exact vs golden model: 1,966 transcript-recorded board frames across 35+ runs (five profiles), 0 mismatches + full simulation regressions | — | [S4]–[S8], [S16]–[S24] |
 | FOM | accelerator core scope: ≈ **3.5×10⁻³** · full-system scope: ≈ **2.2×10⁻⁵** (both shown; see §11) | — | [S1][S2][S3] |
 
 ## 10. Runtime reconfiguration (system-level feature)
@@ -322,7 +328,11 @@ evidence [S16][S17]: a 58-switch matrix covering **all 20 ordered profile pairs*
 with every activation frame anchor-exact; five 100-frame soaks (one per profile,
 zero inter-frame resets); a cold-boot fallback proof (persistence hash verified,
 then factory-identity → B32 reload → anchor-exact frames). Combined with M6 this
-gives **90 verified full-PL reconfigurations** on record. Incompatible geometry is
+gave **90 verified full-PL reconfigurations** through M7; the E2 matrix rerun
+added 58 (20 provably consecutive A32→B32→A32 cycles), for **148 on record**
+[S21], and the five M9 physical power-cycle boots added four further reload-path
+activations plus one parameter-only activation from factory identity [S23].
+Incompatible geometry is
 admitted only with explicit recorded preprocessing — D640's LANCZOS resize of the
 library image (hash-recorded in `profiles/anchors_m7.json`) is such a record; D640
 frames are validated per frame against their frozen golden-output SHA-256.
@@ -401,9 +411,13 @@ accelerator.
 | S15 | `Convlution_Accelerator.runs/impl_1/accelerator_dma_wrapper_drc_routed.rpt`, `..._route_status.rpt` |
 | S16 | `report/evidence/m7_switch_B32_first_20260913.txt`, `m7_switch_matrix_20260913.txt`, `m7_coldboot_20260913.txt` (profile-switching campaign); per-profile build records in `M7_STATE.md` — the D32/D640 archived routing reports under `report/profile_builds/<P>/` are pre-physopt intermediates, labeled as such |
 | S17 | `report/evidence/m7_soaks_20260913.txt` (five 100-frame per-profile soaks; carries a verification-mechanism correction banner) |
-| S18 | `report/evidence/m8_cli_board_validation_20260913.txt` (M8 CLI board runs, benchmark, and archived record schema `m8-run-record/2`) |
+| S18 | `report/evidence/m8_cli_board_validation_20260913.txt` (M8 CLI board runs, benchmark; the archived record schema later evolved to `m8-run-record/3`) |
 | S19 | `software/m7_switch.py`, `software/m8_cli.py`, `profiles/m7_profiles.json`, `profiles/anchors_m7.json`, `software/hardware_{A32,B32,C32,D32,D640}.json` |
 | S20 | `report/profile_builds/D640/final/accelerator_dma_wrapper_timing_summary_postroute_physopted.rpt` — D640 final post-physopt routing (WNS +0.001 ns, WHS +0.028 ns, 0 failing endpoints of 30,797), frozen 2026-09-13 |
+| S21 | `report/evidence/e2_extremes_matrix_20260914.txt` (E2: per-profile extremes ×5 + provably-consecutive matrix rerun) |
+| S22 | `report/evidence/m9_soak1000_20260914.txt` (M9 1,000-frame varied soak summary; true schema-v3 records recovered) |
+| S23 | `report/evidence/m9_coldboots_20260914.txt` (five true power-cycle cold boots) |
+| S24 | `report/evidence/schema_v3_records_20260913/` (recovered schema-v3 records + repair-batch revalidation records; see its MANIFEST.md) |
 
 ## 14. Reproduction
 
