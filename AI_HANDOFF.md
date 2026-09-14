@@ -1400,6 +1400,39 @@ Remaining per §19.6: archive the old B32 work directory and artifacts, then
 the uniform-provenance B32 rebuild. After that, §19.7 firmware/catalog/board
 qualification.
 
+### 18.17 B32_CFGLUT125 uniform-provenance rebuild accepted; five-build freeze (2026-09-15)
+
+The B32 rebuild passed from clean commit
+`b230d02096f7273aa50fcbca477680df0739a100` after the §19.6 archive flow
+(`1dfe419`/`b230d02`): 125 MHz, WNS +0.090, WHS +0.053, zero setup/hold
+failures, clean routing, zero DRC errors, zero methodology checks and a
+source-bound build manifest. Preserved BIT SHA-256 is
+`2388f249aa1ae8c4bce2b9aa0cfd612acecf11d0e4cf595f020ff8bf4b8abcdd`;
+XSA SHA-256 is
+`2b523f78d4b59c6fa0f468ccb9d90a8b420cbd224d7ac586e0f8f76229d222c8`.
+Evidence is under `report/research_builds/B32_CFGLUT125/rebuild_20260915/`
+(the parent directory keeps the older qualified build's reports and board
+records untouched). The canonical `bitstreams/b32_cfglut125_125mhz.bit/.xsa`
+now bind the rebuild; the old qualified artifact set is preserved and
+re-verified at `bitstreams/history/20260914_b32_board_qualified/` (and in
+git history for the XSA). The old canonical `.bit.bin` still belongs to the
+older build until §19.7 firmware generation. The rebuild carries the same 16
+RTL source hashes as the other four builds — uniform provenance across all
+five.
+
+**All five routed 125 MHz CFGLUT5 builds are now frozen:**
+
+| Release | Shape | WNS / WHS (ns) | Source commit | BIT SHA-256 |
+|---|---|---|---|---|
+| A32_CFGLUT125 | N3 K8 32x32 | +0.197 / +0.037 | `45b35a6` | `0ddd0a46…5cdc759` |
+| B32_CFGLUT125 | N3 K16 32x32 | +0.090 / +0.053 | `b230d02` | `2388f249…4b8abcdd` |
+| C32_CFGLUT125 | N5 K8 32x32 | +0.003 / +0.037 | `9c725cc` | `8108a82f…315d866f` |
+| D32_CFGLUT125 | N3 K4 32x32 | +0.093 / +0.014 | `fcc3ed1` | `b02fc59c…2c4786dd` |
+| D640_CFGLUT125 | N3 K4 640x480 | +0.001 / +0.022 | `180c2fa` | `6e95188e…f41cca3` |
+
+All are BUILT / BOARD_VALIDATION=NOT_RUN. Next: §19.7 — `.bit.bin` firmware
+generation, manifest hash binding, catalog cutover, then board qualification.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1482,38 +1515,27 @@ evidence only; exclude them from the active catalog/library/image/demo.
    XSA SHA `096927f40b54dd054f253c3038e74f8fcdf471c7f3ae76d72c065598143f6a67`.
    Reports `report/research_builds/D32_CFGLUT125/`; evidence recorded in the
    commit carrying §18.16.
-6. B32 has older routed/board-qualified 125 MHz evidence. Preserve it, but
-   rebuild B32 last for uniform generalized-source provenance.
+6. B32 rebuilt for uniform generalized-source provenance: BUILT / board
+   NOT_RUN, 125 MHz, WNS `+0.090`, WHS `+0.053`. Source `b230d02`; BIT SHA
+   `2388f249aa1ae8c4bce2b9aa0cfd612acecf11d0e4cf595f020ff8bf4b8abcdd`;
+   XSA SHA `2b523f78d4b59c6fa0f468ccb9d90a8b420cbd224d7ac586e0f8f76229d222c8`.
+   Evidence `report/research_builds/B32_CFGLUT125/rebuild_20260915/`; older
+   qualified B32 artifacts preserved at
+   `bitstreams/history/20260914_b32_board_qualified/` (§18.17).
+
+All five routed builds are frozen (§18.17 table). Next: §19.7.
 
 C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — B32 rebuild
+### 19.4 Immediate action — §19.7 firmware and catalog cutover
 
-A32 and D32 are accepted (§18.15, §18.16). The §19.6 B32 archive flow is
-complete (steps 1-4 verified; record:
-`report/research_builds/B32_CFGLUT125/REBUILD_ARCHIVE_20260915.md`): old work
-directory archived and hash-verified to `work/archive/`, board-qualified
-BIT/BIN/XSA preserved under `bitstreams/history/20260914_b32_board_qualified/`,
-and the re-render is pristine (only `src/config_pkg.vhd`, SHA
-`1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d`).
-After confirming clean state, give the user:
-
-```tcl
-if {[llength [get_projects -quiet]]} { close_project }
-cd {D:/MyProjects/Convlution_Accelerator}
-set research_release_id B32_CFGLUT125
-set build_rc [catch { source {scripts/research_release/research_build.tcl} } build_msg build_opts]
-puts "BUILD RESULT: $build_rc"
-puts "BUILD MESSAGE: $build_msg"
-if {$build_rc} { puts [dict get $build_opts -errorinfo] }
-```
-
-Accept only `RESEARCH_BUILD_OK: B32_CFGLUT125` with nonnegative WNS/WHS and
-`BUILD RESULT: 0`. On failure inspect the preserved run; never rerun blindly.
-PSU-1..4 negative-DQS-skew critical warnings are expected (ZedBoard preset;
-§18.15).
+All five routed builds are frozen (§18.17). The next action is §19.7 step 1:
+generate the five FPGA-manager `.bit.bin` firmware images with Bootgen Zynq
+`-process_bitstream bin` (user-run, one block), verify hashes, then bind
+canonical BIT/BIN filenames/hashes in the candidate manifests and cut the
+active catalog/runtime to exactly the five releases.
 
 ### 19.5 Mandatory post-build acceptance
 
@@ -1558,9 +1580,11 @@ recorded in `report/research_builds/B32_CFGLUT125/REBUILD_ARCHIVE_20260915.md`:
 4. DONE — `research_release.py prepare B32_CFGLUT125`: pristine render, only
    `src/config_pkg.vhd`, SHA
    `1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d`.
-5. Build/accept normally (§19.4 command). Old qualification is history; new
-   B32 needs fresh binding. At acceptance, the preserved dated copies prove
-   the replacement of the canonical `bitstreams/b32_cfglut125_125mhz.*` files.
+5. DONE — rebuilt and accepted per §19.5 from clean `b230d02` (§18.17):
+   canonical `bitstreams/b32_cfglut125_125mhz.bit/.xsa` now bind the rebuild;
+   old qualified set preserved at
+   `bitstreams/history/20260914_b32_board_qualified/`; old qualification is
+   history and the new B32 needs fresh board binding.
 
 ### 19.7 After five routed builds
 
