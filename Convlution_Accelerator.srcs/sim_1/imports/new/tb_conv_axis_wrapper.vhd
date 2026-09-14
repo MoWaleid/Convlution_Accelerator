@@ -1391,13 +1391,6 @@ begin
                     "Input generator did not pack exactly one padded frame"
                 severity failure;
 
-
-            send_input_beat(
-                data_word,
-                x"0F",
-                '1'
-            );
-
         end procedure send_full_input_frame;
 
 
