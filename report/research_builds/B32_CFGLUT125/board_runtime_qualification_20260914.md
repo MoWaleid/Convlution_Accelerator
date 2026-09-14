@@ -135,3 +135,28 @@ Record hashes:
 All three records use schema `m8-run-record/3`, outcome `PASS`, profile
 `B32_CFGLUT125`, and record `reloaded=false`, as expected for tests run while
 the research image was already live.
+
+## A32 recovery inventory and clock-safety decision
+
+The missing A32 runtime inventory was restored without accessing the FPGA or
+DMA. The installation used a verified 11-file payload and created this
+pre-install recovery archive:
+
+- Recovery archive:
+  `/home/petalinux/release_checkpoints/A32_pre_restore_6f6742bc1bde4d43a2a3d9d6519c356e.tar.gz`
+- Recovery SHA-256:
+  `e93acaef69395e7c58b041181df0ae1e76e8749c492d8eae631b780d32818018`
+- Installed A32 firmware SHA-256:
+  `b59378e4918f3c128d0d787546981e58b7508085c916780a21fef5db3a04130b`
+- Installed A32 manifest SHA-256:
+  `31c96657b4208f6e36350a476bb8c8213528bb1d3a2476ad5099f68b1dc032f9`
+- Admitted A32 bundle SHA-256:
+  `367fb1f5a45a3271c2967ae4f0cadb1b50661470dc4df50496dbf36dce895469`
+
+Inventory restoration is PASS. Reconfiguration was deliberately withheld:
+`m7_switch.py` programs only the PL image and does not reconfigure PS FCLK0.
+This boot supplies 125 MHz, whereas A32 is routed and qualified for 100 MHz
+(reported Fmax approximately 100.7 MHz). Loading A32 here would therefore be
+an unqualified overclock. The safe comparison/switching route is a common
+100 MHz boot using A32_MAC100 and the same-source `B32_CFGLUT100` research
+release. `B32_CFGLUT125` remains the separately qualified performance release.

@@ -199,15 +199,22 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       including live shifts 24–31 and canonical-parameter restoration.
       The 100-frame anchor-exact soak passes (median 0.125 ms, p95 0.128 ms,
       all frames bit-exact). Repeated baseline/research switching,
-      power-cycle, and fault/recovery remain open. Evidence:
+      power-cycle, and fault/recovery remain open. The A32 runtime inventory
+      has been restored and hash-verified, but A32 was not loaded under the
+      live 125 MHz FCLK: the switcher changes PL only, and the routed A32
+      artifact is a 100 MHz release. Cross-release switching is therefore
+      deferred to the common-clock A32_MAC100/B32_CFGLUT100 boot. Evidence:
       `report/research_builds/B32_CFGLUT125/board_runtime_qualification_20260914.md`.
 - [ ] G3.4 Edge-free claim discipline (IP-09): simulation metrics + board
       throughput stay separate claims; K16 = 4 beats/position on 64-bit
       AXIS — no "one position/cycle at the interface" language.
 
 ### Gate 4 / M12 — matched comparison + dual release
-- [ ] G4.1 Build `B32_CFGLUT100` from the same tree/directives (only the
-      clock variable differs; provenance-controlled per IP-11).
+- [x] G4.1 Build `B32_CFGLUT100` from the same tree/directives (only the
+      controlled clock and build identity differ; provenance-controlled per
+      IP-11). Routed build PASS at 100 MHz: WNS `+0.764 ns`, WHS
+      `+0.011 ns`, DRC/route clean. This is now the candidate for safe
+      common-clock A32/research switching; board validation remains pending.
 - [ ] G4.2 Matched measurement: B32_MAC100 vs CFGLUT100 vs CFGLUT125,
       identical bundle (the shared B32 bundle), input, preprocessing,
       software path, method. Unit discipline (results vs positions vs

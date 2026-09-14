@@ -5,7 +5,10 @@
 
 module conv_axis_wrapper_bd (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clk CLK" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME clk, ASSOCIATED_BUSIF S_AXI:S_AXIS:M_AXIS, ASSOCIATED_RESET resetn, FREQ_HZ 125000000" *)
+    // FREQ_HZ is intentionally omitted.  The connected PS FCLK is the single
+    // clock authority, allowing the same RTL to be built as a checked 100 MHz
+    // or 125 MHz release without stale module-reference metadata.
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME clk, ASSOCIATED_BUSIF S_AXI:S_AXIS:M_AXIS, ASSOCIATED_RESET resetn" *)
     input wire clk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 resetn RST" *)
     (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME resetn, POLARITY ACTIVE_LOW" *)

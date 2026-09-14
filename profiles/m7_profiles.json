@@ -42,6 +42,13 @@
       "N": 3,
       "K": 16,
       "build_id": "45463132354b31364e33573332523031"
+    },
+    "B32_CFGLUT100": {
+      "W": 32,
+      "H": 32,
+      "N": 3,
+      "K": 16,
+      "build_id": "45463130304b31364e33573332523031"
     }
   },
   "releases": {
@@ -81,6 +88,13 @@
       "bundle_sha256": "952cb13ce0adad04c42704c1e85bd964538cf66f8455783b2123bbce9d160cec",
       "manifest": "hardware_B32_CFGLUT125.json",
       "build_id_hex": "45463132354b31364e33573332523031"
+    },
+    "B32_CFGLUT100": {
+      "shape_id": "N3K16W32H32-CVH1",
+      "bundle_dir": "B32",
+      "bundle_sha256": "952cb13ce0adad04c42704c1e85bd964538cf66f8455783b2123bbce9d160cec",
+      "manifest": "hardware_B32_CFGLUT100.json",
+      "build_id_hex": "45463130304b31364e33573332523031"
     }
   }
 }

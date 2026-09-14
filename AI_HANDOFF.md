@@ -939,20 +939,22 @@ Do not mark `B32_CFGLUT125` QUALIFIED yet. Resume Gate 3.3 in this order:
 
 1. **DONE — preserve the three board run records.** The archive and extracted
    schema-v3 records are checked into the research evidence directory.
-2. **Inventory before switching.** The first read-only inventory proved that
-   the new image lacks the A32 firmware, manifest, and bundle while retaining
-   the correct catalog and anchor. A narrowly scoped restore archive is now on
-   the SD FAT partition: `A32_MAC100_restore_20260914.tar.gz`, SHA-256
-   `df078b551ade8727503fcf7992d6b38ef4d6d04296b8cc4f99359b45e19fae3c`.
-   Install it with backup and exact verification, then rerun the inventory.
-   Do not request an A32 switch until the inventory passes.
-3. **Repeated full-PL reconfiguration against the MAC baseline.** Exercise
-   A32 MAC100 → B32_CFGLUT125 → A32 repeatedly (target at least 20 complete
-   cycles), with identity validation and anchor-exact activation after every
-   load. Use explicit profile requests unless the matrix builder has first
-   been reviewed to include the research release. The old matrix was designed
-   for the five legacy profiles and must not be assumed to cover this sixth
-   release.
+2. **DONE — restore A32 inventory without hardware access.** Eleven files were
+   installed and verified. Firmware SHA `b59378e4…`, manifest SHA `31c96657…`,
+   bundle SHA `367fb1f5…`. Pre-install recovery archive:
+   `/home/petalinux/release_checkpoints/A32_pre_restore_6f6742bc1bde4d43a2a3d9d6519c356e.tar.gz`,
+   SHA-256 `e93acaef69395e7c58b041181df0ae1e76e8749c492d8eae631b780d32818018`.
+   The installer explicitly reported that no FPGA or DMA device was accessed.
+3. **Clock-safe repeated full-PL reconfiguration.** Do not load A32 on the
+   current 125 MHz boot. `m7_switch.py` changes only the PL image; A32 is routed
+   for 100 MHz with only about 100.7 MHz derived Fmax. First build and boot the
+   same-source `B32_CFGLUT100` release, then exercise A32_MAC100 →
+   B32_CFGLUT100 → A32 at the common 100 MHz clock for at least 20 complete
+   cycles, with identity validation and anchor-exact activation after every
+   load. Keep B32_CFGLUT125 as the separately qualified performance release.
+   `B32_CFGLUT100` is now BUILT: WNS `+0.764 ns`, WHS `+0.011 ns`, DRC and
+   routing clean; BIT SHA `a4c1a183…fff900`, firmware SHA
+   `fe603bd1…e0dad`, XSA SHA `fc33afa0…64840`. Board validation is `NOT_RUN`.
 4. **Fault/recovery.** Reuse the proven lifecycle/fault harness only after
    reviewing its target-profile assumptions. Inject bounded failures, verify
    nonzero exit/FAILED record, DMA halt, ERROR/FAULT accounting, RESET recovery,

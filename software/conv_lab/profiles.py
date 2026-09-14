@@ -29,8 +29,8 @@ def load_profiles(path):
     entries = data["profiles"]
     require(type(entries) is dict and
             set(entries) == {"A32", "B32", "C32", "D32", "D640",
-                             "B32_CFGLUT125"},
-            "explicit six-release catalog required")
+                             "B32_CFGLUT125", "B32_CFGLUT100"},
+            "explicit seven-release catalog required")
     result = {}
     ids = set()
     for name, entry in entries.items():

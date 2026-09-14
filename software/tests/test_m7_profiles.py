@@ -27,6 +27,8 @@ CASES = {
     "D640": (640,480,3,4,309444,313728,2457600,2771392,"443634304e334b30342d323630393132"),
     "B32_CFGLUT125": (32,32,3,16,1156,5440,32768,38272,
                        "45463132354b31364e33573332523031"),
+    "B32_CFGLUT100": (32,32,3,16,1156,5440,32768,38272,
+                       "45463130304b31364e33573332523031"),
 }
 
 
@@ -35,7 +37,7 @@ class M7Profiles(unittest.TestCase):
         self.profiles = load_profiles(CATALOG)
         self.allocation = Allocation(0x10000000, 4194304, 0, 0x20000000)
 
-    def test_six_release_layouts_and_frozen_ids(self):
+    def test_seven_release_layouts_and_frozen_ids(self):
         self.assertEqual(set(self.profiles), set(CASES))
         for name, (w,h,n,k,tx,rxoff,rx,end,identity) in CASES.items():
             with self.subTest(profile=name):
@@ -140,6 +142,8 @@ class M7Profiles(unittest.TestCase):
         self.assertEqual(m8_cli.release_bundle_dir("B32", catalog), "B32")
         self.assertEqual(m8_cli.release_bundle_dir("B32_CFGLUT125", catalog),
                          "B32")
+        self.assertEqual(m8_cli.release_bundle_dir("B32_CFGLUT100", catalog),
+                         "B32")
         with mock.patch.object(m8_cli.m7, "BASE", ROOT / "profiles"):
             identity = m8_cli.parameter_identity("B32")
         self.assertEqual(identity["bundle_dir"], "B32")
@@ -167,6 +171,14 @@ class M7Profiles(unittest.TestCase):
             m8_cli.high_shift_channels(3, 16, 23)
         with self.assertRaises(RuntimeError):
             m8_cli.high_shift_channels(3, 16, 32)
+
+    def test_wrapper_clock_metadata_is_profile_agnostic(self):
+        wrapper = (ROOT / "Convlution_Accelerator.srcs/sources_1/new/"
+                   "conv_axis_wrapper_bd.v").read_text()
+        self.assertIn("ASSOCIATED_BUSIF S_AXI:S_AXIS:M_AXIS", wrapper)
+        self.assertNotIn("FREQ_HZ", "\n".join(
+            line for line in wrapper.splitlines()
+            if "X_INTERFACE_PARAMETER" in line))
 
     def test_b32_rejects_legacy_a32_id_in_otherwise_correct_discovery(self):
         p = self.profiles["B32"]
