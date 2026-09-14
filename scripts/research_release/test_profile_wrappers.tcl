@@ -6,9 +6,14 @@
 # five-release generalization of scripts/test_edge_bubbles.tcl (which remains
 # the historical K16/N3 edge-fixture evidence).
 #
-# Usage from the Vivado Tcl console:
-#   set argv {B32_CFGLUT125 optimized}; source scripts/research_release/test_profile_wrappers.tcl
-# or set the two variables directly before sourcing.  Variants:
+# Usage from the Vivado Tcl console (match the research_build.tcl pattern):
+#   close_project   ;# only if another sim project from a prior run is open
+#   set profile_wrapper_release B32_CFGLUT125
+#   set profile_wrapper_variant optimized
+#   source scripts/research_release/test_profile_wrappers.tcl
+# (Unset variables default to B32_CFGLUT125 / optimized.  The GUI console's
+# ::argv carries Vivado's own launch arguments, so it is deliberately not
+# consulted.)  Variants:
 #   optimized         prefetch ON  - metric checker must PASS (invalid 0)
 #   optimized_stress  prefetch ON + stress fixture
 #   baseline          prefetch OFF - expected invalid advances = (N-1)*(rows-1)
@@ -22,10 +27,8 @@ set sim [file join $root Convlution_Accelerator.srcs sim_1 imports new]
 
 set release_id B32_CFGLUT125
 set variant optimized
-if {[info exists ::argv] && [llength $::argv] >= 1} {
-    set release_id [lindex $::argv 0]
-    if {[llength $::argv] >= 2} { set variant [lindex $::argv 1] }
-}
+if {[info exists profile_wrapper_release]} { set release_id $profile_wrapper_release }
+if {[info exists profile_wrapper_variant]} { set variant $profile_wrapper_variant }
 if {$variant ni {optimized optimized_stress baseline baseline_stress negative_control}} {
     error "Use optimized, optimized_stress, baseline, baseline_stress or negative_control"
 }
@@ -63,6 +66,15 @@ puts "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w bui
 
 set out [file join $root work \
     [format "profile_wrapper_%s_%s_%s" $release_id $variant [clock seconds]]]
+
+# A prior failed run leaves profile_wrapper_sim open; close only that one.
+# Any other open project (e.g. the main Vivado project) must be closed by the
+# user before sourcing this script.
+if {![catch {current_project}]} {
+    if {[get_property NAME [current_project]] eq "profile_wrapper_sim"} {
+        close_project
+    }
+}
 
 create_project profile_wrapper_sim $out -part xc7z020clg484-1
 set_property target_language VHDL [current_project]
