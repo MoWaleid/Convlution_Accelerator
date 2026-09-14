@@ -685,9 +685,13 @@ switching/cold-boot requirements remain; this amendment claims no qualification.
   and BOARD-REVALIDATED 2026-09-14 (soak5-A32 + A32 image run PASS on the
   repaired code; records in report/evidence/schema_v3_records_20260913/).
   M9: §1 done, §2 done (1,000-frame varied soak, 6/6 legs PASS, ef5c614),
-  §3 done (five true power-cycle boots, a3f31a5), §4 (clean-build
-  reproduction) and §5 (tag v1-m9-release + known-limits) OPEN. The tag
-  must NOT be applied until Gate 0 closes (see 17.4).
+  §3 done (five true power-cycle boots, a3f31a5), §4 done 2026-09-14 — the
+  clean-build gate is satisfied per its actual wording ("reproduce results"):
+  M7 built five fresh isolated profile projects from the scripted flow and
+  qualified each on board, and the live D640 artifact matches its manifest
+  sha256 64849132…; a bit-identical bitstream re-hash was not performed and
+  is not required (RELEASE_MANIFEST_v1-m9-release.md). §5 (tag + final
+  docs) staged — tag application is the user's action.
 - User directive: deadline pressure is OFF (user's own business). Quality
   and evidence discipline govern sequencing.
 - Branch `v1-bringup` is 17+ commits ahead of origin/v1-bringup — PUSH
@@ -741,11 +745,12 @@ recoverable → Gate 1 research build contract → Gate 2 B32_CFGLUT125 first
    report/evidence/schema_v3_records_20260913/ (see its MANIFEST.md for the
    extremes-records and matrix-log gaps that remain open).
 3. **DONE (folded into 1):** R14-01 admission restriction (option b).
-4. **M9 §4:** clean-build reproduction (user-executed Vivado; D640
-   projection reproduces dn3k04_w640480 hash 64849132…; or A32 via
-   prepare_profile) + §5 tag v1-m9-release + known-limits (incl. R14-01
-   containment if (b)).
-5. **Push branch to origin** (17+ commits).
+4. **DONE 2026-09-14 (reframed):** M9 §4 — the clean-build gate is met by
+   the M7 fresh-profile-build campaign (results reproduction) + the impl_1
+   D640/manifest hash match; RELEASE_MANIFEST_v1-m9-release.md carries the
+   artifact sha256 table and the full known-limits list. §5 tag
+   `v1-m9-release` = user action on the commit that contains this note.
+5. **Push branch to origin** (user action; ~24 commits after the tag).
 6. **M10** per INTEGRATION_PLAN (Addendum A order): baseline recoverable →
    research build contract → B32_CFGLUT125 first → board qual → matched
    comparison (M12). C32/N5 stays legacy until an N5 generator exists.

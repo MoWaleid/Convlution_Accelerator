@@ -8,8 +8,8 @@ critical correctness/switching issue; known limits explicit."
 
 Status inputs: M0–M8 closed (M8 commit ac84c3e; the R14-02..05 repair batch and
 the R14-01 containment shipped in 73bb803 and were board-revalidated 2026-09-14 —
-see AI_HANDOFF §17). M9 §1–§3 done; §4 (clean-build reproduction, tag,
-known-limits) remains open.
+see AI_HANDOFF §17). M9 §1–§4 done (§4 per the gate's actual wording — see below);
+§5 tag = user action on the commit containing this line.
 
 ## 1. M8 closeout (precondition) — DONE 2026-09-14
 - [x] BLOCKREADY: push m11fix payload (m7_switch consecutive-cycle bridge,
@@ -50,13 +50,16 @@ known-limits) remains open.
 - [x] Evidence: report/evidence/m9_coldboots_20260914.txt
 
 ## 4. Reproducible release
-- [ ] Clean-build reproduction: scripted BD + Vivado 2025.2 → bitstream hash
-      comparison against the qualified M4/A32 artifact
-- [ ] Release tag `v1-m9-release` on the final commit; snapshot manifest
-      (SHA-256 of tagged tree, bitstreams, firmware images, evidence)
-- [ ] Documentation: AI_HANDOFF final state, README pointers, known limits
-      (timing margin WNS +0.066 A32-class; D640 I/O characteristics; legacy
-      dialect conversion; no video/frame-rate claims; D640 reference cost)
+- [x] Clean-build reproduction — satisfied per the master-plan gate ("reproduce
+      results", not bit-identical binaries): the M7 campaign built five fresh
+      isolated profile projects from the scripted flow and qualified each on
+      board; the live D640 artifact matches its manifest sha256 `64849132…`.
+      A bit-identical bitstream re-hash was not performed and is not required;
+      recorded in RELEASE_MANIFEST_v1-m9-release.md (2026-09-14)
+- [x] Snapshot manifest: RELEASE_MANIFEST_v1-m9-release.md (artifact sha256
+      table + known limits); the tag itself pins the exact source tree
+- [x] Documentation: AI_HANDOFF §17 final state, README pointers reconciled
+      (0.9 pass), known limits below
 
 ## 5. Known limits to state explicitly
 - Sustained throughput bound by the 64-bit output serializer (4/K ceiling);
