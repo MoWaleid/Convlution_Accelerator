@@ -206,8 +206,11 @@ def do_manifest(release_id):
         "build_inputs": {str(p.relative_to(ROOT)):
                          hashlib.sha256(p.read_bytes()).hexdigest()
                          for p in build_input_paths(release_id)},
-        "artifacts": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                      for p in sorted(artifacts.iterdir()) if p.is_file()},
+        "artifacts": {
+            p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted(artifacts.iterdir())
+            if p.is_file() and p.name != "build_manifest.json"
+        },
     }
     out = artifacts / "build_manifest.json"
     out.write_text(json.dumps(manifest, indent=1) + "\n")
