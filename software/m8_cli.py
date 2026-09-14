@@ -279,6 +279,24 @@ def parameter_identity(bundle_dir):
     return out
 
 
+def high_shift_channels(n, k, shift):
+    """Deterministic signed stimulus for the research shift range.
+
+    At shift 24, an all-255 frame produces both +1 and -1. At shifts 25
+    through 31 it produces exact zero after half-up rounding. The latter
+    cases exercise the sign-extension branch beyond the 25-bit accumulator,
+    where the frozen MAC implementation was defective.
+    """
+    m7.require(24 <= shift <= 31, "high-shift stimulus requires shift 24..31")
+    channels = []
+    for channel in range(k):
+        if channel % 2 == 0:
+            channels.append(([127] * (n * n), (1 << 23) - 1, shift, 0))
+        else:
+            channels.append(([-128] * (n * n), -(1 << 23), shift, 0))
+    return channels
+
+
 def write_record(run_dir, rec):
     """Atomic publication: temp file + rename, so an interrupted write can
     never leave a truncated record.json (M8-04)."""
@@ -610,8 +628,10 @@ def cmd_extremes(args):
     n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
 
     rec = new_record(args.profile, hw, "extremes")
-    rec["extremes"] = {"stimuli": ["all_zero", "all_255", "saturation_params",
-                                   "reinstall_activation"]}
+    rec["extremes"] = {
+        "stimuli": (["all_zero", "all_255", "saturation_params"]
+                    + [f"shift_{shift}" for shift in range(24, 32)]
+                    + ["reinstall_activation"])}
     root, root_name = archive_root()
     rec["archive_root"] = root_name
     run_dir = allocate_run_dir(root, time.strftime("%Y%m%dT%H%M%SZ",
@@ -686,6 +706,33 @@ def cmd_extremes(args):
                               "wall_ms": 0.0})
         (run_dir / "frame_saturation_params.s16le").write_bytes(
             struct.pack(f"<{len(values)}h", *values))
+
+        # Research-line high-shift qualification. Shift 24 exercises a
+        # nonzero signed result; 25..31 exercise exact half-up/sign-extension
+        # behavior at and beyond the 25-bit accumulator width.
+        for shift in range(24, 32):
+            shift_channels = high_shift_channels(n, k, shift)
+            m7.program_params_accel(accel, n, shift_channels)
+            shift_expected = m7.make_expected(
+                stimuli[1][1], n, w, h, shift_channels)
+            values, mismatches, sha, hw_ms = m7.run_frame(
+                dma, accel, buf_fd, ctx["phys"], layout, stimuli[1][1],
+                shift_expected, k)
+            m7.require(mismatches == 0,
+                       f"shift_{shift}: {mismatches} mismatches")
+            if shift == 24:
+                m7.require(1 in values and -1 in values,
+                           "shift_24 did not exercise signed +/-1 results")
+            else:
+                m7.require(set(values) == {0},
+                           f"shift_{shift}: expected exact zero output")
+            rec["frames"].append({"stimulus": f"shift_{shift}",
+                                  "sha256": sha,
+                                  "mismatches": mismatches,
+                                  "hw_ms": hw_ms * 1000.0,
+                                  "wall_ms": 0.0})
+            (run_dir / f"frame_shift_{shift}.s16le").write_bytes(
+                struct.pack(f"<{len(values)}h", *values))
 
         # Reinstall the admitted canonical bundle and revalidate the requested
         # model with an anchor-checked activation frame.

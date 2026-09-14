@@ -151,6 +151,23 @@ class M7Profiles(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             m8_cli.release_bundle_dir("B32_CFGLUT125", escaped)
 
+    def test_research_high_shift_stimulus_covers_signed_branches(self):
+        padded = bytes([255] * ((32 + 3 - 1) * (32 + 3 - 1)))
+        for shift in range(24, 32):
+            channels = m8_cli.high_shift_channels(3, 16, shift)
+            self.assertEqual({entry[2] for entry in channels}, {shift})
+            self.assertTrue(all(entry[3] == 0 for entry in channels))
+            values = m8_cli.m7.make_expected(padded, 3, 32, 32, channels)
+            if shift == 24:
+                self.assertIn(1, values)
+                self.assertIn(-1, values)
+            else:
+                self.assertEqual(set(values), {0})
+        with self.assertRaises(RuntimeError):
+            m8_cli.high_shift_channels(3, 16, 23)
+        with self.assertRaises(RuntimeError):
+            m8_cli.high_shift_channels(3, 16, 32)
+
     def test_b32_rejects_legacy_a32_id_in_otherwise_correct_discovery(self):
         p = self.profiles["B32"]
         r = {0x4100:0x43564831,0x4104:0x10000,0x4108:0x1ff,

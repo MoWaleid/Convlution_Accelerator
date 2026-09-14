@@ -195,7 +195,10 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       repeated reconfigurations vs the MAC baseline → power cycle →
       fault/recovery. Then catalog the release BUILT→QUALIFIED. Identity,
       runtime admission, parameter-only activation, and the first three run
-      frames PASS; remaining items are still open. Evidence:
+      frames PASS. The 12-frame numerical extremes suite also passes,
+      including live shifts 24–31 and canonical-parameter restoration.
+      The 100-frame soak, switching, power-cycle, and fault/recovery items
+      remain open. Evidence:
       `report/research_builds/B32_CFGLUT125/board_runtime_qualification_20260914.md`.
 - [ ] G3.4 Edge-free claim discipline (IP-09): simulation metrics + board
       throughput stay separate claims; K16 = 4 beats/position on 64-bit

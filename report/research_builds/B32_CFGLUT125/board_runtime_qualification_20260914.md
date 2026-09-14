@@ -65,3 +65,28 @@ BUILD_ID already matched `EF125K16N3W32R01`.
 The archived board run record is
 `/var/lib/conv-lab/results/20180309T131241Z-B32_CFGLUT125-library_alley_cat/record.json`.
 
+## Numerical extremes and high shifts
+
+The M8 extremes harness was extended before this run so the research build is
+tested live at every shift from 24 through 31. Shift 24 is required to produce
+both signed `+1` and `-1`; shifts 25 through 31 are required to produce exact
+zero through the half-up/sign-extension path. The harness also retains the
+all-zero, all-255, signed-24 bias endpoint/saturation checks, and finally
+reinstalls the canonical B32 parameters and verifies their anchor again.
+
+- Qualified board `m8_cli.py` SHA-256:
+  `798c26f7834d8cb4c5f4ac404b0b333aa77b4e1b7d02647d282068fa384bb1ce`
+- Focused host profile regression suite: 11 tests PASS.
+- Board result: 12 verified stimulus frames PASS.
+- Activation before the procedural stimuli: 0.146 ms, anchor prefix
+  `5821c8b19a88fd34`.
+- Cleanup status: `0x00000181`.
+- Archived run record:
+  `/var/lib/conv-lab/results/20180309T131821Z-extremes-B32_CFGLUT125/record.json`.
+
+Observed terminal summary:
+
+```text
+M8 EXTREMES 20180309T131821Z-extremes-B32_CFGLUT125: PASS
+(12 verified stimulus frames)
+```
