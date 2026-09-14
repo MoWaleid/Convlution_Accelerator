@@ -7,7 +7,7 @@ set work_dir [file join $root work engine_sim]
 file mkdir $work_dir
 create_project -force engine_sim $work_dir -part xc7z020clg484-1
 set rtl [file join $root Convlution_Accelerator.srcs sources_1 new]
-foreach name {config_pkg conv_pkg sync_fifo coeff_bias_shift_regfile window_generator cfglut5_kcm cfglut5_bitheap_3x3 conv_channel conv_engine conv_top} {
+foreach name {config_pkg conv_pkg sync_fifo coeff_bias_shift_regfile axi_lite_ctrl window_generator cfglut5_kcm cfglut5_bitheap_3x3 conv_channel conv_engine conv_top} {
     add_files -norecurse [file join $rtl $name.vhd]
 }
 set simsrc [file join $root Convlution_Accelerator.srcs sim_1 new]
@@ -15,6 +15,7 @@ add_files -fileset sim_1 -norecurse [list \
     [file join $simsrc tb_cfglut5_exact.vhd] \
     [file join $simsrc tb_cfglut5_k16_smoke.vhd] \
     [file join $simsrc tb_cfglut5_pipeline.vhd]]
+add_files -fileset sim_1 -norecurse [file join $root Convlution_Accelerator.srcs sim_1 imports new tb_axi_lite_ctrl.vhd]
 set_property file_type {VHDL 2008} [get_files *.vhd]
 update_compile_order -fileset sim_1
 
@@ -25,6 +26,8 @@ set checks {
     {Exact CFGLUT5 K=16 channel/configuration smoke test passed}
     tb_cfglut5_pipeline
     {PIPELINE_125_PASS}
+    tb_axi_lite_ctrl
+    {AXI_LITE_CTRL COMPLETE UNIT REGRESSION PASS}
 }
 
 set failures 0

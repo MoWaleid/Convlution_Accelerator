@@ -49,6 +49,14 @@ architecture sim of tb_axi_lite_ctrl is
         std_logic_vector(31 downto 0) := x"000001A1";
         -- IDLE + ERROR + PARAM_COMPLETE + QUIESCENT
 
+    constant STATUS_CONFIG :
+        std_logic_vector(31 downto 0) := x"00000182";
+        -- BUSY + PARAM_COMPLETE + QUIESCENT
+
+    constant STATUS_CONFIG_ERROR :
+        std_logic_vector(31 downto 0) := x"000001A2";
+        -- BUSY + ERROR + PARAM_COMPLETE + QUIESCENT
+
     constant STATUS_RUN :
         std_logic_vector(31 downto 0) := x"00000082";
         -- BUSY + PARAM_COMPLETE
@@ -312,6 +320,9 @@ architecture sim of tb_axi_lite_ctrl is
     signal internal_error_in :
         std_logic := '0';
 
+    signal datapath_config_ready :
+        std_logic := '1';
+
 
     -- ========================================================================
     -- Lifecycle outputs
@@ -328,6 +339,24 @@ architecture sim of tb_axi_lite_ctrl is
 
     signal production_enable :
         std_logic;
+
+    signal coeff_write_pulse :
+        std_logic;
+
+    signal coeff_write_addr :
+        std_logic_vector(31 downto 0);
+
+    signal coeff_write_data :
+        std_logic_vector(31 downto 0);
+
+    signal start_pulse_count :
+        natural := 0;
+
+    signal local_reset_pulse_count :
+        natural := 0;
+
+    signal coeff_write_pulse_count :
+        natural := 0;
 
 
     -- ========================================================================
@@ -493,6 +522,9 @@ begin
             internal_error_in =>
                 internal_error_in,
 
+            datapath_config_ready =>
+                datapath_config_ready,
+
             start_pulse =>
                 start_pulse,
 
@@ -504,6 +536,15 @@ begin
 
             production_enable =>
                 production_enable,
+
+            coeff_write_pulse =>
+                coeff_write_pulse,
+
+            coeff_write_addr =>
+                coeff_write_addr,
+
+            coeff_write_data =>
+                coeff_write_data,
 
             coeffs_out =>
                 coeffs_out,
@@ -517,6 +558,27 @@ begin
             relu_en_out =>
                 relu_en_out
         );
+
+    pulse_monitor : process(S_AXI_ACLK)
+    begin
+        if rising_edge(S_AXI_ACLK) then
+            if S_AXI_ARESETN = '0' then
+                start_pulse_count       <= 0;
+                local_reset_pulse_count <= 0;
+                coeff_write_pulse_count <= 0;
+            else
+                if start_pulse = '1' then
+                    start_pulse_count <= start_pulse_count + 1;
+                end if;
+                if local_reset_pulse = '1' then
+                    local_reset_pulse_count <= local_reset_pulse_count + 1;
+                end if;
+                if coeff_write_pulse = '1' then
+                    coeff_write_pulse_count <= coeff_write_pulse_count + 1;
+                end if;
+            end if;
+        end if;
+    end process pulse_monitor;
 
 
     -- ========================================================================
@@ -1115,6 +1177,15 @@ begin
 
         end procedure;
 
+        variable start_count_before :
+            natural;
+
+        variable reset_count_before :
+            natural;
+
+        variable coeff_count_before :
+            natural;
+
 
     begin
 
@@ -1122,12 +1193,16 @@ begin
         -- Static sanity
         -- ====================================================================
 
-        assert CFG_K = 8
-            report "This controller regression currently expects CFG_K=8"
+        assert CFG_K = 16
+            report "This research controller regression expects CFG_K=16"
             severity failure;
 
         assert CFG_N = 3
             report "This controller regression currently expects CFG_N=3"
+            severity failure;
+
+        assert CFG_UNPADDED_WIDTH = 32 and CFG_UNPADDED_HEIGHT = 32
+            report "This research controller regression expects 32x32 geometry"
             severity failure;
 
 
@@ -1230,7 +1305,7 @@ begin
 
         axi_read_check(
             CHANNEL_K_ADDR,
-            x"00000008",
+            x"00000010",
             AXI_OKAY,
             "CHANNEL_K"
         );
@@ -1258,7 +1333,7 @@ begin
 
         axi_read_check(
             EXPECTED_OUTPUT_BYTES_ADDR,
-            x"00004000",
+            x"00008000",
             AXI_OKAY,
             "EXPECTED_OUTPUT_BYTES"
         );
@@ -1868,6 +1943,236 @@ begin
 
         report "--- CVH1 category 4 PASS ---";
 
+        -- ====================================================================
+        -- CATEGORY 4B
+        -- Serial-CFGLUT configuration lifecycle and recovery
+        -- ====================================================================
+
+        report "--- CVH1 category 4B: CFGLUT configuration lifecycle ---";
+
+        -- A valid parameter transaction may be accepted while the previous
+        -- CFGLUT word is still loading, but it must not commit or respond
+        -- until datapath_config_ready returns. Readback remains the installed
+        -- register value until that atomic commit.
+        datapath_config_ready <= '0';
+        coeff_count_before := coeff_write_pulse_count;
+
+        send_aw_only(CH0_COEFF0_ADDR);
+        send_w_only(x"0D0C0B0A", "1111");
+
+        for cycle in 1 to 3 loop
+            wait until rising_edge(S_AXI_ACLK);
+            wait for 1 ns;
+            assert S_AXI_BVALID = '0'
+                report "parameter write responded while CFGLUT loader busy"
+                severity error;
+            assert coeff_write_pulse_count = coeff_count_before
+                report "parameter write committed while CFGLUT loader busy"
+                severity error;
+        end loop;
+
+        axi_read_check(
+            CH0_COEFF0_ADDR,
+            x"04030201",
+            AXI_OKAY,
+            "readback changed before deferred parameter commit"
+        );
+
+        datapath_config_ready <= '1';
+        expect_b_response(AXI_OKAY, 1, "deferred parameter write");
+
+        assert coeff_write_pulse_count = coeff_count_before + 1
+            report "deferred coefficient write did not emit one loader pulse"
+            severity error;
+
+        axi_read_check(
+            CH0_COEFF0_ADDR,
+            x"0D0C0B0A",
+            AXI_OKAY,
+            "deferred coefficient write did not commit"
+        );
+
+        -- Restore the category-4 coefficient value.
+        axi_write_check(
+            CH0_COEFF0_ADDR,
+            x"04030201",
+            "1111",
+            AXI_OKAY,
+            "restore CH0 coefficient word 0"
+        );
+
+        -- START remains responsive while the final serial configuration tail
+        -- is busy. It enters CONFIG, reports BUSY, and does not release stream
+        -- production until datapath_config_ready.
+        datapath_config_ready <= '0';
+        start_count_before := start_pulse_count;
+
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000001",
+            "1111",
+            AXI_OKAY,
+            "START while CFGLUT loader busy"
+        );
+
+        assert run_enable = '0' and production_enable = '0'
+            report "CONFIG state released stream production early"
+            severity error;
+
+        assert start_pulse_count = start_count_before
+            report "CONFIG state emitted START before coefficients installed"
+            severity error;
+
+        axi_read_check(
+            STATUS_ADDR,
+            STATUS_CONFIG,
+            AXI_OKAY,
+            "CONFIG STATUS while loader busy"
+        );
+
+        -- Parameter writes during CONFIG are rejected without mutation.
+        axi_write_check(
+            CH0_BIAS_ADDR,
+            x"00000005",
+            "1111",
+            AXI_SLVERR,
+            "parameter write during CONFIG"
+        );
+
+        axi_read_check(
+            ERROR_FLAGS_ADDR,
+            x"00000010",
+            AXI_OKAY,
+            "BUSY_PARAMETER_WRITE during CONFIG"
+        );
+
+        axi_read_check(
+            STATUS_ADDR,
+            STATUS_CONFIG_ERROR,
+            AXI_OKAY,
+            "CONFIG STATUS after rejected parameter write"
+        );
+
+        -- RESET must remain reachable while configuration is busy.
+        reset_count_before := local_reset_pulse_count;
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000002",
+            "1111",
+            AXI_OKAY,
+            "RESET during CONFIG"
+        );
+
+        assert local_reset_pulse_count = reset_count_before + 1
+            report "RESET during CONFIG did not emit local reset pulse"
+            severity error;
+
+        axi_read_check(
+            STATUS_ADDR,
+            STATUS_PARAM,
+            AXI_OKAY,
+            "RESET during CONFIG did not restore clean IDLE"
+        );
+
+        axi_read_check(
+            ERROR_FLAGS_ADDR,
+            x"00000000",
+            AXI_OKAY,
+            "RESET during CONFIG did not clear errors"
+        );
+
+        -- ABORT must likewise be reachable before the loader finishes.
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000001",
+            "1111",
+            AXI_OKAY,
+            "second START while CFGLUT loader busy"
+        );
+
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000004",
+            "1111",
+            AXI_OKAY,
+            "ABORT during CONFIG"
+        );
+
+        axi_read_check(
+            STATUS_ADDR,
+            STATUS_FAULT,
+            AXI_OKAY,
+            "ABORT during CONFIG did not enter FAULT"
+        );
+
+        axi_read_check(
+            ERROR_FLAGS_ADDR,
+            x"00000100",
+            AXI_OKAY,
+            "ABORTED flag during CONFIG"
+        );
+
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000002",
+            "1111",
+            AXI_OKAY,
+            "RESET after CONFIG ABORT"
+        );
+
+        -- Finally prove the delayed transition emits exactly one START pulse.
+        start_count_before := start_pulse_count;
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000001",
+            "1111",
+            AXI_OKAY,
+            "delayed CONFIG START"
+        );
+
+        assert start_pulse_count = start_count_before
+            report "delayed CONFIG START pulsed before cfg_ready"
+            severity error;
+
+        datapath_config_ready <= '1';
+        wait until rising_edge(S_AXI_ACLK);
+        wait until rising_edge(S_AXI_ACLK);
+        wait for 1 ns;
+
+        assert start_pulse_count = start_count_before + 1
+            report "CONFIG-to-RUN transition did not emit exactly one START pulse"
+            severity error;
+
+        assert run_enable = '1' and production_enable = '1'
+            report "CONFIG-to-RUN transition did not enable production"
+            severity error;
+
+        -- Return to the clean IDLE/PARAM state expected by category 5.
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000004",
+            "1111",
+            AXI_OKAY,
+            "ABORT after delayed CONFIG START"
+        );
+
+        axi_write_check(
+            COMMAND_ADDR,
+            x"00000002",
+            "1111",
+            AXI_OKAY,
+            "RESET after delayed CONFIG START"
+        );
+
+        axi_read_check(
+            STATUS_ADDR,
+            STATUS_PARAM,
+            AXI_OKAY,
+            "category 4B final clean STATUS"
+        );
+
+        report "--- CVH1 category 4B PASS ---";
+
 
         -- ====================================================================
         -- CATEGORY 5
@@ -2194,12 +2499,12 @@ begin
         -- ------------------------------------------------------------
         -- Output:
         --
-        -- 2047 full beats without TLAST = 16376 bytes.
+        -- 4095 full beats without TLAST = 32760 bytes.
         -- Final beat provides remaining 8 bytes + TLAST.
         -- ------------------------------------------------------------
 
         output_accept_beats(
-            2047,
+            4095,
             8,
             false
         );
@@ -2215,7 +2520,7 @@ begin
 
         axi_read_check(
             OUTPUT_ACCEPT_BYTES_ADDR,
-            x"00003FF8",
+            x"00007FF8",
             AXI_OKAY,
             "output count before final beat"
         );
@@ -2242,6 +2547,14 @@ begin
         );
 
         output_tvalid <= '0';
+
+
+        -- The accepted output event and its TLAST completion check cross two
+        -- controller timing-isolation registers.  Let both registered stages
+        -- retire before observing the architectural DONE/IDLE state.
+        wait until rising_edge(S_AXI_ACLK);
+        wait until rising_edge(S_AXI_ACLK);
+        wait for 1 ns;
 
 
         -- Success must now be visible.
@@ -2282,7 +2595,7 @@ begin
 
         axi_read_check(
             OUTPUT_ACCEPT_BYTES_ADDR,
-            x"00004000",
+            x"00008000",
             AXI_OKAY,
             "final OUTPUT_ACCEPT_BYTES"
         );
@@ -2373,7 +2686,7 @@ begin
 
         axi_read_check(
             OUTPUT_ACCEPT_BYTES_ADDR,
-            x"00004000",
+            x"00008000",
             AXI_OKAY,
             "output counter retained after DONE clear"
         );

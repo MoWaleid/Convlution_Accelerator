@@ -17,8 +17,8 @@ entity axi_lite_ctrl is
         C_LOGICAL_IMAGE_WIDTH  : integer := CFG_UNPADDED_WIDTH;
         C_LOGICAL_IMAGE_HEIGHT : integer := CFG_UNPADDED_HEIGHT;
 
-        -- Frozen release identifier for this M4 N3/K8/W32 build.
-        -- hardware.json must contain the identical 128-bit value.
+        -- Frozen release identifier for the selected build.
+        -- The matching hardware manifest must contain this exact value.
         C_BUILD_ID : std_logic_vector(127 downto 0) :=
             CFG_BUILD_ID;
 
@@ -844,11 +844,6 @@ begin
             S_AXI_ARESETN = '1'
             and axi_bvalid = '0'
             and write_addr_pending = '0'
-            and
-            (
-                lifecycle_state /= STATE_IDLE
-                or datapath_config_ready = '1'
-            )
         else '0';
 
     axi_wready <=
@@ -857,11 +852,6 @@ begin
             S_AXI_ARESETN = '1'
             and axi_bvalid = '0'
             and write_data_pending = '0'
-            and
-            (
-                lifecycle_state /= STATE_IDLE
-                or datapath_config_ready = '1'
-            )
         else '0';
 
     axi_arready <=
@@ -1592,6 +1582,24 @@ begin
                 elsif
                     write_addr_pending = '1'
                     and write_data_pending = '1'
+                    and not
+                    (
+                        -- A legal parameter write may be captured while the
+                        -- serial CFGLUT loader is finishing the preceding
+                        -- word. Hold that one transaction until it can commit
+                        -- atomically. Commands and malformed accesses remain
+                        -- responsive, so START can enter STATE_CONFIG and
+                        -- RESET/ABORT can always recover a stalled loader.
+                        lifecycle_state = STATE_IDLE
+                        and datapath_config_ready = '0'
+                        and is_aligned(write_addr_reg)
+                        and is_parameter_addr(write_addr_reg)
+                        and write_strb_reg = "1111"
+                        and valid_parameter_data(
+                            write_addr_reg,
+                            write_data_reg
+                        )
+                    )
                 then
 
                     -- Commit only data that was already captured at the
