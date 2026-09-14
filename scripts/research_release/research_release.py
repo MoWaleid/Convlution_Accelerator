@@ -115,7 +115,13 @@ def do_check(release_id):
     spec = parse_spec(release_id)
     rel = crosscheck(spec, load_catalog())
     paths = source_paths(spec, release_id)
-    missing = [str(p) for p in paths if not p.is_file()]
+    missing = []
+    for p in paths:
+        if p.is_file():
+            continue
+        if p.name == "config_pkg.vhd" and p.parent.parent == out_dir(release_id) / "src":
+            continue   # rendered by prepare/build, not required at check time
+        missing.append(str(p))
     if missing:
         raise RuntimeError(f"sources missing (transplant pending?):\n  " +
                            "\n  ".join(missing))

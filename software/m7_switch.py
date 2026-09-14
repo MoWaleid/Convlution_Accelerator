@@ -36,7 +36,8 @@ LOCK_FILE = (Path("/run/lock/m7_switch.lock") if Path("/run/lock").is_dir()
              else Path("/tmp/m7_switch.lock"))
 _lock_fd = None
 FW_NAME = {"A32": "m7_A32.bin", "B32": "m7_B32.bin", "C32": "m7_C32.bin",
-           "D32": "m7_D32.bin", "D640": "m7_D640.bin"}
+           "D32": "m7_D32.bin", "D640": "m7_D640.bin",
+           "B32_CFGLUT125": "m7_B32_CFGLUT125.bin"}
 ORDER = ["A32", "B32", "C32", "D32", "D640"]
 
 # ─── FPGA Manager sysfs ──────────────────────────────────────────────────────
@@ -500,7 +501,7 @@ def switch_to(profile, catalog, anchors, ctx):
     firmware_hash = hashlib.sha256(firmware.read_bytes()).hexdigest()
     require(firmware_hash == hw["artifacts"]["firmware_bin_sha256"],
             f"{profile}: firmware hash mismatch")
-    channels, bundle_hash = load_params(profile, n, k,
+    channels, bundle_hash = load_params(rel.get("bundle_dir", profile), n, k,
                                         hw_bias_width=acc["bias_width"])
     require(bundle_hash == rel["bundle_sha256"],
             f"{profile}: admitted bundle {bundle_hash[:16]} != release-bound "

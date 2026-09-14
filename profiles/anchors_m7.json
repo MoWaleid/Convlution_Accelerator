@@ -12,6 +12,12 @@
     "rx_bytes": 32768,
     "output_sha256": "5821c8b19a88fd34e3002dd7b0c7d60c7fcd79b8a61a326697d95b6e3ec3be94"
   },
+  "B32_CFGLUT125": {
+    "tx_bytes": 1156,
+    "rx_bytes": 32768,
+    "output_sha256": "5821c8b19a88fd34e3002dd7b0c7d60c7fcd79b8a61a326697d95b6e3ec3be94",
+    "note": "same admitted bundle (B32), input and geometry as B32 - the golden output is identical for any correct implementation of the shape; this anchor is the M12 comparison's correctness target"
+  },
   "C32": {
     "tx_bytes": 1296,
     "rx_bytes": 16384,
