@@ -190,6 +190,7 @@ def main():
     print("MOCK OK: benchmark (stats + environment recorded)")
 
     # 4b) E2 extremes: all-zero, all-255, saturation stimulus (both rails),
+    # the live shift 24..31 sweep (f262783, board-qualified 2026-09-14) and
     # canonical reinstall + anchor revalidation
     set_current("A32")
     CLI.main(["extremes", "--profile", "A32"])
@@ -197,10 +198,12 @@ def main():
     assert rec["outcome"] == "PASS", rec
     tags = [f["stimulus"] for f in rec["frames"]]
     assert tags == ["all_zero", "all_255", "saturation_params",
+                    *[f"shift_{s}" for s in range(24, 32)],
                     "reinstall_activation"], tags
     assert all(f["mismatches"] == 0 for f in rec["frames"])
     assert (run_dir / "frame_saturation_params.s16le").is_file()
-    print("MOCK OK: extremes (4 stimulus frames, saturation rails exercised)")
+    assert (run_dir / "frame_shift_24.s16le").is_file()
+    print("MOCK OK: extremes (12 stimulus frames, saturation rails + high shifts)")
 
     # 4c) M9 soak: library-anchor mode, then image exact-reference mode
     set_current("A32")

@@ -37,7 +37,11 @@ LOCK_FILE = (Path("/run/lock/m7_switch.lock") if Path("/run/lock").is_dir()
 _lock_fd = None
 FW_NAME = {"A32": "m7_A32.bin", "B32": "m7_B32.bin", "C32": "m7_C32.bin",
            "D32": "m7_D32.bin", "D640": "m7_D640.bin",
+           "A32_CFGLUT125": "m7_A32_CFGLUT125.bin",
            "B32_CFGLUT125": "m7_B32_CFGLUT125.bin",
+           "C32_CFGLUT125": "m7_C32_CFGLUT125.bin",
+           "D32_CFGLUT125": "m7_D32_CFGLUT125.bin",
+           "D640_CFGLUT125": "m7_D640_CFGLUT125.bin",
            "B32_CFGLUT100": "m7_B32_CFGLUT100.bin"}
 ORDER = ["A32", "B32", "C32", "D32", "D640"]
 

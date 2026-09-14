@@ -1107,3 +1107,49 @@ This closes the behavioral F3/N=5 feasibility blocker only. Next: freeze this
 checkpoint, add the five 125 MHz release specs/catalog staging, run full
 wrapper/profile simulations, then synthesize/route each release. No new
 physical build or board claim follows from the geometry regression alone.
+
+### 18.9 Five-release staging — 2026-09-14 (host-side complete, sims pending)
+
+Following §18.5's directive, the four remaining CFGLUT125 releases are staged
+host-side on `integration/m10-cfglut5` (B32_CFGLUT125 already existed and is
+board-qualified). Release names deliberately carry the `_CFGLUT125` suffix
+until the §18.5 step-4 catalog cutover renames them to the final five
+(A32/C32/D32/D640); BUILD_IDs are already the final ones from the §18.5
+table. Local canonical bundles verified byte-exact against the catalog
+(D640 = D32 bundle bytes, as documented):
+
+- New specs: `scripts/research_release/builds/{A32,C32,D32,D640}_CFGLUT125.spec.tcl`
+  (A32 N3/K8, C32 N5/K8, D32 N3/K4, D640 N3/K4-640x480; all 125 MHz; sources
+  include both generated bitheaps). `research_release.py check` PASS x5.
+- Catalog `profiles/m7_profiles.json`: new `profiles` + `releases` entries
+  for the four IDs (bundle_dir A32/C32/D32/D640; bundle shas carried over
+  from the legacy entries).
+- New manifests `software/hardware_<ID>_CFGLUT125.json` x4 with clock_mhz
+  125, no rx_offset (IP-07), and deliberate `TBD_FIRST_BUILD` artifact hashes
+  (fail-closed: `switch_to` cannot admit them until a real build fills the
+  hashes). Final artifact filenames: `bitstreams/{a32,c32,d32,d640}_cfglut125_125mhz.{bit,bit.bin}`.
+- `profiles/anchors_m7.json`: anchors transferred from the legacy profiles
+  with provenance notes (same bundle + input + geometry => same golden
+  output; C32 rides the 6,144-output N=5 regression).
+- `software/m7_switch.py` FW_NAME: added m7_{A32,C32,D32,D640}_CFGLUT125.bin.
+- **Wrapper TB generalized to the profile matrix** (this was the blocker for
+  full wrapper/profile sims): `sim_1/imports/new/tb_conv_axis_wrapper.vhd`
+  now supports N in {3,5} x K in {4,8,16} with all geometry from config_pkg
+  (N x N reference convolution, N*N coefficient packing -> C_COEFF_WORDS,
+  generic final input beat incl. the C32 exact-multiple frame,
+  geometry-scaled partial-frame ABORT beat count and hang-detector timeout).
+  K16/N3 stimulus semantics are unchanged. Mock suites re-PASS
+  (m7_switch --profile B32 3 + --matrix-seq; m8 suite 18 cases after fixing
+  its stale extremes expectation to the board-qualified 12-stimulus set).
+- New sim runner `scripts/research_release/test_profile_wrappers.tcl`
+  (profile-matrix generalization of test_edge_bubbles.tcl): runs the A-H
+  wrapper regression per release against the rendered per-release
+  config_pkg with N-aware metric expectations; usage
+  `set argv {<RELEASE_ID> optimized}; source ...` from the Vivado Tcl
+  console. All five `work/research_<ID>/src/config_pkg.vhd` renders are in
+  place; the B32 re-render is byte-identical to the qualified build's
+  (sha256 1e24e3a8...), so its provenance is untouched.
+
+Pending: user-executed Vivado wrapper sims per release (optimized variant;
+D640 is a long sim), then the five `research_build.tcl` routed builds,
+then board qualification per §18.5 steps 5-6.

@@ -49,6 +49,34 @@
       "N": 3,
       "K": 16,
       "build_id": "45463130304b31364e33573332523031"
+    },
+    "A32_CFGLUT125": {
+      "W": 32,
+      "H": 32,
+      "N": 3,
+      "K": 8,
+      "build_id": "45463132354b30384e33573332523031"
+    },
+    "C32_CFGLUT125": {
+      "W": 32,
+      "H": 32,
+      "N": 5,
+      "K": 8,
+      "build_id": "45463132354b30384e35573332523031"
+    },
+    "D32_CFGLUT125": {
+      "W": 32,
+      "H": 32,
+      "N": 3,
+      "K": 4,
+      "build_id": "45463132354b30344e33573332523031"
+    },
+    "D640_CFGLUT125": {
+      "W": 640,
+      "H": 480,
+      "N": 3,
+      "K": 4,
+      "build_id": "45463132354e334b30345647412d5231"
     }
   },
   "releases": {
@@ -95,6 +123,34 @@
       "bundle_sha256": "952cb13ce0adad04c42704c1e85bd964538cf66f8455783b2123bbce9d160cec",
       "manifest": "hardware_B32_CFGLUT100.json",
       "build_id_hex": "45463130304b31364e33573332523031"
+    },
+    "A32_CFGLUT125": {
+      "shape_id": "N3K8W32H32-CVH1",
+      "bundle_dir": "A32",
+      "bundle_sha256": "367fb1f5a45a3271c2967ae4f0cadb1b50661470dc4df50496dbf36dce895469",
+      "manifest": "hardware_A32_CFGLUT125.json",
+      "build_id_hex": "45463132354b30384e33573332523031"
+    },
+    "C32_CFGLUT125": {
+      "shape_id": "N5K8W32H32-CVH1",
+      "bundle_dir": "C32",
+      "bundle_sha256": "c9ba0dba0ae7d704fff3160d9cbfa38d069bc81102f4fa03feef8b08bc59d3bb",
+      "manifest": "hardware_C32_CFGLUT125.json",
+      "build_id_hex": "45463132354b30384e35573332523031"
+    },
+    "D32_CFGLUT125": {
+      "shape_id": "N3K4W32H32-CVH1",
+      "bundle_dir": "D32",
+      "bundle_sha256": "d735ca24a505b7f00e7d71ed283e3d3cb0f5ac76903f55c658bc1078e2a706d8",
+      "manifest": "hardware_D32_CFGLUT125.json",
+      "build_id_hex": "45463132354b30344e33573332523031"
+    },
+    "D640_CFGLUT125": {
+      "shape_id": "N3K4W640H480-CVH1",
+      "bundle_dir": "D640",
+      "bundle_sha256": "d735ca24a505b7f00e7d71ed283e3d3cb0f5ac76903f55c658bc1078e2a706d8",
+      "manifest": "hardware_D640_CFGLUT125.json",
+      "build_id_hex": "45463132354e334b30345647412d5231"
     }
   }
 }

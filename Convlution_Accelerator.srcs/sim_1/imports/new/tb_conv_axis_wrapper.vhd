@@ -3,12 +3,13 @@
 --
 -- M4 FINAL comprehensive RTL integration regression.
 --
--- Actual compiled profile:
---   N = 3
---   K = 16
---   padded input  = 34 x 34 = 1156 bytes
---   logical output = 32 x 32
---   output = 32 x 32 x 16 x int16 = 32768 bytes
+-- Compiled profile (all geometry from config_pkg; supports the released
+-- N in {3, 5} x K in {4, 8, 16} profile matrix, 2026-09-14):
+--   N = CFG_N
+--   K = CFG_K
+--   padded input  = CFG_IMAGE_WIDTH x CFG_IMAGE_HEIGHT bytes
+--   logical output = CFG_UNPADDED_WIDTH x CFG_UNPADDED_HEIGHT
+--   output = positions * K * int16 bytes
 --
 -- Numerical setup:
 --   pixel(r,c)        = r + c
@@ -18,15 +19,16 @@
 --   ReLU              = 0
 --
 -- Therefore every channel at logical output (r,c) must be signed16 value
--- 9 * (r + c) + 18.  The spatially varying result makes a dropped, duplicated,
--- or reordered position at any row-edge bubble visible to the scoreboard.
+-- N*N * (r + c) + N*N.  The spatially varying result makes a dropped,
+-- duplicated, or reordered position at any row-edge bubble visible to the
+-- scoreboard.
 --
 -- Coverage
 -- --------
 -- A. Reset, discovery, pre-START stream gating
--- B. Complete K=16 parameter admission through AXI-Lite
+-- B. Complete parameter admission through AXI-Lite
 -- C. Full frame through REAL frontend/core/serializer under backpressure
---      * strict 1156-byte framing
+--      * strict padded-input-byte framing
 --      * numerical output
 --      * output ordering/packing
 --      * input/output backpressure
@@ -125,6 +127,20 @@ architecture sim of tb_conv_axis_wrapper is
         natural :=
             C_EXPECTED_INPUT_BYTES mod 8;
 
+    -- AXI-Lite coefficient words per channel slot: N*N int8 taps packed four
+    -- per 32-bit word (N=3 -> 3 words, N=5 -> 7 words).
+    constant C_COEFF_WORDS :
+        positive :=
+            (C_N * C_N + 3) / 4;
+
+    -- Minimum whole input beats that must be accepted before the very first
+    -- output position can exist: (N-1) full padded rows plus one window row's
+    -- worth of leading pixels.  Used by the partial-frame ABORT fixture so it
+    -- scales with the compiled geometry instead of assuming 34-wide padding.
+    constant C_FIRST_OUTPUT_MIN_BEATS :
+        positive :=
+            ((C_N - 1) * C_PAD_W + C_N + 7) / 8 + 1;
+
 
     function input_pixel_value(
         pixel_index : natural
@@ -143,7 +159,7 @@ architecture sim of tb_conv_axis_wrapper is
     begin
         if not G_STRESS then return 1; end if;
         if channel = 0 and tap = 0 then return -128; end if;
-        if channel = C_K-1 and tap = 8 then return 127; end if;
+        if channel = C_K-1 and tap = C_N*C_N-1 then return 127; end if;
         return ((channel*13 + tap*7) mod 17)-8;
     end function;
 
@@ -151,7 +167,7 @@ architecture sim of tb_conv_axis_wrapper is
         variable word : std_logic_vector(31 downto 0) := (others => '0');
     begin
         for lane in 0 to 3 loop
-            if word_index*4+lane < 9 then
+            if word_index*4+lane < C_N*C_N then
                 word(lane*8+7 downto lane*8) := std_logic_vector(to_signed(coefficient_value(channel,word_index*4+lane),8));
             end if;
         end loop;
@@ -178,9 +194,9 @@ architecture sim of tb_conv_axis_wrapper is
         output_column :=
             position_index mod C_LOG_W;
 
-        for r in 0 to 2 loop
-            for c in 0 to 2 loop
-                total := total + input_pixel_value((output_row+r)*C_PAD_W+output_column+c)*coefficient_value(channel,r*3+c);
+        for r in 0 to C_N-1 loop
+            for c in 0 to C_N-1 loop
+                total := total + input_pixel_value((output_row+r)*C_PAD_W+output_column+c)*coefficient_value(channel,r*C_N+c);
             end loop;
         end loop;
         if total > 32767 then return 32767; end if;
@@ -360,39 +376,29 @@ begin
     -- Basic geometry sanity for this regression
     -- ========================================================================
 
-    assert C_K = 16
+    assert C_N = 3 or C_N = 5
         report
-            "tb_conv_axis_wrapper expects current K=16 profile"
+            "tb_conv_axis_wrapper supports the released N=3 and N=5 profiles"
         severity failure;
 
-    assert C_N = 3
+    assert C_K = 4 or C_K = 8 or C_K = 16
         report
-            "tb_conv_axis_wrapper expects current N=3 profile"
+            "tb_conv_axis_wrapper supports the released K=4/K=8/K=16 profiles"
         severity failure;
 
-    assert C_EXPECTED_INPUT_BYTES = 1156
+    assert C_FINAL_INPUT_BYTES = 0 or C_FINAL_INPUT_BYTES = 4
         report
-            "Unexpected compiled input byte count"
-        severity failure;
-
-    assert C_EXPECTED_OUTPUT_BYTES = 32768
-        report
-            "Unexpected compiled output byte count"
-        severity failure;
-
-    assert C_FINAL_INPUT_BYTES = 4
-        report
-            "Current profile must end with four valid input bytes"
+            "Input framing fixture supports full or 4-byte-final frames only"
         severity failure;
 
     assert C_K mod 4 = 0
         report
-            "K16 regression requires an integral number of AXIS64 beats per output position"
+            "Regression requires an integral number of AXIS64 beats per output position"
         severity failure;
 
-    assert C_OUTPUT_BEATS_PER_POSITION = 4
+    assert C_OUTPUT_BEATS_PER_POSITION * 8 = C_K * 2
         report
-            "K16 regression expects four AXIS64 beats per output position"
+            "Output beat geometry inconsistency"
         severity failure;
 
 
@@ -655,8 +661,9 @@ begin
     -- window generator's row-edge valid bubbles and output backpressure are
     -- both tolerated without weakening ordering coverage.
     --
-    -- K=16 means every logical output pixel becomes exactly four full 64-bit
-    -- beats, so a complete frame contains exactly 4096 beats, all TKEEP=FF.
+    -- K multiple of 4 means every logical output pixel becomes exactly
+    -- C_OUTPUT_BEATS_PER_POSITION full 64-bit beats, so a complete frame
+    -- contains exactly C_EXPECTED_OUTPUT_BEATS beats, all TKEEP=FF.
     -- ========================================================================
 
     output_monitor : process(clk)
@@ -729,7 +736,7 @@ begin
 
                     assert m_axis_tkeep = x"FF"
                         report
-                            "Wrapper emitted non-full K=16 output beat"
+                            "Wrapper emitted non-full output beat"
                         severity failure;
 
 
@@ -760,7 +767,8 @@ begin
                                 (lane + 1) * 16 - 1 downto lane * 16
                             ) = expected_scalar
                         report
-                            "K16 wrapper numerical/order mismatch at output position "
+                            "" &
+                            "Wrapper numerical/order mismatch at output position "
                             & integer'image(position_index)
                             & ", channel group "
                             & integer'image(
@@ -805,7 +813,7 @@ begin
                         assert
                             row_transitions_seen = C_LOG_H - 1
                         report
-                            "K16 wrapper did not preserve all logical row transitions across row-edge bubbles"
+                            "Wrapper did not preserve all logical row transitions across row-edge bubbles"
                         severity failure;
 
 
@@ -1168,12 +1176,12 @@ begin
 
 
         ------------------------------------------------------------------------
-        -- Program all sixteen channels:
+        -- Program all channels:
         --
-        --   nine coefficients = +1
-        --   bias              = 0
-        --   shift             = 0
-        --   ReLU              = 0
+        --   N*N coefficients   = +1 (packed into C_COEFF_WORDS words)
+        --   bias               = 0
+        --   shift              = 0
+        --   ReLU               = 0
         ------------------------------------------------------------------------
 
         procedure program_all_channels is
@@ -1189,22 +1197,14 @@ begin
                     channel * 16#100#;
 
 
-                axi_write(
-                    base + 16#00#,
-                    coefficient_word(channel,0)
-                );
+                for word_index in 0 to C_COEFF_WORDS - 1 loop
 
+                    axi_write(
+                        base + word_index * 4,
+                        coefficient_word(channel, word_index)
+                    );
 
-                axi_write(
-                    base + 16#04#,
-                    coefficient_word(channel,1)
-                );
-
-
-                axi_write(
-                    base + 16#08#,
-                    coefficient_word(channel,2)
-                );
+                end loop;
 
 
                 axi_write(
@@ -1328,43 +1328,67 @@ begin
 
                 end loop;
 
-                send_input_beat(
-                    data_word,
-                    x"FF",
-                    '0'
-                );
+                if C_FINAL_INPUT_BYTES = 0 and
+                   beat = C_FULL_INPUT_BEATS - 1 then
+                    -- Frame length is an exact multiple of the beat width:
+                    -- the final full beat itself carries TLAST.
+                    send_input_beat(
+                        data_word,
+                        x"FF",
+                        '1'
+                    );
+                else
+                    send_input_beat(
+                        data_word,
+                        x"FF",
+                        '0'
+                    );
+                end if;
 
             end loop;
 
 
-            -- 1156 mod 8 = 4:
+            -- Trailing partial beat, if the frame length requires one.
+            --
+            -- C_FINAL_INPUT_BYTES = 4:
             --
             -- lanes 0..3 valid, contiguous low-lane mask.
-            data_word :=
-                (others => '0');
+            if C_FINAL_INPUT_BYTES > 0 then
+
+                data_word :=
+                    (others => '0');
 
 
-            for lane in 0 to C_FINAL_INPUT_BYTES - 1 loop
+                for lane in 0 to C_FINAL_INPUT_BYTES - 1 loop
 
-                data_word(
-                    (lane + 1) * 8 - 1 downto lane * 8
-                ) :=
-                    std_logic_vector(
-                        to_unsigned(
-                            input_pixel_value(pixel_index),
-                            8
-                        )
-                    );
+                    data_word(
+                        (lane + 1) * 8 - 1 downto lane * 8
+                    ) :=
+                        std_logic_vector(
+                            to_unsigned(
+                                input_pixel_value(pixel_index),
+                                8
+                            )
+                        );
 
-                pixel_index :=
-                    pixel_index + 1;
+                    pixel_index :=
+                        pixel_index + 1;
 
-            end loop;
+                end loop;
+
+
+                send_input_beat(
+                    data_word,
+                    x"0F",
+                    '1'
+                );
+
+            end if;
 
 
             assert pixel_index = C_EXPECTED_INPUT_BYTES
                 report
-                    "K16 input generator did not pack exactly one padded frame"
+                    "Input generator did not pack exactly one padded frame"
                 severity failure;
 
 
@@ -1506,7 +1530,7 @@ begin
 
                 assert status_poll_count <= 256
                     report
-                        "Complete K16 output frame did not transition the controller to DONE/IDLE; check input/output acceptance accounting"
+                        "Complete output frame did not transition the controller to DONE/IDLE; check input/output acceptance accounting"
                     severity failure;
 
 
@@ -1944,7 +1968,7 @@ begin
         -- ====================================================================
 
         report
-            "--- WRAPPER B: complete K=16 parameter admission ---";
+            "--- WRAPPER B: complete parameter admission ---";
 
 
         program_all_channels;
@@ -1974,13 +1998,13 @@ begin
 
 
         axi_read(
-            (C_K - 1) * 16#100# + 16#08#,
+            (C_K - 1) * 16#100# + (C_COEFF_WORDS - 1) * 4,
             rd
         );
 
-        assert rd = coefficient_word(C_K-1,2)
+        assert rd = coefficient_word(C_K-1, C_COEFF_WORDS-1)
             report
-                "Final K16 channel coefficient tail readback mismatch"
+                "Final channel coefficient tail readback mismatch"
             severity failure;
 
 
@@ -2293,12 +2317,12 @@ begin
         start_command_time <= now;
 
 
-        -- Ten legal full input beats = 80 physical pixels.
-        --
-        -- That is enough for the 34-wide N=3 window generator to produce
-        -- initial convolution results, but nowhere near a complete frame.
+        -- C_FIRST_OUTPUT_MIN_BEATS whole input beats: just enough accepted
+        -- pixels ((N-1) padded rows plus one window row) for the compiled
+        -- geometry's window generator to produce initial convolution
+        -- results, but nowhere near a complete frame.
         send_full_input_beats(
-            10
+            C_FIRST_OUTPUT_MIN_BEATS
         );
 
 
@@ -2683,7 +2707,11 @@ begin
     timeout_proc : process
     begin
 
-        wait for 2 ms;
+        -- Geometry-scaled hang detector: worst case is the stress fixture
+        -- (up to ~64 idle cycles per input beat) over all regression frames.
+        -- The K16/N3 32x32 profile therefore keeps a margin above its
+        -- historical fixed 2 ms; large frames (D640) scale up accordingly.
+        wait for C_EXPECTED_INPUT_BYTES * 512 * CLK_PERIOD;
 
 
         assert false

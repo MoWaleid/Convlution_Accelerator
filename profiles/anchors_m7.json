@@ -43,5 +43,29 @@
     "tx_bytes": 309444,
     "rx_bytes": 2457600,
     "output_sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e"
+  },
+  "A32_CFGLUT125": {
+    "tx_bytes": 1156,
+    "rx_bytes": 16384,
+    "output_sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+    "note": "same admitted bundle (A32), input and geometry as A32 - the golden output is identical for any bit-exact implementation of the shape; the CFGLUT5 N3 datapath passed the 5,120-output exactness regression and this anchor is re-proven live on first activation"
+  },
+  "C32_CFGLUT125": {
+    "tx_bytes": 1296,
+    "rx_bytes": 16384,
+    "output_sha256": "b6ab2d53dd9517f3892865b386c6206adf24c4137ca8cc259ef3c3ed938d018c",
+    "note": "same admitted bundle (C32), input and geometry as C32 - the golden output is identical for any bit-exact implementation of the shape; the CFGLUT5 N5 datapath passed the 6,144 N=5-output exactness regression and this anchor is re-proven live on first activation"
+  },
+  "D32_CFGLUT125": {
+    "tx_bytes": 1156,
+    "rx_bytes": 8192,
+    "output_sha256": "6cb736f6a80132d8d67bd69854d3d47c5222b3c3936951531632fd6bbf756d5f",
+    "note": "same admitted bundle (D32), input and geometry as D32 - the golden output is identical for any bit-exact implementation of the shape; the CFGLUT5 N3 datapath passed the 5,120-output exactness regression and this anchor is re-proven live on first activation"
+  },
+  "D640_CFGLUT125": {
+    "tx_bytes": 309444,
+    "rx_bytes": 2457600,
+    "output_sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+    "note": "same admitted bundle (D640), recorded LANCZOS preprocessing and 640x480 geometry as D640 - the golden output is identical for any bit-exact implementation of the shape; anchor-only verification applies above REF_POSITION_LIMIT as for D640"
   }
 }
