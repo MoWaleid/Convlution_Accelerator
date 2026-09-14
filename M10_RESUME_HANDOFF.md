@@ -140,27 +140,27 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
 ## 5. Remaining execution order (masterplan style)
 
 ### Gate 2 — prove the transplanted datapath (host + workstation)
-- [ ] G2.1 Verify + commit the working tree (§4 steps above).
-- [ ] G2.2 **Controller audit (F4)**: diff `axi_lite_ctrl.vhd`
+- [x] G2.1 Verify + commit the working tree (§4 steps above).
+- [x] G2.2 **Controller audit (F4)**: diff `axi_lite_ctrl.vhd`
       v1-m9-release..working tree end-to-end; confirm CVH1 conformance
       (STATUS bits, counters, quotas, admission, ERROR_FLAGS) and map our
       software admission (write+readback+PARAM_COMPLETE) onto the new
       `cfg_pending`/`cfg_ready` flow. Add the IP-08 directed cases:
       START-vs-config races, writes during cfg_pending, RESET/ABORT with a
       prefetched window, readback≠installed-state before cfg_ready.
-- [ ] G2.3 **RTL regressions in Vivado GUI Tcl console** (user runs, output
+- [x] G2.3 **RTL regressions in Vivado GUI Tcl console** (user runs, output
       comes back next message): compile tb_cfglut5_exact /
       tb_cfglut5_k16_smoke / tb_cfglut5_pipeline / tb_conv_axis_wrapper
       (A–H + edge-bubble metrics at 8000 ps). Note the live project's BD is
       now the 125 MHz one — sims are behavioral, unaffected.
-- [ ] G2.4 **Numerical gauntlet (IP-10)**: the transplanted conv_channel
+- [x] G2.4 **Numerical gauntlet (IP-10)**: the transplanted conv_channel
       S4/S5 sign-extension fix must be exercised beyond their zero-heavy
       suite — nonzero ±accumulations, extrema, rounding boundaries,
       signed-24 bias endpoints, both ReLU states, ALL 32 shifts vs the
       exact reference. Extend `tb_conv_channel_shifts.vhd` (it already
       demonstrates the harness pattern; on the new datapath all cases
       including shifts 24–31 must PASS — that is the R14-01 fix riding M11).
-- [ ] G2.5 **First research build** (user, Vivado GUI Tcl console):
+- [x] G2.5 **First research build** (Vivado 2025.2 isolated batch build):
       host `python scripts/research_release/research_release.py prepare
       B32_CFGLUT125`, then in the Tcl console
       `cd D:/MyProjects/Convlution_Accelerator; set research_release_id
@@ -168,7 +168,8 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       then host `... research_release.py manifest B32_CFGLUT125`.
       Expect WNS/WHS ≥ 0 at 8 ns (their +0.178 is the reference, ±route
       variance; the gate is sign, not the exact value).
-- [ ] G2.6 Fill the TBD hashes in `hardware_B32_CFGLUT125.json` from
+      Actual: WNS +0.157 ns, WHS +0.019 ns, timing met, DRC/route clean.
+- [x] G2.6 Fill the TBD hashes in `hardware_B32_CFGLUT125.json` from
       `work/research_B32_CFGLUT125/artifacts/build_manifest.json`; copy
       bit/xsa to `bitstreams/b32_cfglut125_125mhz.*`; produce the
       FPGA-manager firmware with
