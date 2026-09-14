@@ -7,18 +7,20 @@ set script_dir [file normalize [file dirname [info script]]]
 set root [file normalize [file join $script_dir .. ..]]
 set rtl [file join $root Convlution_Accelerator.srcs sources_1 new]
 
+set require_continuous true
 if {[info exists argv] && [llength $argv] >= 2} {
     set release_id [lindex $argv 0]
     set tb_file [lindex $argv 1]
+    if {[llength $argv] >= 3} { set require_continuous [lindex $argv 2] }
 } else {
-    error "usage: vivado -mode batch -source debug_wrapper_sim.tcl -tclargs <RELEASE_ID> <TB_FILE>"
+    error "usage: vivado -mode batch -source debug_wrapper_sim.tcl -tclargs <RELEASE_ID> <TB_FILE> <require_continuous true|false>"
 }
 if {![file isfile $tb_file]} { error "TB not found: $tb_file" }
 
 set rendered_config [file join $root work research_$release_id src config_pkg.vhd]
 if {![file isfile $rendered_config]} { error "missing rendered config_pkg: $rendered_config" }
 
-set out [file join $root work debug_wrapper_hang]
+set out [file join $root work debug_wrapper_$release_id]
 file delete -force $out
 file mkdir $out
 
@@ -38,7 +40,7 @@ add_files -fileset sim_1 -norecurse $tb_file
 set_property file_type {VHDL 2008} [get_files *.vhd]
 set_property top conv_axis_wrapper [get_filesets sources_1]
 set_property top tb_conv_axis_wrapper [get_filesets sim_1]
-set_property generic "G_WINDOW_PREFETCH=true G_REQUIRE_CONTINUOUS=true G_STRESS=false" [get_filesets sim_1]
+set_property generic "G_WINDOW_PREFETCH=true G_REQUIRE_CONTINUOUS=$require_continuous G_STRESS=false" [get_filesets sim_1]
 update_compile_order -fileset sim_1
 
 if {$release_id eq "D640_CFGLUT125"} {

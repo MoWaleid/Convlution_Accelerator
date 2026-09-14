@@ -1153,3 +1153,62 @@ table. Local canonical bundles verified byte-exact against the catalog
 Pending: user-executed Vivado wrapper sims per release (optimized variant;
 D640 is a long sim), then the five `research_build.tcl` routed builds,
 then board qualification per §18.5 steps 5-6.
+
+### 18.10 Wrapper-sim bring-up: duplicate-beat bug + edge-free claim scope (2026-09-14 evening)
+
+The first B32 wrapper-sim attempt hung after frame C. Root cause was NOT the
+RTL: `8c0425f`'s conv_channel/conv_engine changes are N=3-equivalent (proven
+by running the pre-edit TB against current RTL: PASS). The hang was a
+testbench bug introduced by the generalization edit: the frame sender's new
+conditional trailing-beat block was added WITHOUT removing the original
+unconditional trailing `send_input_beat`, so frame C carried a second
+TLAST beat. The DUT correctly completed the frame at 1156 bytes and gated
+further input; the TB spun forever on the rejected beat. Instrumentation
+(DEBUG_SEND_BEAT/BEAT_ACCEPTED reports) pinpointed 146 beats sent / 145
+accepted / the duplicate keep=15 TLAST beat spinning. Fixed and verified:
+full A-H B32 regression passes with metrics byte-identical to the
+historical fixture (commit `8dd1d31`).
+
+**Edge-free claim scope (engineering finding, wrapper-level):** the
+zero-bubble output property is proven only for N=3 with K>=8. Evidence from
+the generalized A-H fixture (benchmark frame D = guaranteed supply,
+continuously ready sink):
+- B32_CFGLUT125 (K16/N3): strict PASS, frame D invalid_advances=0, gaps=0.
+- A32_CFGLUT125 (K8/N3): strict PASS.
+- C32_CFGLUT125 (K8/N5): frame C exact and complete, frame D asserts
+  "Unexpected output gap" at the first row transition (beat 64 = position
+  32); frame C WINDOW_METRICS invalid_advances=32 (vs 0 at N3).
+- D32_CFGLUT125 (K4/N3): same signature; frame D gap at beat 32 = position
+  32; frame C invalid_advances=57.
+Working explanation (analysis, consistent with all four points, not
+cycle-proven): the window generator's valid drops for the first N-1 pixels
+of each padded row (any N); the prefetch/serializer slack hides those holes
+when the output path carries >=2 beats per position (K>=8 at N3), but not at
+K4 (1 beat/position) and not for N5's 4-wide hole. Correctness is NOT
+affected: in both failing runs frame C completed with every output scalar
+bit-exact; only the zero-gap assertion tripped. Consequence per the G3.4
+claim discipline: the "one position per clock including edges" judge-bonus
+claim attaches to A32/B32 only; C32/D32/D640 run the fixture with
+G_REQUIRE_CONTINUOUS=false (`optimized_relaxed` variant of the runner) and
+record measured transition bubbles. A source-level fix (window generator
+producing valid windows on transition pixels) is a scoped follow-up design
+task, not a release gate.
+
+**USER DECISION 2026-09-14 (option a): freeze the five-release package with
+the gapless claim on A32/B32 only; C32/D32/D640 documented with measured
+transition bubbles.** Final wrapper-sim matrix (all five releases, A-H
+complete, AI-driven batch xsim): B32/A32 strict PASS (frame D
+invalid_advances=0, gaps=0); C32 relaxed PASS (62/31), D32 relaxed PASS
+(62/62), D640 relaxed PASS (958/958) — frame D invalid advances / external
+output gaps; one-to-two bubbles per logical row transition, ~1.5% / ~6% /
+~0.3% of frame output beats. A second fixture bug surfaced at D640: the
+reference summed untruncated pixel integers while the byte stream truncates
+r+c to 8 bits (first mismatch at position 252: expected 2286 vs the DUT's
+correct 2030); fixed with `mod 256` in the TB's input_pixel_value. The DUT
+was bit-exact against its actual input in every case; no datapath change was
+needed. Full record:
+`report/research_builds/CFGLUT125_MATRIX/profile_wrapper_sims_20260914.md`.
+The runner's `optimized_relaxed` variant + geometry-aware checker encode the
+claim scope; `debug_wrapper_sim.tcl <RELEASE_ID> <TB> <require_continuous>`
+is the batch bisect tool (one release per directory — concurrent runs
+clobbered a shared dir once; never parallelize without distinct out dirs).

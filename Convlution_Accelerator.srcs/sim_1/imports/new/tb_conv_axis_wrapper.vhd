@@ -149,9 +149,12 @@ architecture sim of tb_conv_axis_wrapper is
         if G_STRESS then
             return (pixel_index*73 + (pixel_index/7)*29 + (pixel_index mod 11)*113) mod 256;
         end if;
+        -- r + c, truncated to the 8-bit pixel the DUT actually receives.
+        -- At 640-wide profiles r+c reaches 643, so the reference must sum
+        -- the same truncated byte values, not the unbounded integers.
         return
-            (pixel_index / C_PAD_W)
-            + (pixel_index mod C_PAD_W);
+            ((pixel_index / C_PAD_W)
+            + (pixel_index mod C_PAD_W)) mod 256;
     end function input_pixel_value;
 
 
