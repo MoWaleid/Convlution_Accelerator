@@ -45,8 +45,10 @@ B32/C32/D32/D640).
 1. **Numerical scope (R14-01 containment, option b):** the MAC S4 rounding
    add is defective for shifts 24–31 (constant overflows at 24, wraps at 25,
    vanishes at 26+); admission (`load_params`) rejects shift ≥ 24. Shifts
-   0–23 are arithmetically safe; 4/7/8/9 are board-qualified. The real fix
-   rides the research line (M11).
+   0–23 are arithmetically safe; 4/7/8/9 are board-qualified. The defect is
+   **confirmed by simulation** on the baseline (`tb_conv_channel_shifts`,
+   2026-09-14: shifts 25/26/31 return −1 vs reference 0). The real fix rides
+   the research line (M11).
 2. **Throughput:** 4/K output positions/cycle is the 64-bit serializer
    interface ceiling, not a measured rate; only wall-clock frame times are
    reported. No video/frame-rate claims.

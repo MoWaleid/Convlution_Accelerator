@@ -101,9 +101,11 @@ any transplant.
    `cfglut5_bitheap_3x3.vhd` on `00a6e11` regenerates **byte-identically**
    from `scripts/generate_cfglut_bitheap.py` (sha256 `ad49b540…`). The
    research build-flow stand-up (D3 scripts) remains.
-3. **F1 xsim confirmation staged:** `tb_conv_channel_shifts.vhd` drives the
-   four minimal counterexamples (zero-window, bias 0/−1, shifts 8/25/26/31)
-   against hand-computed reference values; expected outcome on the baseline
-   is 3 mismatches = R14-01 CONFIRMED by simulation. Awaiting GUI xsim run.
+3. **F1 xsim confirmation DONE 2026-09-14:** `tb_conv_channel_shifts` ran on
+   the baseline (Vivado 2025.2 xsim): case 0 (shift 8) OK; cases 1-3
+   (shift 25 zero-acc, shift 26/31 acc −1) each returned **−1 vs reference
+   0**. Verdict line: `TB_R14_01_SIM: DEFECT CONFIRMED BY SIMULATION - 3 of
+   4 large-shift cases`. R14-01 is sim-proven on our baseline; the M9
+   known-limit statement is simulation-backed.
 4. Teammate artifact/evidence package request (resolve +0.201/+0.178 WNS —
    IP-02) or clean rebuild of the research line.
