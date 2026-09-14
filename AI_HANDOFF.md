@@ -1358,6 +1358,28 @@ Next routed build is A32_CFGLUT125, then D32 and the uniform-provenance B32
 rebuild. Firmware generation, final-manifest hash binding, catalog cutover and
 board qualification follow only after the five routed builds are frozen.
 
+### 18.15 A32_CFGLUT125 routed build accepted (2026-09-15)
+
+The A32_CFGLUT125 build passed from clean commit
+`45b35a6970975552050db9cf3eabd292df3fa3a6`: 125 MHz, WNS +0.197, WHS +0.037,
+zero setup/hold failures, clean routing, zero DRC errors, zero methodology
+checks and a source-bound build manifest. Preserved BIT SHA-256 is
+`0ddd0a4694dcf7f8f9e91d9444f420415540df96db40fc166cfe950a15cdc759`;
+XSA SHA-256 is
+`41cc3d8d0a70faaabc90ba0baaa120722a7a9d0baff86e87651adb5efddbfef8`.
+Reports are under `report/research_builds/A32_CFGLUT125/`; the XSA is tracked
+at `bitstreams/a32_cfglut125_125mhz.xsa` and the BIT stays ignored with its
+hash bound in tracked records. A32 remains BUILT / BOARD_VALIDATION=NOT_RUN.
+The PSU-1..4 negative-DQS-skew critical warnings observed during generation
+are the known ZedBoard-preset artifact: the four
+`PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_*` values are byte-identical to the accepted
+C32/D640 builds and the board-qualified B32 CFGLUT125 build.
+
+Next routed build is D32_CFGLUT125 (render verified pristine: only
+`src/config_pkg.vhd`, SHA
+`78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92`), then the
+uniform-provenance B32 rebuild per §19.6.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1427,30 +1449,41 @@ evidence only; exclude them from the active catalog/library/image/demo.
    `6e95188e197f402bf9029295b3d4584111aa7b5afbb06802045596f49f41cca3`;
    XSA SHA `371a420baf8b20d1ad2cb0ad072bde8f101a232df0dc691e72f79b37742c9457`.
    Reports `report/research_builds/D640_CFGLUT125/`; commit `58fca2c`.
-4. B32 has older routed/board-qualified 125 MHz evidence. Preserve it, but
+4. A32 BUILT / board NOT_RUN: 125 MHz, WNS `+0.197`, WHS `+0.037`, clean route,
+   zero DRC errors, zero methodology checks. Source `45b35a6`; BIT SHA
+   `0ddd0a4694dcf7f8f9e91d9444f420415540df96db40fc166cfe950a15cdc759`;
+   XSA SHA `41cc3d8d0a70faaabc90ba0baaa120722a7a9d0baff86e87651adb5efddbfef8`.
+   Reports `report/research_builds/A32_CFGLUT125/`; evidence recorded in the
+   commit carrying §18.15. PSU-1..4 warnings dispositioned as the known
+   ZedBoard-preset artifact (§18.15).
+5. B32 has older routed/board-qualified 125 MHz evidence. Preserve it, but
    rebuild B32 last for uniform generalized-source provenance.
 
-C32/D640 BITs are ignored under `bitstreams/` with hashes in tracked records;
-their XSAs/reports are tracked. New `.bit.bin` and board qualification are open.
+C32/D640/A32 BITs are ignored under `bitstreams/` with hashes in tracked
+records; their XSAs/reports are tracked. New `.bit.bin` and board
+qualification are open.
 
-### 19.4 Immediate action — A32
+### 19.4 Immediate action — D32
 
-Observed: `work/research_A32_CFGLUT125/` contains only `src/config_pkg.vhd`,
-SHA `7434e32794e00ce54ddd9fde1ee94c0a863c629412fabd1146acff2883a96fe4`.
+A32 is accepted (§18.15). Observed: `work/research_D32_CFGLUT125/` contains
+only `src/config_pkg.vhd`, SHA
+`78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92`.
 After confirming clean state, give the user:
 
 ```tcl
 if {[llength [get_projects -quiet]]} { close_project }
 cd {D:/MyProjects/Convlution_Accelerator}
-set research_release_id A32_CFGLUT125
+set research_release_id D32_CFGLUT125
 set build_rc [catch { source {scripts/research_release/research_build.tcl} } build_msg build_opts]
 puts "BUILD RESULT: $build_rc"
 puts "BUILD MESSAGE: $build_msg"
 if {$build_rc} { puts [dict get $build_opts -errorinfo] }
 ```
 
-Accept only `RESEARCH_BUILD_OK: A32_CFGLUT125` with nonnegative WNS/WHS and
+Accept only `RESEARCH_BUILD_OK: D32_CFGLUT125` with nonnegative WNS/WHS and
 `BUILD RESULT: 0`. On failure inspect the preserved run; never rerun blindly.
+PSU-1..4 negative-DQS-skew critical warnings are expected (ZedBoard preset;
+§18.15).
 
 ### 19.5 Mandatory post-build acceptance
 
