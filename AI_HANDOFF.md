@@ -1169,12 +1169,14 @@ accepted / the duplicate keep=15 TLAST beat spinning. Fixed and verified:
 full A-H B32 regression passes with metrics byte-identical to the
 historical fixture (commit `8dd1d31`).
 
-**Edge-free claim scope (engineering finding, wrapper-level):** the
-zero-bubble output property is proven only for N=3 with K>=8. Evidence from
+**Edge-free claim scope (engineering finding, wrapper-level):** Option A
+limits the external zero-bubble output claim to A32/B32. Evidence from
 the generalized A-H fixture (benchmark frame D = guaranteed supply,
 continuously ready sink):
 - B32_CFGLUT125 (K16/N3): strict PASS, frame D invalid_advances=0, gaps=0.
-- A32_CFGLUT125 (K8/N3): strict PASS.
+- A32_CFGLUT125 (K8/N3): wrapper-complete with frame D
+  invalid_advances=31, external gaps=0; the serializer hides the internal
+  transition bubbles.
 - C32_CFGLUT125 (K8/N5): frame C exact and complete, frame D asserts
   "Unexpected output gap" at the first row transition (beat 64 = position
   32); frame C WINDOW_METRICS invalid_advances=32 (vs 0 at N3).
@@ -1197,8 +1199,8 @@ task, not a release gate.
 **USER DECISION 2026-09-14 (option a): freeze the five-release package with
 the gapless claim on A32/B32 only; C32/D32/D640 documented with measured
 transition bubbles.** Final wrapper-sim matrix (all five releases, A-H
-complete, AI-driven batch xsim): B32/A32 strict PASS (frame D
-invalid_advances=0, gaps=0); C32 relaxed PASS (62/31), D32 relaxed PASS
+complete, AI-driven batch xsim): B32 strict PASS metrics (0/0), A32 strict
+PASS metrics (31/0); C32 relaxed PASS (62/31), D32 relaxed PASS
 (62/62), D640 relaxed PASS (958/958) — frame D invalid advances / external
 output gaps; one-to-two bubbles per logical row transition, ~1.5% / ~6% /
 ~0.3% of frame output beats. A second fixture bug surfaced at D640: the
@@ -1210,5 +1212,88 @@ needed. Full record:
 `report/research_builds/CFGLUT125_MATRIX/profile_wrapper_sims_20260914.md`.
 The runner's `optimized_relaxed` variant + geometry-aware checker encode the
 claim scope; `debug_wrapper_sim.tcl <RELEASE_ID> <TB> <require_continuous>`
-is the batch bisect tool (one release per directory — concurrent runs
-clobbered a shared dir once; never parallelize without distinct out dirs).
+is the batch bisect tool. Both official and debug runners now allocate unique
+microsecond/PID directories and refuse reuse.
+
+### 18.11 GLM review round — five-profile staging + wrapper campaign (2026-09-14)
+
+`feedback.md`'s newest layer (GLM-F1..F8) reviewed commits 523b0fd..6a2c5f6
+and blocked the routed builds until fixed. Dispositions, executed in the
+reviewer's required order:
+- **F1 (P0, fixed):** `conv_lab/profiles.py` strict loader accepted only the
+  seven-entry catalog; the eleven-entry staging catalog broke
+  `tests.test_m7_profiles` (12/12 errors). Loader + tests now define the
+  exact eleven-release staging set (final five only at cutover); 12/12 PASS.
+- **F2 (P0, fixed):** `test_profile_wrappers.tcl` never parsed
+  CFG_UNPADDED_HEIGHT (`$spec_h` undefined in expr) and called check_metrics
+  with 4 of 5 parameters — deterministic post-sim failures the batch debug
+  runs could not catch. Both fixed; every regexp return is now checked
+  fail-closed; H is bound in the identity comparison.
+- **F3 (P1, fixed):** `research_release.crosscheck` now binds spec
+  N/K/W/H == catalog profile fields, canonical shape string,
+  profile==release_id, profile/release/spec build-ID agreement, and 125 MHz
+  for _CFGLUT125 releases. Negative tests:
+  `scripts/research_release/test_spec_crosscheck.py` (7 cases).
+- **F5 (P1, fixed):** debug runner uses unique timestamped out dirs, never
+  deletes, records TB/config SHA-256 in run_meta.txt, and exits nonzero on
+  any missing PASS marker or Failure/Error/Fatal.
+- **F6 (P1, fixed):** `m7_switch.release_bundle_dir()` added; `--soak` and
+  `do_switch_frames` resolve the catalog bundle_dir instead of the raw
+  release name. Mock coverage: `--candidate-undeployable profile|soak`
+  proves A32_CFGLUT125 is rejected before any hardware mutation (catalog/
+  firmware/F7-hash gates; registers byte-identical, zero program calls).
+  ORDER stays the legacy five until catalog cutover.
+- **F7 (P2, fixed in code):** the four candidate manifests carry explicit
+  `release_status: candidate-unbuilt` / `deployable: false`, and
+  `switch_to` rejects any manifest whose artifact hashes are not canonical
+  64-hex SHA-256 (clean GLM-F7 error instead of a hash mismatch). The
+  cutover packaging gate (reject TBD_*, 100 MHz entries, suffixed names,
+  missing firmware) is a recorded cutover checklist item.
+- **F8 (P2, fixed):** the TB's trailing-beat TKEEP is generated from
+  C_FINAL_INPUT_BYTES (contiguous low-lane mask) instead of the hardcoded
+  x"0F"; the remainder assert now admits any beat-sized remainder, and a
+  synthetic W=33/H=33 fixture (remainder 1) passed the full strict A-H
+  regression (frame D 0/0).
+- **F4 (P1, still open after GLM):** GLM re-ran the matrix, but A32/B32 exited
+  1 after successful simulation because `check_metrics` read `spec_k` outside
+  its Tcl procedure scope. The collection is preserved honestly at
+  `report/research_builds/CFGLUT125_MATRIX/wrapper_glm_provisional_20260914/`.
+  C32/D32/D640 exited 0; A32/B32 retain useful functional logs and metrics but
+  no official terminal PASS. User-executed clean-commit qualification remains
+  required.
+
+### 18.12 Codex takeover after GLM corrections (2026-09-14)
+
+The user ended external-agent delegation; Codex now owns repository edits and
+Windows-side checks. The user continues to execute supplied Vivado Tcl,
+Ubuntu/PetaLinux and board-shell commands. Option A is locked: only A32/B32
+may advertise zero external output bubbles; C32/D32/D640 ship exact with their
+measured row-transition bubbles documented.
+
+Takeover audit outcome:
+- GLM's eleven-entry staging loader, release geometry/identity crosscheck,
+  bundle aliases and generalized TKEEP pass focused host tests.
+- Fixed the remaining official-runner scope fault by passing `spec_k`
+  explicitly. Every rendered/spec regexp is now fail-closed; evidence paths
+  use microsecond/PID nonces; official runs refuse a dirty tracked tree.
+- The official runner now emits `run_meta.txt` (commit and exact
+  runner/testbench/rendered-config hashes) and `run_result.txt` (exact terminal
+  marker and Option-A scope). `preserve_wrapper_evidence.py` no longer launches
+  Vivado: it collects user-run results, verifies all bindings against the same
+  clean commit, refuses overwrite, and generates complete SHA-256 evidence.
+- Candidate manifests are explicitly `deployable:false`; `m7_switch.py` now
+  rejects that field before firmware access or any hardware mutation, in
+  addition to rejecting placeholder/noncanonical hashes.
+- Corrected the report: A32 frame D is 31 internal invalid advances / 0
+  external gaps, not 0/0. This distinction is central to Option A.
+- Takeover host verification passed: 8 release crosscheck/tamper tests, 12
+  M7 profile tests, deterministic 3x3+5x5 generator check, five release checks
+  and exact render checks, B32/matrix/candidate M7 mocks, the full M8 mock
+  suite, 15 importer tests, and static parsing of 49 Python plus 7 JSON files.
+  No Vivado simulation/build or hardware command was executed by Codex.
+
+Immediate gate: commit the repaired staging state, then the user runs the five
+official wrapper regressions from that clean commit (A32/B32 `optimized`,
+C32/D32/D640 `optimized_relaxed`). After collection passes, build risk-first:
+C32, D640, A32, D32, then rebuild B32 for uniform provenance. Only B32 has a
+routed and board-qualified 125 MHz CFGLUT5 artifact at this checkpoint.

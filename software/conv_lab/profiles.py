@@ -27,10 +27,17 @@ def load_profiles(path):
     require(type(data["schema_version"]) is int and data["schema_version"] == 2,
             "profile schema")
     entries = data["profiles"]
+    # Explicit staging set (GLM-F1): the five frozen legacy releases, the two
+    # preserved B32 research releases, and the four candidate CFGLUT125
+    # releases awaiting their first routed build. At the final catalog cutover
+    # this exact set changes to the five production names only; the loader
+    # never accepts arbitrary names.
     require(type(entries) is dict and
             set(entries) == {"A32", "B32", "C32", "D32", "D640",
-                             "B32_CFGLUT125", "B32_CFGLUT100"},
-            "explicit seven-release catalog required")
+                             "B32_CFGLUT125", "B32_CFGLUT100",
+                             "A32_CFGLUT125", "C32_CFGLUT125",
+                             "D32_CFGLUT125", "D640_CFGLUT125"},
+            "explicit eleven-release staging catalog required")
     result = {}
     ids = set()
     for name, entry in entries.items():

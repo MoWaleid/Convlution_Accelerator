@@ -55,27 +55,75 @@ if {![file isfile $rendered_config]} {
 # The rendered per-release config_pkg is the build-tree source of truth.
 set fh [open $rendered_config r]; set cfg_text [read $fh]; close $fh
 set spec_path [file join $script_dir builds $release_id.spec.tcl]
+if {![file isfile $spec_path]} {
+    error "Missing release spec: $spec_path"
+}
 set sfh [open $spec_path r]; set spec_text [read $sfh]; close $sfh
-set spec_build_id ""; set spec_k ""; set spec_n ""; set spec_w ""
+set spec_build_id ""; set spec_k ""; set spec_n ""; set spec_w ""; set spec_h ""
 foreach {label pattern dst} {
     build_id {CFG_BUILD_ID\s*:\s*std_logic_vector\(127 downto 0\)\s*:=\s*x"([0-9A-Fa-f]+)"} spec_build_id
     cfg_k    {CFG_K\s*:\s*integer\s*:=\s*(\d+)} spec_k
     cfg_n    {CFG_N\s*:\s*integer\s*:=\s*(\d+)} spec_n
     cfg_w    {CFG_UNPADDED_WIDTH\s*:\s*integer\s*:=\s*(\d+)} spec_w
+    cfg_h    {CFG_UNPADDED_HEIGHT\s*:\s*integer\s*:=\s*(\d+)} spec_h
 } {
-    regexp -nocase -line $pattern $cfg_text -> $dst
+    # GLM-F2: every regexp return is checked; a failed parse must not
+    # inherit a stale variable from an interactive Vivado session.
+    if {![regexp -nocase -line $pattern $cfg_text -> $dst]} {
+        error "$release_id: rendered config_pkg is missing $label - re-run research_release.py prepare"
+    }
 }
-regexp -line {set spec\(build_id_hex\)\s+(\S+)} $spec_text -> cat_build_id
-regexp -line {set spec\(k\)\s+(\d+)} $spec_text -> cat_k
-regexp -line {set spec\(n\)\s+(\d+)} $spec_text -> cat_n
-regexp -line {set spec\(w\)\s+(\d+)} $spec_text -> cat_w
-if {$spec_build_id ne $cat_build_id || $spec_k ne $cat_k || $spec_n ne $cat_n || $spec_w ne $cat_w} {
-    error "$release_id: rendered config_pkg ($spec_build_id K$spec_k N$spec_n W$spec_w) disagrees with spec ($cat_build_id K$cat_k N$cat_n W$cat_w) - re-run research_release.py prepare"
+foreach {label pattern dst} {
+    build_id {set spec\(build_id_hex\)\s+(\S+)} cat_build_id
+    spec_k   {set spec\(k\)\s+(\d+)} cat_k
+    spec_n   {set spec\(n\)\s+(\d+)} cat_n
+    spec_w   {set spec\(w\)\s+(\d+)} cat_w
+    spec_h   {set spec\(h\)\s+(\d+)} cat_h
+} {
+    if {![regexp -line $pattern $spec_text -> $dst]} {
+        error "$release_id: release spec is missing $label"
+    }
 }
-puts "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w build_id=$spec_build_id"
+if {$spec_build_id ne $cat_build_id || $spec_k ne $cat_k || $spec_n ne $cat_n || $spec_w ne $cat_w || $spec_h ne $cat_h} {
+    error "$release_id: rendered config_pkg ($spec_build_id K$spec_k N$spec_n W$spec_w H$spec_h) disagrees with spec ($cat_build_id K$cat_k N$cat_n W$cat_w H$cat_h) - re-run research_release.py prepare"
+}
+set release_driver [file join $script_dir research_release.py]
+if {[catch {exec python -B $release_driver verify-render $release_id} render_check]} {
+    error "$release_id: deterministic rendered-config verification failed: $render_check"
+}
+puts $render_check
+puts "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id"
 
+set run_nonce [format "%s_%s" [clock microseconds] [pid]]
 set out [file join $root work \
-    [format "profile_wrapper_%s_%s_%s" $release_id $variant [clock seconds]]]
+    [format "profile_wrapper_%s_%s_%s" $release_id $variant $run_nonce]]
+if {[file exists $out]} {
+    error "Refusing to reuse wrapper evidence directory: $out"
+}
+
+# Bind every official result to a clean tracked source state and the exact
+# rendered config. Untracked work/ outputs are allowed; tracked source edits
+# must be committed before qualification.
+if {[catch {exec git -C $root diff --quiet}]} {
+    error "Tracked unstaged changes exist; commit or revert them before official qualification"
+}
+if {[catch {exec git -C $root diff --cached --quiet}]} {
+    error "Tracked staged changes exist; commit them before official qualification"
+}
+set git_commit [string trim [exec git -C $root rev-parse HEAD]]
+
+proc official_sha256 {path} {
+    if {[catch {exec certutil -hashfile $path SHA256} out]} {
+        error "certutil could not hash $path"
+    }
+    if {![regexp -nocase {(^|\n)([0-9a-f]{64})(\r?$|\n)} $out -> _ hex]} {
+        error "certutil returned no canonical SHA-256 for $path"
+    }
+    return [string tolower $hex]
+}
+
+set tb_path [file normalize [file join $sim tb_conv_axis_wrapper.vhd]]
+set runner_path [file normalize [info script]]
 
 # A prior failed run leaves profile_wrapper_sim open; close only that one.
 # Any other open project (e.g. the main Vivado project) must be closed by the
@@ -83,10 +131,24 @@ set out [file join $root work \
 if {![catch {current_project}]} {
     if {[get_property NAME [current_project]] eq "profile_wrapper_sim"} {
         close_project
+    } else {
+        error "Close the currently open Vivado project before running the isolated wrapper regression"
     }
 }
 
 create_project profile_wrapper_sim $out -part xc7z020clg484-1
+set meta_fd [open [file join $out run_meta.txt] w]
+puts $meta_fd "release_id=$release_id"
+puts $meta_fd "variant=$variant"
+puts $meta_fd "git_commit=$git_commit"
+puts $meta_fd "vivado=[version -short]"
+puts $meta_fd "runner=$runner_path"
+puts $meta_fd "runner_sha256=[official_sha256 $runner_path]"
+puts $meta_fd "testbench=$tb_path"
+puts $meta_fd "testbench_sha256=[official_sha256 $tb_path]"
+puts $meta_fd "rendered_config=$rendered_config"
+puts $meta_fd "rendered_config_sha256=[official_sha256 $rendered_config]"
+close $meta_fd
 set_property target_language VHDL [current_project]
 set_property simulator_language Mixed [current_project]
 
@@ -100,7 +162,7 @@ foreach name {conv_pkg sync_fifo coeff_bias_shift_regfile axi_lite_ctrl \
     add_files -norecurse [file join $rtl $name.vhd]
 }
 add_files -norecurse $rendered_config
-add_files -fileset sim_1 -norecurse [file join $sim tb_conv_axis_wrapper.vhd]
+add_files -fileset sim_1 -norecurse $tb_path
 
 set_property file_type {VHDL 2008} [get_files *.vhd]
 set_property top conv_axis_wrapper [get_filesets sources_1]
@@ -131,12 +193,13 @@ if {[string first "CONV_AXIS_WRAPPER COMPLETE M4 INTEGRATION REGRESSION PASS" $l
 # deterministic fixture produces (N-1) invalid advances at each of the
 # (rows-1) logical row transitions (N=3/K16 historical fixture: 2*31 = 62).
 #
-# gapless_expected gates the zero-bubble assertions: proven for N=3/K>=8,
-# not proven for K=4 or N=5 (measured values recorded instead).
+# gapless_expected gates the external zero-bubble assertion. Option A makes
+# this an explicit release claim for A32/B32 only; it must not expand to a
+# future geometry merely because that geometry also has N=3 and K>=8.
 # ---------------------------------------------------------------------
 set expected_invalid_no_prefetch [expr {($spec_n - 1) * ($spec_h - 1)}]
-set gapless_expected [expr {($spec_n == 3) && ($spec_k >= 8)}]
-proc check_metrics {log_text built_enabled expected_policy_enabled expected_invalid_no_prefetch gapless_expected} {
+set gapless_expected [expr {$release_id in {A32_CFGLUT125 B32_CFGLUT125}}]
+proc check_metrics {log_text built_enabled expected_policy_enabled expected_invalid_no_prefetch gapless_expected spec_k} {
     set records {}
     foreach {_ seq pre inv} [regexp -all -inline -line \
         {WINDOW_METRICS seq=(\d+) prefetch=(true|false) invalid_advances=(\d+)} $log_text] {
@@ -174,19 +237,34 @@ proc check_metrics {log_text built_enabled expected_policy_enabled expected_inva
         puts "PROFILE_WRAPPER_EDGE_GAP_KNOWN: frame D invalid_advances=[lindex $d 2] gaps=$dgaps (edge-free zero-bubble claim not proven for this geometry; recorded, not asserted)"
         return ""
     }
-    set expected_invalid [expr {$expected_policy_enabled ? 0 : $expected_invalid_no_prefetch}]
-    if {[lindex $d 2] != $expected_invalid} {
-        return "frame D invalid_advances=[lindex $d 2], expected $expected_invalid"
+    # Internal zero-bubble (no engine advance on an invalid window) is the
+    # stricter tier proven at K16 (B32).  K8 (A32) deterministically absorbs
+    # one internal bubble per row transition behind two output beats per
+    # position; recorded, not asserted.
+    if {$spec_k == 16} {
+        set expected_invalid [expr {$expected_policy_enabled ? 0 : $expected_invalid_no_prefetch}]
+        if {[lindex $d 2] != $expected_invalid} {
+            return "frame D invalid_advances=[lindex $d 2], expected $expected_invalid"
+        }
+    } else {
+        puts "PROFILE_WRAPPER_INTERNAL_BUBBLES_RECORDED: frame D invalid_advances=[lindex $d 2] (external output gapless; internal tier proven at K16 only)"
     }
-    if {$dgaps != 0} {
-        return "frame D output gaps=$dgaps, expected 0"
+    if {$expected_policy_enabled} {
+        # Option A's published claim is external continuity. A32 may contain
+        # internal invalid-window advances that its serializer hides.
+        if {$dgaps != 0} {
+            return "frame D output gaps=$dgaps, expected 0"
+        }
+    } else {
+        puts "PROFILE_WRAPPER_BASELINE_GAPS_RECORDED: frame D gaps=$dgaps"
     }
     return ""
 }
 
 set built_enabled $enabled
 set expected_policy_enabled [expr {$expect_checker_fail ? "true" : $enabled}]
-set check_fail [check_metrics $log_text $built_enabled $expected_policy_enabled $expected_invalid_no_prefetch]
+set check_fail [check_metrics $log_text $built_enabled $expected_policy_enabled \
+                    $expected_invalid_no_prefetch $gapless_expected $spec_k]
 
 if {$expect_checker_fail} {
     if {$check_fail eq ""} {
@@ -200,6 +278,12 @@ if {$expect_checker_fail} {
     if {$check_fail ne ""} {
         error "Metric acceptance checker failed: $check_fail"
     }
-    puts "PROFILE_WRAPPER_PASS: $release_id $variant"
+    set terminal_marker "PROFILE_WRAPPER_PASS: $release_id $variant"
+    set result_fd [open [file join $out run_result.txt] w]
+    puts $result_fd "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id"
+    puts $result_fd $terminal_marker
+    puts $result_fd "OPTION_A_EXTERNAL_GAPLESS_CLAIM=[expr {$gapless_expected ? {yes} : {no}}]"
+    close $result_fd
+    puts $terminal_marker
 }
 close_project

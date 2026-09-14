@@ -1,0 +1,130 @@
+{
+  "schema": "wrapper-provisional-evidence/1",
+  "qualification_status": "PROVISIONAL_NOT_OFFICIAL",
+  "recorded_utc": "2026-09-14T20:24:20Z",
+  "executed_by": "GLM agent (batch xsim on the Windows workstation)",
+  "runner": "scripts/research_release/test_profile_wrappers.tcl",
+  "note": "Provisional smoke evidence only. A32 and B32 simulations reached the wrapper completion marker and measured zero external gaps, but the Tcl runner exited 1 afterward because check_metrics read spec_k outside its procedure scope. identity_record fields also captured echoed Tcl source rather than runtime output. C32/D32/D640 exited 0. The fixed clean-commit runner must be executed by the user for official qualification.",
+  "runs": [
+    {
+      "release_id": "B32_CFGLUT125",
+      "variant": "optimized",
+      "started_utc": "2026-09-14T20:14:23Z",
+      "vivado_version": "2025.2",
+      "exit_code": 1,
+      "run_dir": "work\\profile_wrapper_B32_CFGLUT125_optimized_1789416869",
+      "terminal_marker": null,
+      "identity_record": "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id\"",
+      "window_metrics": [
+        "WINDOW_METRICS seq=1 prefetch=true invalid_advances=0 first_to_last=43152000 ps",
+        "WINDOW_METRICS seq=2 prefetch=true invalid_advances=0 first_to_last=32592000 ps",
+        "WINDOW_METRICS seq=3 prefetch=true invalid_advances=0 first_to_last=43112000 ps"
+      ],
+      "edge_metrics": [
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=43576000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=1 gaps=0 first_to_last=32760000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=43560000 ps"
+      ],
+      "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
+      "rendered_config_sha256": "1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d",
+      "log_sha256": "90b2bcde221dcb95b03b5ea37331b8aca98cdc33551ab6996d7fc0c44ca56139",
+      "result": "FAIL"
+    },
+    {
+      "release_id": "A32_CFGLUT125",
+      "variant": "optimized",
+      "started_utc": "2026-09-14T20:15:05Z",
+      "vivado_version": "2025.2",
+      "exit_code": 1,
+      "run_dir": "work\\profile_wrapper_A32_CFGLUT125_optimized_1789416910",
+      "terminal_marker": null,
+      "identity_record": "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id\"",
+      "window_metrics": [
+        "WINDOW_METRICS seq=1 prefetch=true invalid_advances=10 first_to_last=21544000 ps",
+        "WINDOW_METRICS seq=2 prefetch=true invalid_advances=31 first_to_last=16320000 ps",
+        "WINDOW_METRICS seq=3 prefetch=true invalid_advances=20 first_to_last=21480000 ps"
+      ],
+      "edge_metrics": [
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=21800000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=1 gaps=0 first_to_last=16376000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=21720000 ps"
+      ],
+      "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
+      "rendered_config_sha256": "7434e32794e00ce54ddd9fde1ee94c0a863c629412fabd1146acff2883a96fe4",
+      "log_sha256": "e1fa8ebe1ac96d937b4ffef7b58bbee57a15e22a820de1e4b6a7e4439bb86263",
+      "result": "FAIL"
+    },
+    {
+      "release_id": "C32_CFGLUT125",
+      "variant": "optimized_relaxed",
+      "started_utc": "2026-09-14T20:15:43Z",
+      "vivado_version": "2025.2",
+      "exit_code": 0,
+      "run_dir": "work\\profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789416949",
+      "terminal_marker": "PROFILE_WRAPPER_PASS: C32_CFGLUT125 optimized_relaxed",
+      "identity_record": "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id\"",
+      "window_metrics": [
+        "WINDOW_METRICS seq=1 prefetch=true invalid_advances=32 first_to_last=21400000 ps",
+        "WINDOW_METRICS seq=2 prefetch=true invalid_advances=62 first_to_last=16560000 ps",
+        "WINDOW_METRICS seq=3 prefetch=true invalid_advances=42 first_to_last=21488000 ps"
+      ],
+      "edge_metrics": [
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=21664000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=1 gaps=31 first_to_last=16624000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=21776000 ps"
+      ],
+      "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
+      "rendered_config_sha256": "0c18193df15550bc3df4129d3783dc55c3a059c26da863bd675dcfb941f10a6c",
+      "log_sha256": "d19596725a3bb7685a39dc8fe320a0337e6b8c43ae7ac4a0d6e68cc91ea04134",
+      "result": "PASS"
+    },
+    {
+      "release_id": "D32_CFGLUT125",
+      "variant": "optimized_relaxed",
+      "started_utc": "2026-09-14T20:16:38Z",
+      "vivado_version": "2025.2",
+      "exit_code": 0,
+      "run_dir": "work\\profile_wrapper_D32_CFGLUT125_optimized_relaxed_1789417003",
+      "terminal_marker": "PROFILE_WRAPPER_PASS: D32_CFGLUT125 optimized_relaxed",
+      "identity_record": "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id\"",
+      "window_metrics": [
+        "WINDOW_METRICS seq=1 prefetch=true invalid_advances=57 first_to_last=10752000 ps",
+        "WINDOW_METRICS seq=2 prefetch=true invalid_advances=62 first_to_last=8680000 ps",
+        "WINDOW_METRICS seq=3 prefetch=true invalid_advances=47 first_to_last=10704000 ps"
+      ],
+      "edge_metrics": [
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=10936000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=1 gaps=62 first_to_last=8680000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=10920000 ps"
+      ],
+      "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
+      "rendered_config_sha256": "78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92",
+      "log_sha256": "5043fe6cbea7e3fad7b1d307b39fe00cd0b244550c32baeef8af926487266c7f",
+      "result": "PASS"
+    },
+    {
+      "release_id": "D640_CFGLUT125",
+      "variant": "optimized_relaxed",
+      "started_utc": "2026-09-14T20:17:14Z",
+      "vivado_version": "2025.2",
+      "exit_code": 0,
+      "run_dir": "work\\profile_wrapper_D640_CFGLUT125_optimized_relaxed_1789417040",
+      "terminal_marker": "PROFILE_WRAPPER_PASS: D640_CFGLUT125 optimized_relaxed",
+      "identity_record": "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id\"",
+      "window_metrics": [
+        "WINDOW_METRICS seq=1 prefetch=true invalid_advances=639 first_to_last=3263864000 ps",
+        "WINDOW_METRICS seq=2 prefetch=true invalid_advances=958 first_to_last=2465256000 ps",
+        "WINDOW_METRICS seq=3 prefetch=true invalid_advances=639 first_to_last=3263792000 ps"
+      ],
+      "edge_metrics": [
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=3263992000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=1 gaps=958 first_to_last=2465256000 ps",
+        "EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=3263984000 ps"
+      ],
+      "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
+      "rendered_config_sha256": "5fd08524d48c3d0f5778bebd9f2646e6ce153235fab719b3f3b5b2f1c096d647",
+      "log_sha256": "7658c15a7f765e467666e489a3aa9d430b3c85c0fca217a93291d9e5830f813a",
+      "result": "PASS"
+    }
+  ]
+}

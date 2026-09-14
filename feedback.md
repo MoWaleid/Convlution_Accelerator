@@ -1,3 +1,231 @@
+# Codex takeover review of GLM corrections — 2026-09-14
+
+GLM resolved the substance of F1, F3, F6 and F8: the exact eleven-entry
+staging catalog passes its focused tests, numerical release/spec crosschecks
+have positive and negative coverage, candidate releases resolve shared bundle
+directories, and the wrapper fixture now derives the trailing TKEEP mask.
+
+The correction pass was not release-ready. Two defects remained:
+
+1. `test_profile_wrappers.tcl` passed `spec_k` neither into the original Tcl
+   procedure scope nor through a global declaration. The GLM matrix therefore
+   exited 1 for A32 and B32 after their simulations completed. The preserved
+   manifest confirms both failures. The current Codex fix passes `spec_k`
+   explicitly, checks every spec parse, makes Option A an explicit A32/B32
+   release set, and separates external continuity from A32's measured 31
+   internal invalid advances.
+2. `preserve_wrapper_evidence.py` could crash while merging records because it
+   indexed tuple entries as dictionaries, could dereference a missing run
+   directory, accepted echoed Tcl source as a runtime identity marker, and
+   bound dirty simulations only to the preceding commit. It has been replaced
+   by a collection-only utility. Official Tcl runs now require a clean tracked
+   tree, record commit plus exact runner/testbench/config hashes, use unique
+   directories, and emit a machine-readable terminal result.
+
+Additional takeover hardening makes `deployable: false` an explicit runtime
+admission gate before firmware or hardware access, makes debug-run hashes
+fail closed, and prevents same-second evidence-directory collisions. The GLM
+evidence directory was renamed `wrapper_glm_provisional_20260914`; it is useful
+smoke evidence but is not official qualification.
+
+Locked release policy remains Option A: A32/B32 alone may claim zero external
+output bubbles. B32 records 0 internal advances / 0 external gaps; A32 records
+31 internal advances / 0 external gaps. C32, D32 and D640 remain exact,
+releaseable profiles with measured transition bubbles reported.
+
+---
+
+# GLM follow-up review — five-profile CFGLUT125 staging and wrapper campaign (2026-09-14)
+
+## Review outcome
+
+The four commits after `8c0425f` (`523b0fd`, `9c64a1d`, `8dd1d31`,
+`6a2c5f6`) move the project in the correct direction: the four missing
+CFGLUT125 release specs are coherent, the generalized wrapper fixture checks
+the actual N/K/W/H-dependent datapath, and the preserved B32/C32/D32/D640
+XSim logs support the reported functional and row-transition-bubble results.
+
+**Do not start the routed five-build campaign yet.** The staging commit broke
+the strict Python catalog interface, the documented "official" wrapper runner
+has two Tcl errors after simulation completes, and the release driver does not
+actually bind N/K/W/H to the catalog. Fix and re-run the gates below first.
+
+This was a review/verification pass only. No implementation file, generated
+RTL, release artifact, catalog, manifest, or build directory was changed.
+
+## Release-blocking findings
+
+### GLM-F1 — P0: the expanded catalog is rejected by the strict loader
+
+`profiles/m7_profiles.json` now contains eleven staged entries, but
+`software/conv_lab/profiles.py:30-33` still requires the exact former
+seven-entry set. Consequently, from `software/`:
+
+```text
+python -B -m unittest tests.test_m7_profiles
+Ran 12 tests ... FAILED (errors=12)
+AdmissionError: explicit seven-release catalog required
+```
+
+This also makes `scripts/prepare_profile.py` unusable because it imports the
+same loader. Update the strict expected set and `software/tests/test_m7_profiles.py`
+together. Do not make the loader accept arbitrary names: define the exact
+staging set explicitly, exercise all eleven layouts/IDs/bundle aliases, and
+change the exact set to the final five only at catalog cutover. The deployed
+production catalog must never contain the legacy/candidate entries.
+
+### GLM-F2 — P0: `test_profile_wrappers.tcl` cannot complete successfully
+
+The official runner has two deterministic post-simulation faults:
+
+1. `scripts/research_release/test_profile_wrappers.tcl:59-71` parses W but
+   never initializes/parses either rendered or spec H. Line 137 evaluates
+   `$spec_h`, which is undefined.
+2. `check_metrics` takes five parameters at line 139, including
+   `gapless_expected`, but line 189 calls it with only four.
+
+Also bind H in the rendered-config/spec comparison and check every `regexp`
+return before using its capture so a failed parse cannot inherit a stale Tcl
+variable from an interactive Vivado session. After fixing, run the actual
+documented runner—not only `debug_wrapper_sim.tcl`—for all five releases and
+require the terminal `PROFILE_WRAPPER_PASS` marker.
+
+### GLM-F3 — P1: release `check` does not bind numerical geometry to the catalog
+
+`scripts/research_release/research_release.py:69-78` checks only the literal
+`shape_id` string and `build_id_hex` against `releases`. It never verifies that
+spec N/K/W/H equal `catalog["profiles"][release_id]`, nor that the shape ID is
+the canonical string computed from those values. A spec can therefore retain
+the expected shape text while rendering a different hardware geometry and
+still print `SPEC OK`.
+
+Strengthen `crosscheck` to require:
+
+- `spec(profile) == spec(release_id)` for these candidate releases;
+- integer spec N/K/W/H equal the catalog profile fields;
+- `N<n>K<k>W<w>H<h>-CVH1 == spec(shape_id)`;
+- profile build ID, release build ID, and spec build ID are identical;
+- the final matrix clock is exactly 125 MHz.
+
+Add negative tests that independently mutate N, K, W, H, shape, profile,
+clock, and build ID and prove that every mutation is rejected before render or
+Vivado invocation.
+
+### GLM-F4 — P1: the wrapper evidence record overstates what is preserved
+
+The local logs independently confirm:
+
+- B32 strict: `invalid_advances=0`, `gaps=0`, final wrapper PASS marker;
+- C32 relaxed: `62/31`, final wrapper PASS marker;
+- D32 relaxed: `62/62`, final wrapper PASS marker;
+- D640 relaxed: `958/958`, final wrapper PASS marker.
+
+No A32 wrapper log exists under `work/debug_wrapper_*` or
+`work/profile_wrapper_*`. The report nevertheless marks A32 PASS and calls all
+five releases engineering-complete. In addition, the official runner could
+not have emitted its own PASS marker because of GLM-F2. Downgrade the report
+to provisional GLM-run evidence until A32 is rerun and all five official logs
+are preserved. Record for each run: exact Git commit, release/config hash,
+Vivado version, runner variant, log SHA-256, result marker, and extracted
+metrics. Keep user-executed qualification distinct from agent-executed smoke
+evidence.
+
+### GLM-F5 — P1: the debug runner is destructive and fail-open
+
+`scripts/research_release/debug_wrapper_sim.tcl:23-25` deletes a fixed
+per-release directory before each run. This already caused a concurrent-run
+clobber documented in the handoff. Lines 57-65 print `DEBUG_WRAPPER_RESULT:
+FAIL` but then call plain `quit`, so a failed batch can still return success.
+
+Use a unique timestamp/nonce output directory, never delete previous evidence,
+and raise `error` or `quit 1` on missing PASS markers or any Failure/Error/Fatal
+record. The debug runner should also record its resolved TB path/hash and
+rendered config hash; otherwise its results are not source-bound.
+
+### GLM-F6 — P1: candidate runtime paths are not consistently bundle-aware
+
+Adding the four firmware names is correct for staging, and `switch_to` uses
+the release `bundle_dir`. The direct `m7_switch.py --soak` path does not:
+`software/m7_switch.py:795` calls `load_params(profile, ...)`. A candidate such
+as `A32_CFGLUT125` would therefore look for a nonexistent
+`profiles/A32_CFGLUT125/` instead of the catalog-bound `profiles/A32/`.
+Resolve the release once and use its `bundle_dir` everywhere (`--profile`,
+`--soak`, matrix, and any future benchmark mode).
+
+`ORDER` also remains the legacy five-profile set, so the passing
+`--matrix-seq` mock verifies only the old releases. Before production cutover,
+add tests for candidate `--profile` and `--soak`; after cutover, make the
+switching matrix cover exactly A32/B32/C32/D32/D640 backed by the new 125 MHz
+artifacts.
+
+### GLM-F7 — P2: incomplete manifests are in the active manifest namespace
+
+The four new `software/hardware_*_CFGLUT125.json` files contain
+`TBD_FIRST_BUILD`, not a canonical 64-hex SHA-256. Runtime equality currently
+fails closed, which is good, but schema/admission does not explicitly reject
+the placeholder and packaging could accidentally ship it. Prefer candidate
+metadata outside the deployable manifest namespace, or add an explicit
+non-deployable status and require canonical artifact hashes for every runtime
+catalog entry. The final packaging gate must reject all `TBD_*`, legacy
+100 MHz entries, suffixed candidate names, missing firmware, and hash mismatch.
+
+### GLM-F8 — P2: the generalized input TKEEP remains geometry-specific
+
+`tb_conv_axis_wrapper.vhd:1359-1387` handles an arbitrary nonzero remainder
+but always sends `x"0F"`. That is correct for the current A/B/D geometries
+(remainder 4), while C32 is an exact beat multiple, but it is not correct for
+the project’s stated future arbitrary compile-time W×H support. Generate the
+low-lane contiguous TKEEP mask from `C_FINAL_INPUT_BYTES` and add at least one
+fixture for a remainder other than 0 or 4. This is not a blocker for the fixed
+five-release matrix, but it is a sustainability defect in a fixture described
+as generalized.
+
+## Verification performed in this review
+
+Passed:
+
+- `git diff --check 8c0425f..HEAD`;
+- `research_release.py check` for A32/B32/C32/D32/D640 CFGLUT125;
+- deterministic generated-RTL check for both 3x3 and 5x5 bitheaps;
+- Python static compilation for `software`, `scripts`, and `verification`;
+- M7 mock `--profile B32 3` and legacy-five `--matrix-seq`;
+- full M8 mock CLI suite;
+- M8 importer: 15 tests PASS;
+- preserved B32/C32/D32/D640 XSim PASS markers and reported metrics.
+
+Failed:
+
+- `software/tests/test_m7_profiles.py`: 12/12 ERROR because the loader still
+  demands the old seven-entry catalog.
+- static inspection of `test_profile_wrappers.tcl`: undefined `spec_h` and a
+  missing procedure argument guarantee failure after XSim.
+- A32 wrapper evidence preservation: no matching log found.
+
+The four new releases still have only rendered configs and placeholder
+manifests; no A32/C32/D32/D640 routed bitstream, XSA, bit.bin, timing report,
+or board qualification was found. B32 remains the only physically built and
+board-qualified CFGLUT125 release.
+
+## Required correction order
+
+1. Fix GLM-F1 through GLM-F3 and add negative identity tests.
+2. Make the debug runner fail-closed/non-destructive (GLM-F5) and fix the
+   candidate `bundle_dir` path (GLM-F6).
+3. Re-run all host tests; zero failures/errors/skips in the applicable focused
+   suites.
+4. Run and preserve the official wrapper matrix: B32/A32 `optimized`;
+   C32/D32/D640 `optimized_relaxed`.
+5. Only then start physical builds, risk-first: C32, D640, A32, D32, and a
+   current-source B32 rebuild for a uniform five-build provenance set.
+6. Fill canonical artifact hashes, convert verified `.bit` files to FPGA
+   Manager `.bin`, package a candidate board library, and qualify every
+   profile before the final five-name catalog cutover.
+7. At cutover, remove every 100 MHz and suffixed candidate entry from the
+   production catalog/library/image/demo selector while retaining their
+   reports as historical comparison evidence.
+
+---
+
 # Full-project integration feasibility audit for GLM — 2026-09-14
 
 ## Outcome

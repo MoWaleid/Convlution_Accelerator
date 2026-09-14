@@ -13,6 +13,7 @@ Discipline layered on the adapted fresh-project Vivado flow
 
 Subcommands:
   check <ID>      validate spec vs catalog + source presence; print hashes
+  verify-render <ID> prove the prepared config is the deterministic spec render
   build <ID>      check + render + run Vivado batch + manifest
   prepare <ID>    check + render only (then run research_build.tcl yourself,
                   e.g. from the Vivado GUI Tcl console), then `manifest <ID>`
@@ -67,14 +68,38 @@ def load_catalog():
 
 
 def crosscheck(spec, catalog):
+    """GLM-F3: the spec is bound to the catalog on identity AND numerical
+    geometry. A spec that renders different N/K/W/H than the catalog profile
+    must be rejected before any render or Vivado invocation."""
     rel = (catalog.get("releases") or {}).get(spec["release_id"])
     if rel is None:
         raise RuntimeError(f"{spec['release_id']}: no releases entry in catalog")
+    prof = (catalog.get("profiles") or {}).get(spec["release_id"])
+    if prof is None:
+        raise RuntimeError(f"{spec['release_id']}: no profiles entry in catalog")
+    if str(spec["profile"]) != str(spec["release_id"]):
+        raise RuntimeError(f"{spec['release_id']}: spec profile {spec['profile']!r} "
+                           f"!= release id")
+    for key, cat_key in (("n", "N"), ("k", "K"), ("w", "W"), ("h", "H")):
+        if int(spec[key]) != int(prof[cat_key]):
+            raise RuntimeError(f"{spec['release_id']}: spec {key}={spec[key]} "
+                               f"!= catalog profiles {cat_key}={prof[cat_key]}")
+    canonical_shape = (f"N{int(spec['n'])}K{int(spec['k'])}"
+                       f"W{int(spec['w'])}H{int(spec['h'])}-CVH1")
     if rel["shape_id"] != spec["shape_id"]:
         raise RuntimeError(f"{spec['release_id']}: spec shape {spec['shape_id']} "
                            f"!= catalog {rel['shape_id']}")
-    if rel["build_id_hex"] != spec["build_id_hex"]:
-        raise RuntimeError(f"{spec['release_id']}: spec build_id != catalog")
+    if spec["shape_id"] != canonical_shape:
+        raise RuntimeError(f"{spec['release_id']}: shape {spec['shape_id']} is not "
+                           f"the canonical {canonical_shape} for the bound geometry")
+    if str(prof["build_id"]) != str(rel["build_id_hex"]) or \
+            str(rel["build_id_hex"]) != str(spec["build_id_hex"]):
+        raise RuntimeError(f"{spec['release_id']}: profile/release/spec build IDs "
+                           f"disagree")
+    if str(spec["release_id"]).endswith("_CFGLUT125") and \
+            int(spec["clock_mhz"]) != 125:
+        raise RuntimeError(f"{spec['release_id']}: CFGLUT125 releases run at "
+                           f"125 MHz, spec says {spec['clock_mhz']}")
     return rel
 
 
@@ -82,7 +107,7 @@ def out_dir(release_id):
     return ROOT / "work" / f"research_{release_id}"
 
 
-def render_config_pkg(spec, dest):
+def render_config_text(spec):
     template = CONFIG_PKG.read_text()
     text = template
 
@@ -118,8 +143,34 @@ def render_config_pkg(spec, dest):
             rf'\g<1>{value};',
         )
 
+    return text
+
+
+def render_config_pkg(spec, dest):
+    text = render_config_text(spec)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(text, newline="\n")
+
+
+def verify_rendered_config(release_id, path=None):
+    """Fail if the untracked prepared config differs by even one byte from
+    the deterministic render of the current checked spec and tracked template."""
+    spec = parse_spec(release_id)
+    crosscheck(spec, load_catalog())
+    path = Path(path) if path is not None else \
+        out_dir(release_id) / "src" / "config_pkg.vhd"
+    if not path.is_file():
+        raise RuntimeError(f"{release_id}: rendered config missing: {path}")
+    expected = render_config_text(spec).encode("utf-8")
+    actual = path.read_bytes()
+    if actual != expected:
+        raise RuntimeError(
+            f"{release_id}: rendered config is stale or modified; "
+            "run research_release.py prepare after preserving the old build"
+        )
+    print(f"RENDER VERIFIED: {release_id} "
+          f"{hashlib.sha256(actual).hexdigest()}")
+    return path
 
 
 def source_paths(spec, release_id):
@@ -220,7 +271,8 @@ def do_manifest(release_id):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("command", choices=["check", "build", "prepare", "manifest"])
+    ap.add_argument("command", choices=["check", "verify-render", "build",
+                                        "prepare", "manifest"])
     ap.add_argument("release_id")
     ap.add_argument("--vivado", default="vivado")
     ap.add_argument("--jobs", type=int, default=4)
@@ -228,6 +280,9 @@ def main():
 
     if args.command == "check":
         do_check(args.release_id)
+        return
+    if args.command == "verify-render":
+        verify_rendered_config(args.release_id)
         return
     if args.command == "manifest":
         do_manifest(args.release_id)

@@ -1,0 +1,442 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Mon Sep 14 23:22:49 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source {D:\MyProjects\Convlution_Accelerator\scripts\research_release\run_official_wrapper.tcl}
+# set script_dir [file normalize [file dirname [info script]]]
+# if {![info exists profile_wrapper_release]} {
+#     if {[info exists argv] && [llength $argv] >= 1} {
+#         set profile_wrapper_release [lindex $argv 0]
+#     } else {
+#         error "usage: vivado -mode batch -source run_official_wrapper.tcl -tclargs <RELEASE_ID> <VARIANT>"
+#     }
+# }
+# if {![info exists profile_wrapper_variant]} {
+#     if {[llength $argv] >= 2} {
+#         set profile_wrapper_variant [lindex $argv 1]
+#     } else {
+#         set profile_wrapper_variant optimized
+#     }
+# }
+# source [file join $script_dir test_profile_wrappers.tcl]
+## set script_dir [file normalize [file dirname [info script]]]
+## set root [file normalize [file join $script_dir .. ..]]
+## set rtl [file join $root Convlution_Accelerator.srcs sources_1 new]
+## set sim [file join $root Convlution_Accelerator.srcs sim_1 imports new]
+## set release_id B32_CFGLUT125
+## set variant optimized
+## if {[info exists profile_wrapper_release]} { set release_id $profile_wrapper_release }
+## if {[info exists profile_wrapper_variant]} { set variant $profile_wrapper_variant }
+## if {$variant ni {optimized optimized_relaxed optimized_stress baseline baseline_stress negative_control}} {
+##     error "Use optimized, optimized_relaxed, optimized_stress, baseline, baseline_stress or negative_control"
+## }
+## set enabled [expr {[string match "optimized*" $variant] ? "true" : "false"}]
+## set stress  [expr {($variant eq "optimized_stress" || $variant eq "baseline_stress") ? "true" : "false"}]
+## set expect_checker_fail [expr {$variant eq "negative_control"}]
+## set require_continuous [expr {($variant eq "optimized_relaxed") ? "false" : $enabled}]
+## set rendered_config [file join $root work research_$release_id src config_pkg.vhd]
+## if {![file isfile $rendered_config]} {
+##     error "Missing $rendered_config - run: python scripts/research_release/research_release.py prepare $release_id"
+## }
+## set fh [open $rendered_config r]
+## set cfg_text [read $fh]
+## close $fh
+## set spec_path [file join $script_dir builds $release_id.spec.tcl]
+## set sfh [open $spec_path r]
+## set spec_text [read $sfh]
+## close $sfh
+## set spec_build_id ""
+## set spec_k ""
+## set spec_n ""
+## set spec_w ""
+## set spec_h ""
+## foreach {label pattern dst} {
+##     build_id {CFG_BUILD_ID\s*:\s*std_logic_vector\(127 downto 0\)\s*:=\s*x"([0-9A-Fa-f]+)"} spec_build_id
+##     cfg_k    {CFG_K\s*:\s*integer\s*:=\s*(\d+)} spec_k
+##     cfg_n    {CFG_N\s*:\s*integer\s*:=\s*(\d+)} spec_n
+##     cfg_w    {CFG_UNPADDED_WIDTH\s*:\s*integer\s*:=\s*(\d+)} spec_w
+##     cfg_h    {CFG_UNPADDED_HEIGHT\s*:\s*integer\s*:=\s*(\d+)} spec_h
+## } {
+##     # GLM-F2: every regexp return is checked; a failed parse must not
+##     # inherit a stale variable from an interactive Vivado session.
+##     if {![regexp -nocase -line $pattern $cfg_text -> $dst]} {
+##         error "$release_id: rendered config_pkg is missing $label - re-run research_release.py prepare"
+##     }
+## }
+## regexp -line {set spec\(build_id_hex\)\s+(\S+)} $spec_text -> cat_build_id
+## regexp -line {set spec\(k\)\s+(\d+)} $spec_text -> cat_k
+## regexp -line {set spec\(n\)\s+(\d+)} $spec_text -> cat_n
+## regexp -line {set spec\(w\)\s+(\d+)} $spec_text -> cat_w
+## regexp -line {set spec\(h\)\s+(\d+)} $spec_text -> cat_h
+## if {$spec_build_id ne $cat_build_id || $spec_k ne $cat_k || $spec_n ne $cat_n || $spec_w ne $cat_w || $spec_h ne $cat_h} {
+##     error "$release_id: rendered config_pkg ($spec_build_id K$spec_k N$spec_n W$spec_w H$spec_h) disagrees with spec ($cat_build_id K$cat_k N$cat_n W$cat_w H$cat_h) - re-run research_release.py prepare"
+## }
+## puts "PROFILE_WRAPPER_IDENTITY_OK: $release_id K=$spec_k N=$spec_n W=$spec_w H=$spec_h build_id=$spec_build_id"
+PROFILE_WRAPPER_IDENTITY_OK: C32_CFGLUT125 K=8 N=5 W=32 H=32 build_id=45463132354b30384e35573332523031
+## set out [file join $root work \
+##     [format "profile_wrapper_%s_%s_%s" $release_id $variant [clock seconds]]]
+## if {![catch {current_project}]} {
+##     if {[get_property NAME [current_project]] eq "profile_wrapper_sim"} {
+##         close_project
+##     }
+## }
+## create_project profile_wrapper_sim $out -part xc7z020clg484-1
+INFO: [ProjectBase 1-489] The host OS only allows 260 characters in a normal path. The project is stored in a path with more than 80 characters. If you experience issues with IP, Block Designs, or files not being found, please consider moving the project to a location with a shorter path. Alternately consider using the OS subst command to map part of the path to a drive letter.
+Current project path is 'D:/MyProjects/Convlution_Accelerator/work/profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789417373'
+create_project: Time (s): cpu = 00:00:13 ; elapsed = 00:00:08 . Memory (MB): peak = 544.410 ; gain = 214.555
+## set_property target_language VHDL [current_project]
+## set_property simulator_language Mixed [current_project]
+## foreach name {conv_pkg sync_fifo coeff_bias_shift_regfile axi_lite_ctrl \
+##               window_generator cfglut5_kcm cfglut5_bitheap_3x3 \
+##               cfglut5_bitheap_5x5 conv_channel conv_engine conv_top \
+##               axi_stream_input_frontend axi_stream_output_serializer \
+##               conv_axis_wrapper} {
+##     add_files -norecurse [file join $rtl $name.vhd]
+## }
+## add_files -norecurse $rendered_config
+## add_files -fileset sim_1 -norecurse [file join $sim tb_conv_axis_wrapper.vhd]
+## set_property file_type {VHDL 2008} [get_files *.vhd]
+## set_property top conv_axis_wrapper [get_filesets sources_1]
+## set_property top tb_conv_axis_wrapper [get_filesets sim_1]
+## set_property generic "G_WINDOW_PREFETCH=$enabled G_REQUIRE_CONTINUOUS=$require_continuous G_STRESS=$stress" [get_filesets sim_1]
+## update_compile_order -fileset sim_1
+## if {$release_id eq "D640_CFGLUT125"} {
+##     puts "NOTE: D640 simulates 640x480 frames - expect a long xsim run; this is not a hang"
+## }
+## launch_simulation -mode behavioral
+Command: launch_simulation  -mode behavioral
+INFO: [Vivado 12-25911] Executing simulation for 'XSim' simulator
+INFO: [Vivado 12-28535] Process started - Mon Sep 14 23:23:05 2026
+
+INFO: [Vivado 12-12493] Simulation top is 'tb_conv_axis_wrapper'
+INFO: [Vivado 12-5682] Launching behavioral simulation in 'D:/MyProjects/Convlution_Accelerator/work/profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789417373/profile_wrapper_sim.sim/sim_1/behav/xsim'
+INFO: [SIM-utils-51] Simulation object is 'sim_1'
+INFO: [SIM-utils-72] Using boost library from 'D:/Program_Files_2/2025.2/Vivado/tps/boost_1_72_0'
+INFO: [SIM-utils-54] Inspecting design source files for 'tb_conv_axis_wrapper' in fileset 'sim_1'...
+INFO: [USF-XSim-97] Finding global include files...
+INFO: [USF-XSim-98] Fetching design files from 'sim_1'...
+INFO: [USF-XSim-2] XSim::Compile design
+INFO: [USF-XSim-61] Executing 'COMPILE and ANALYZE' step in 'D:/MyProjects/Convlution_Accelerator/work/profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789417373/profile_wrapper_sim.sim/sim_1/behav/xsim'
+"xvhdl --incr --relax -prj tb_conv_axis_wrapper_vhdl.prj"
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/work/research_C32_CFGLUT125/src/config_pkg.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_pkg.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/coeff_bias_shift_regfile.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'coeff_bias_shift_regfile'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/axi_lite_ctrl.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'axi_lite_ctrl'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/sync_fifo.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'sync_fifo'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/axi_stream_input_frontend.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'axi_stream_input_frontend'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/axi_stream_output_serializer.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'axi_stream_output_serializer'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/cfglut5_bitheap_3x3.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'cfglut5_bitheap_3x3'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/cfglut5_bitheap_5x5.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'cfglut5_bitheap_5x5'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/cfglut5_kcm.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'cfglut5_kcm'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/window_generator.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'window_generator'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_channel.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'conv_channel'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_engine.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'conv_engine'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'conv_top'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_axis_wrapper.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'conv_axis_wrapper'
+
+INFO: [VRFC 10-163] Analyzing VHDL file "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd" into library xil_defaultlib
+
+INFO: [VRFC 10-3107] analyzing entity 'tb_conv_axis_wrapper'
+
+INFO: [USF-XSim-69] 'compile' step finished in '2' seconds
+INFO: [USF-XSim-3] XSim::Elaborate design
+INFO: [USF-XSim-61] Executing 'ELABORATE' step in 'D:/MyProjects/Convlution_Accelerator/work/profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789417373/profile_wrapper_sim.sim/sim_1/behav/xsim'
+"xelab --incr --debug typical --relax --mt 2 -generic_top "G_WINDOW_PREFETCH=true" -generic_top "G_REQUIRE_CONTINUOUS=false" -generic_top "G_STRESS=false" -L xil_defaultlib -L secureip --snapshot tb_conv_axis_wrapper_behav xil_defaultlib.tb_conv_axis_wrapper -log elaborate.log"
+
+Vivado Simulator v2025.2
+
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+Running: D:/Program_Files_2/2025.2/Vivado/bin/unwrapped/win64.o/xelab.exe --incr --debug typical --relax --mt 2 -generic_top G_WINDOW_PREFETCH=true -generic_top G_REQUIRE_CONTINUOUS=false -generic_top G_STRESS=false -L xil_defaultlib -L secureip --snapshot tb_conv_axis_wrapper_behav xil_defaultlib.tb_conv_axis_wrapper -log elaborate.log 
+
+Using 2 slave threads.
+
+Starting static elaboration
+
+Completed static elaboration
+
+Starting simulation data flow analysis
+
+Completed simulation data flow analysis
+
+Time Resolution for simulation is 1ps
+
+Compiling package std.standard
+
+Compiling package std.textio
+
+Compiling package ieee.std_logic_1164
+
+Compiling package ieee.numeric_std
+
+Compiling package std.env
+
+Compiling package ieee.math_real
+
+Compiling package xil_defaultlib.config_pkg
+
+Compiling package xil_defaultlib.conv_pkg
+
+Compiling package unisim.vcomponents
+
+Compiling package ieee.vital_timing
+
+Compiling package ieee.vital_primitives
+
+Compiling package unisim.vpkg
+
+Compiling architecture rtl of entity xil_defaultlib.sync_fifo [sync_fifo_default]
+
+Compiling architecture rtl of entity xil_defaultlib.axi_stream_input_frontend [\axi_stream_input_frontend(c_exp...]
+
+Compiling architecture rtl of entity xil_defaultlib.coeff_bias_shift_regfile [\coeff_bias_shift_regfile(c_k=8,...]
+
+Compiling architecture rtl of entity xil_defaultlib.axi_lite_ctrl [\axi_lite_ctrl(c_k=8,c_n=5,c_log...]
+
+Compiling architecture rtl of entity xil_defaultlib.window_generator [\window_generator(c_n=5,c_image_...]
+
+Compiling architecture cfglut5_v of entity unisim.CFGLUT5 [\CFGLUT5(0,31)\]
+
+Compiling architecture rtl of entity xil_defaultlib.cfglut5_kcm [cfglut5_kcm_default]
+
+Compiling architecture lut6_2_v of entity unisim.LUT6_2 [\LUT6_2(init="111010001110100011...]
+
+Compiling architecture lut6_2_v of entity unisim.LUT6_2 [\LUT6_2(init="100010001000100010...]
+
+Compiling architecture structural of entity xil_defaultlib.cfglut5_bitheap_5x5 [cfglut5_bitheap_5x5_default]
+
+Compiling architecture rtl of entity xil_defaultlib.conv_channel [\conv_channel(c_n=5)\]
+
+Compiling architecture rtl of entity xil_defaultlib.conv_engine [\conv_engine(c_k=8,c_n=5)\]
+
+Compiling architecture rtl of entity xil_defaultlib.conv_top [\conv_top(c_window_prefetch=true...]
+
+Compiling architecture rtl of entity xil_defaultlib.axi_stream_output_serializer [\axi_stream_output_serializer(c_...]
+
+Compiling architecture rtl of entity xil_defaultlib.conv_axis_wrapper [\conv_axis_wrapper(c_k=8,c_n=5,c...]
+
+Compiling architecture sim of entity xil_defaultlib.tb_conv_axis_wrapper
+
+Built simulation snapshot tb_conv_axis_wrapper_behav
+
+run_program: Time (s): cpu = 00:00:00 ; elapsed = 00:00:18 . Memory (MB): peak = 551.195 ; gain = 0.000
+INFO: [USF-XSim-69] 'elaborate' step finished in '18' seconds
+INFO: [USF-XSim-4] XSim::Simulate design
+INFO: [USF-XSim-61] Executing 'SIMULATE' step in 'D:/MyProjects/Convlution_Accelerator/work/profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789417373/profile_wrapper_sim.sim/sim_1/behav/xsim'
+INFO: [USF-XSim-98] *** Running xsim
+   with args "tb_conv_axis_wrapper_behav -key {Behavioral:sim_1:Functional:tb_conv_axis_wrapper} -tclbatch {tb_conv_axis_wrapper.tcl} -log {simulate.log}"
+INFO: [USF-XSim-8] Loading simulator feature
+Time resolution is 1 ps
+source tb_conv_axis_wrapper.tcl
+### set curr_wave [current_wave_config]
+### if { [string length $curr_wave] == 0 } {
+###   if { [llength [get_objects]] > 0} {
+###     add_wave /
+###     set_property needs_save false [current_wave_config]
+###   } else {
+###      send_msg_id Add_Wave-1 WARNING "No top level signals found. Simulator will start without a wave window. If you want to open a wave window go to 'File->New Waveform Configuration' or type 'create_wave_config' in the TCL console."
+###   }
+### }
+### run 1000ns
+Note: --- WRAPPER A: reset / discovery / pre-START gating ---
+Time: 0 ps  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER A PASS ---
+Time: 440 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER B: complete parameter admission ---
+Time: 440 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'tb_conv_axis_wrapper_behav' loaded.
+INFO: [USF-XSim-97] XSim simulation ran for 1000ns
+launch_simulation: Time (s): cpu = 00:00:01 ; elapsed = 00:00:24 . Memory (MB): peak = 551.195 ; gain = 6.785
+## run all
+Note: --- WRAPPER B PASS ---
+Time: 53568 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER C: full real-chain frame under backpressure ---
+Time: 53568 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: WINDOW_METRICS seq=1 prefetch=true invalid_advances=32 first_to_last=21400000 ps
+Time: 76220 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/dut/conv_top_inst/window_protocol_check  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd
+Note: EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=21664000 ps
+Time: 76556 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_first_output=1292000 ps
+Time: 76556 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER C PASS ---
+Time: 76704 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER D: repeated START with NO RESET ---
+Time: 76704 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: WINDOW_METRICS seq=2 prefetch=true invalid_advances=62 first_to_last=16560000 ps
+Time: 94516 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/dut/conv_top_inst/window_protocol_check  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd
+Note: EDGE_METRICS prefetch=true ready_mode=1 gaps=31 first_to_last=16624000 ps
+Time: 94652 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_first_output=1292000 ps
+Time: 94652 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_done=17968000 ps
+Time: 94704 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER D PASS: repeated full chain works WITHOUT RESET ---
+Time: 94800 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER E: malformed input framing -> FAULT ---
+Time: 94800 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER E PASS ---
+Time: 95096 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER F: ABORT while queued output is externally stalled ---
+Time: 95096 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER F PASS ---
+Time: 96664 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER G: RESET recovery after ABORT ---
+Time: 96664 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER G PASS ---
+Time: 96792 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER H: post-recovery full end-to-end frame ---
+Time: 96792 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: WINDOW_METRICS seq=3 prefetch=true invalid_advances=42 first_to_last=21488000 ps
+Time: 119532 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/dut/conv_top_inst/window_protocol_check  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd
+Note: EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=21776000 ps
+Time: 119892 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_first_output=1292000 ps
+Time: 119892 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER H PASS ---
+Time: 120040 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: ============================================================
+Time: 120040 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note:  CONV_AXIS_WRAPPER COMPLETE M4 INTEGRATION REGRESSION PASS 
+Time: 120040 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: ============================================================
+Time: 120040 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+$finish called at time : 120040 ns : File "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd" Line 2705
+run: Time (s): cpu = 00:00:00 ; elapsed = 00:00:16 . Memory (MB): peak = 551.195 ; gain = 0.000
+## close_sim
+INFO: xsimkernel Simulation Memory Usage: 40460 KB (Peak: 40460 KB), Simulation CPU Usage: 16311 ms
+INFO: [Simtcl 6-16] Simulation closed
+## set log_file [file join $out profile_wrapper_sim.sim sim_1 behav xsim simulate.log]
+## set fd [open $log_file r]
+## set log_text [read $fd]
+## close $fd
+## if {[string first "CONV_AXIS_WRAPPER COMPLETE M4 INTEGRATION REGRESSION PASS" $log_text] < 0 || [regexp -nocase {(^|\n)(Error:|Failure:|Fatal:)} $log_text]} {
+##     error "Profile wrapper regression failed: $log_file"
+## }
+## set expected_invalid_no_prefetch [expr {($spec_n - 1) * ($spec_h - 1)}]
+## set gapless_expected [expr {($spec_n == 3) && ($spec_k >= 8)}]
+## proc check_metrics {log_text built_enabled expected_policy_enabled expected_invalid_no_prefetch gapless_expected} {
+##     set records {}
+##     foreach {_ seq pre inv} [regexp -all -inline -line \
+##         {WINDOW_METRICS seq=(\d+) prefetch=(true|false) invalid_advances=(\d+)} $log_text] {
+##         lappend records [list $seq $pre $inv]
+##     }
+##     if {[llength $records] != 3} {
+##         return "expected 3 WINDOW_METRICS records (frames C,D,H), got [llength $records]"
+##     }
+##     set seqs {}
+##     foreach r $records { lappend seqs [lindex $r 0] }
+##     if {$seqs ne "1 2 3"} { return "WINDOW_METRICS sequence mismatch: $seqs" }
+##     set d [lindex $records 1]
+##     if {[lindex $d 1] ne $built_enabled} {
+##         return "frame D prefetch flag [lindex $d 1] does not match built config $built_enabled"
+##     }
+##     set dmetrics 0
+##     set dgaps ""
+##     foreach {_ rm gaps} [regexp -all -inline -line \
+##         {EDGE_METRICS prefetch=\w+ ready_mode=(\d+) gaps=(\d+)} $log_text] {
+##         if {$rm == 1} {
+##             incr dmetrics
+##             set dgaps $gaps
+##         }
+##     }
+##     if {$dmetrics != 1} {
+##         return "expected exactly 1 ready_mode=1 EDGE_METRICS record, got $dmetrics"
+##     }
+##     if {![regexp {EDGE_LATENCY start_to_first_output=} $log_text]} {
+##         return "missing start_to_first_output latency record"
+##     }
+##     if {![regexp {EDGE_LATENCY start_to_done=} $log_text]} {
+##         return "missing start_to_done latency record"
+##     }
+##     if {!$gapless_expected} {
+##         puts "PROFILE_WRAPPER_EDGE_GAP_KNOWN: frame D invalid_advances=[lindex $d 2] gaps=$dgaps (edge-free zero-bubble claim not proven for this geometry; recorded, not asserted)"
+##         return ""
+##     }
+##     # External zero-gap is the release claim for N=3/K>=8 (A32/B32).
+##     if {$dgaps != 0} {
+##         return "frame D output gaps=$dgaps, expected 0"
+##     }
+##     # Internal zero-bubble (no engine advance on an invalid window) is the
+##     # stricter tier proven at K16 (B32).  K8 (A32) deterministically absorbs
+##     # one internal bubble per row transition behind two output beats per
+##     # position; recorded, not asserted.
+##     if {$spec_k == 16} {
+##         set expected_invalid [expr {$expected_policy_enabled ? 0 : $expected_invalid_no_prefetch}]
+##         if {[lindex $d 2] != $expected_invalid} {
+##             return "frame D invalid_advances=[lindex $d 2], expected $expected_invalid"
+##         }
+##     } else {
+##         puts "PROFILE_WRAPPER_INTERNAL_BUBBLES_RECORDED: frame D invalid_advances=[lindex $d 2] (external output gapless; internal tier proven at K16 only)"
+##     }
+##     return ""
+## }
+## set built_enabled $enabled
+## set expected_policy_enabled [expr {$expect_checker_fail ? "true" : $enabled}]
+PROFILE_WRAPPER_EDGE_GAP_KNOWN: frame D invalid_advances=62 gaps=31 (edge-free zero-bubble claim not proven for this geometry; recorded, not asserted)
+## set check_fail [check_metrics $log_text $built_enabled $expected_policy_enabled \
+##                     $expected_invalid_no_prefetch $gapless_expected]
+## if {$expect_checker_fail} {
+##     if {$check_fail eq ""} {
+##         error "Negative control unexpectedly PASSED the metric checker; the checker does not detect the regression"
+##     }
+##     if {$check_fail ne "frame D invalid_advances=$expected_invalid_no_prefetch, expected 0"} {
+##         error "Negative control failed for an unexpected reason: $check_fail"
+##     }
+##     puts "PROFILE_WRAPPER_NEGATIVE_CONTROL_FAIL_AS_EXPECTED: $check_fail"
+## } else {
+##     if {$check_fail ne ""} {
+##         error "Metric acceptance checker failed: $check_fail"
+##     }
+##     puts "PROFILE_WRAPPER_PASS: $release_id $variant"
+## }
+PROFILE_WRAPPER_PASS: C32_CFGLUT125 optimized_relaxed
+## close_project
+INFO: [Common 17-206] Exiting Vivado at Mon Sep 14 23:23:46 2026...

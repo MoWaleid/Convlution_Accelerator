@@ -14,6 +14,7 @@ Run --profile twice in a row to also exercise the same-build (no reload) path.
 """
 import json
 import os
+import shutil
 import struct
 import sys
 import types
@@ -158,6 +159,14 @@ M.FW_NAME = {
     "C32": "cn5k08_len22_2026-09-12.bit.bin",
     "D32": "dn3k04_len22_2026-09-12.bit.bin",
     "D640": "dn3k04_w640480_2026-09-12.bit.bin",
+    # GLM-F6 staging: candidate firmware names resolve, but no firmware file
+    # exists until the routed builds fill the candidate manifests.
+    "A32_CFGLUT125": "m7_A32_CFGLUT125.bin",
+    "B32_CFGLUT125": "m7_B32_CFGLUT125.bin",
+    "C32_CFGLUT125": "m7_C32_CFGLUT125.bin",
+    "D32_CFGLUT125": "m7_D32_CFGLUT125.bin",
+    "D640_CFGLUT125": "m7_D640_CFGLUT125.bin",
+    "B32_CFGLUT100": "m7_B32_CFGLUT100.bin",
 }
 
 
@@ -372,6 +381,62 @@ if __name__ == "__main__":
             print("D640 canonical input:", digest)
             assert digest == want, (digest, want)
             print("MOCK OK: --d640-input-hash")
+        elif args[:2] in (["--candidate-undeployable", "profile"],
+                          ["--candidate-undeployable", "soak"]):
+            # GLM-F6/F7: candidate releases resolve their bundle and firmware
+            # name, but their placeholder manifests must fail closed BEFORE
+            # any hardware mutation until a routed build fills the hashes.
+            release = "A32_CFGLUT125"
+            mode = "--profile" if args[1] == "profile" else "--soak"
+            # Sync the stage with the authoritative repo catalog and the
+            # candidate manifests so the test exercises the current staging.
+            repo_catalog = json.loads(
+                (REPO / "profiles/m7_profiles.json").read_text())
+            (STAGE / "m7_profiles.json").write_text(
+                json.dumps(repo_catalog, indent=2))
+            for cand in ("A32_CFGLUT125", "C32_CFGLUT125",
+                         "D32_CFGLUT125", "D640_CFGLUT125"):
+                shutil.copyfile(REPO / f"software/hardware_{cand}.json",
+                                STAGE / f"hardware_{cand}.json")
+            program_profile("A32")   # board starts with the A32 build live
+            before_acc = bytes(acc_regs.mem)
+            before_dma = bytes(dma_regs.mem)
+            program_calls = []
+            real_program = M.program_fpga
+            M.program_fpga = lambda fw: program_calls.append(fw.name)
+            try:
+                sys.argv = ["m7_switch.py", mode, release, "1"]
+                try:
+                    M.main()
+                except (RuntimeError, FileNotFoundError) as exc:
+                    assert "A32_CFGLUT125" in str(exc), exc
+                else:
+                    raise AssertionError("candidate release was admitted")
+                # Even with a firmware file present, the explicit candidate
+                # status must reject the release before hashes or hardware.
+                import tempfile
+                with tempfile.TemporaryDirectory() as temp_fw:
+                    dummy = Path(temp_fw) / "m7_A32_CFGLUT125.bin"
+                    dummy.write_bytes(b"\x00" * 16)
+                    M.FW_DIR = Path(temp_fw)
+                    try:
+                        catalog_doc = json.loads(
+                            (STAGE / "m7_profiles.json").read_text())
+                        anchors = json.loads(
+                            (STAGE / "anchors_m7.json").read_text())
+                        M.switch_to(release, catalog_doc, anchors, None)
+                    except RuntimeError as exc:
+                        assert "explicitly marks this release non-deployable" in str(exc), exc
+                    else:
+                        raise AssertionError("placeholder manifest admitted")
+            finally:
+                M.program_fpga = real_program
+                M.FW_DIR = REPO / "bitstreams"
+            assert program_calls == [], program_calls
+            assert bytes(acc_regs.mem) == before_acc, "accelerator registers mutated"
+            assert bytes(dma_regs.mem) == before_dma, "DMA registers mutated"
+            print(f"MOCK OK: candidate {release} rejected before hardware "
+                  f"mutation ({mode}; GLM-F7 admission verified)")
         else:
             program_profile("A32")   # board starts with the A32 build live
             run(args)

@@ -15,6 +15,7 @@ style as the M0-M6 board runs.
 import hashlib
 import json
 import os
+import re
 import statistics
 import struct
 import sys
@@ -474,6 +475,18 @@ def resolve_release(release_id, catalog):
     return rel
 
 
+def release_bundle_dir(profile, catalog_doc):
+    """Parameter directory for a release: catalog bundle_dir when bound,
+    otherwise the release name itself (GLM-F6: every load_params call site
+    must go through this, never the raw release name)."""
+    rel = resolve_release(profile, catalog_doc)
+    bundle = rel.get("bundle_dir", profile)
+    require(type(bundle) is str and bundle not in ("", ".", "..")
+            and Path(bundle).name == bundle,
+            f"{profile}: invalid release bundle_dir")
+    return bundle
+
+
 def switch_to(profile, catalog, anchors, ctx):
     """One full profile request through the seven-phase lifecycle.
     Returns True if the PL was reprogrammed, False for parameter-only change."""
@@ -493,6 +506,8 @@ def switch_to(profile, catalog, anchors, ctx):
              f"W{acc['image_w']}H{acc['image_h']}-CVH1")
     require(rel["shape_id"] == shape,
             f"{profile}: release shape {rel['shape_id']} != manifest shape {shape}")
+    require(hw.get("deployable", True) is True,
+            f"{profile}: manifest explicitly marks this release non-deployable")
     n = acc["kernel_n"]
     k = acc["channels_k"]
     w = acc["image_w"]
@@ -501,6 +516,12 @@ def switch_to(profile, catalog, anchors, ctx):
     rx_bytes = acc["expected_output_bytes"]
 
     # Phase: VALIDATING — candidate firmware + parameter files + live identity
+    declared_bin = hw["artifacts"]["firmware_bin_sha256"]
+    declared_bit = hw["artifacts"]["bitstream_sha256"]
+    require(re.fullmatch(r"[0-9a-f]{64}", declared_bin) is not None
+            and re.fullmatch(r"[0-9a-f]{64}", declared_bit) is not None,
+            f"{profile}: manifest artifact hashes are not canonical SHA-256 "
+            "- non-deployable candidate/placeholder manifest (GLM-F7)")
     firmware = FW_DIR / FW_NAME[profile]
     require(firmware.is_file(), f"firmware missing: {firmware}")
     firmware_hash = hashlib.sha256(firmware.read_bytes()).hexdigest()
@@ -718,7 +739,7 @@ def main():
             frames = int(sys.argv[3]) if len(sys.argv) > 3 else 3
             require(profile in catalog, f"unknown profile {profile}")
             reloaded = switch_to(profile, catalog_doc, anchors, ctx)
-            do_switch_frames(profile, catalog, anchors, ctx, frames)
+            do_switch_frames(profile, catalog_doc, anchors, ctx, frames)
             mode_result["label"] = (f"M7_SWITCH {profile}: PASS ({frames} frames, "
                                     f"reload={'yes' if reloaded else 'no'})")
             mode_result["ok"] = True
@@ -792,8 +813,9 @@ def main():
             hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
             acc = hw["accelerator"]
             n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
-            channels, _bundle = load_params(profile, n, k,
-                                            hw_bias_width=acc["bias_width"])
+            channels, _bundle = load_params(
+                release_bundle_dir(profile, catalog_doc), n, k,
+                hw_bias_width=acc["bias_width"])
             padded = load_input(n, w, h)
             expected = make_expected(padded, n, w, h, channels) \
                 if w * h * k <= REF_POSITION_LIMIT else None
@@ -866,12 +888,13 @@ def safe_cleanup(ctx):
         ctx["handles"] = None
 
 
-def do_switch_frames(profile, catalog, anchors, ctx, frames):
+def do_switch_frames(profile, catalog_doc, anchors, ctx, frames):
     hw = json.loads((BASE / f"hardware_{profile}.json").read_text())
     acc = hw["accelerator"]
     n, k, w, h = acc["kernel_n"], acc["channels_k"], acc["image_w"], acc["image_h"]
-    channels, _bundle = load_params(profile, n, k,
-                                    hw_bias_width=acc["bias_width"])
+    channels, _bundle = load_params(
+        release_bundle_dir(profile, catalog_doc), n, k,
+        hw_bias_width=acc["bias_width"])
     padded = load_input(n, w, h)
     expected = make_expected(padded, n, w, h, channels) \
         if w * h * k <= REF_POSITION_LIMIT else None

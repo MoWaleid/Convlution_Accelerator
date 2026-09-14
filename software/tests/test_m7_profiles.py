@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from unittest import mock
 
+import m7_switch as m7
 import m8_cli
 from conv_lab.dma import layout, transfer_length, validate_layout
 from conv_lab.errors import AdmissionError
@@ -29,6 +30,24 @@ CASES = {
                        "45463132354b31364e33573332523031"),
     "B32_CFGLUT100": (32,32,3,16,1156,5440,32768,38272,
                        "45463130304b31364e33573332523031"),
+    "A32_CFGLUT125": (32,32,3,8,1156,5440,16384,21888,
+                       "45463132354b30384e33573332523031"),
+    "C32_CFGLUT125": (32,32,5,8,1296,5568,16384,22016,
+                       "45463132354b30384e35573332523031"),
+    "D32_CFGLUT125": (32,32,3,4,1156,5440,8192,13696,
+                       "45463132354b30344e33573332523031"),
+    "D640_CFGLUT125": (640,480,3,4,309444,313728,2457600,2771392,
+                        "45463132354e334b30345647412d5231"),
+}
+# Release-to-parameter-bundle aliases (GLM-F1: every staged release must
+# resolve its catalog-bound bundle directory; candidates share the frozen
+# legacy bundles because bundle bytes and hardware release names are
+# orthogonal).
+BUNDLE_ALIASES = {
+    "A32": "A32", "B32": "B32", "C32": "C32", "D32": "D32", "D640": "D640",
+    "B32_CFGLUT125": "B32", "B32_CFGLUT100": "B32",
+    "A32_CFGLUT125": "A32", "C32_CFGLUT125": "C32",
+    "D32_CFGLUT125": "D32", "D640_CFGLUT125": "D640",
 }
 
 
@@ -37,7 +56,7 @@ class M7Profiles(unittest.TestCase):
         self.profiles = load_profiles(CATALOG)
         self.allocation = Allocation(0x10000000, 4194304, 0, 0x20000000)
 
-    def test_seven_release_layouts_and_frozen_ids(self):
+    def test_staging_release_layouts_ids_and_bundle_aliases(self):
         self.assertEqual(set(self.profiles), set(CASES))
         for name, (w,h,n,k,tx,rxoff,rx,end,identity) in CASES.items():
             with self.subTest(profile=name):
@@ -139,11 +158,12 @@ class M7Profiles(unittest.TestCase):
 
     def test_m8_release_resolves_shared_parameter_bundle(self):
         catalog = json.loads(CATALOG.read_bytes())
-        self.assertEqual(m8_cli.release_bundle_dir("B32", catalog), "B32")
-        self.assertEqual(m8_cli.release_bundle_dir("B32_CFGLUT125", catalog),
-                         "B32")
-        self.assertEqual(m8_cli.release_bundle_dir("B32_CFGLUT100", catalog),
-                         "B32")
+        for release, bundle in BUNDLE_ALIASES.items():
+            with self.subTest(release=release):
+                self.assertEqual(m8_cli.release_bundle_dir(release, catalog),
+                                 bundle)
+                self.assertEqual(m7.release_bundle_dir(release, catalog),
+                                 bundle)
         with mock.patch.object(m8_cli.m7, "BASE", ROOT / "profiles"):
             identity = m8_cli.parameter_identity("B32")
         self.assertEqual(identity["bundle_dir"], "B32")

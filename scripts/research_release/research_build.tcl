@@ -34,6 +34,19 @@ foreach key {release_id shape_id n k w h build_id_hex clock_mhz profile render_c
 }
 if {$spec(release_id) ne $research_release_id} { error "spec release_id mismatch" }
 
+# The GUI path must enforce the same catalog/spec/render binding as the Python
+# driver. This prevents direct Tcl invocation from bypassing the release
+# identity checks or consuming a hand-edited untracked config_pkg.
+set release_driver [file join $script_dir research_release.py]
+if {[catch {exec python -B $release_driver verify-render $research_release_id} verify_output]} {
+    error "Release identity/render verification failed: $verify_output"
+}
+puts $verify_output
+if {[catch {exec git -C $root diff --quiet}] ||
+    [catch {exec git -C $root diff --cached --quiet}]} {
+    error "Tracked source changes exist; commit them before a physical release build"
+}
+
 set out [file join $root work research_${research_release_id}]
 set rendered_config [file join $out src config_pkg.vhd]
 if {[file exists $out]} {

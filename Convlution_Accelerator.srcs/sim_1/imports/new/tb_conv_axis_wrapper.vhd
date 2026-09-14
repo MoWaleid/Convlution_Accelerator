@@ -141,6 +141,18 @@ architecture sim of tb_conv_axis_wrapper is
         positive :=
             ((C_N - 1) * C_PAD_W + C_N + 7) / 8 + 1;
 
+    -- GLM-F8: contiguous low-lane TKEEP for the trailing partial input beat,
+    -- derived from the compiled frame geometry instead of assuming a
+    -- four-byte remainder.
+    function final_input_tkeep return std_logic_vector is
+        variable mask : std_logic_vector(7 downto 0) := (others => '0');
+    begin
+        for lane in 0 to C_FINAL_INPUT_BYTES - 1 loop
+            mask(lane) := '1';
+        end loop;
+        return mask;
+    end function final_input_tkeep;
+
 
     function input_pixel_value(
         pixel_index : natural
@@ -389,9 +401,9 @@ begin
             "tb_conv_axis_wrapper supports the released K=4/K=8/K=16 profiles"
         severity failure;
 
-    assert C_FINAL_INPUT_BYTES = 0 or C_FINAL_INPUT_BYTES = 4
+    assert C_FINAL_INPUT_BYTES <= 7
         report
-            "Input framing fixture supports full or 4-byte-final frames only"
+            "Input frame remainder must fit one 64-bit beat"
         severity failure;
 
     assert C_K mod 4 = 0
@@ -1382,7 +1394,7 @@ begin
 
                 send_input_beat(
                     data_word,
-                    x"0F",
+                    final_input_tkeep,
                     '1'
                 );
 
