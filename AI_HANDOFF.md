@@ -1080,3 +1080,30 @@ The user should tell the new session:
 The best continuity check is not conversational memory; it is whether the new
 session independently reproduces §18.2–§18.5 from the repository and evidence
 without inventing state.
+
+### 18.8 Five-profile CFGLUT125 geometry checkpoint — 2026-09-14
+
+Commit `72763d5` replaced the abandoned 100 MHz product target with the
+user-approved five-profile CFGLUT5/edge-free/125 MHz target. Work immediately
+after that commit generalized the exact generated compressor:
+
+- `scripts/generate_cfglut_bitheap.py` emits deterministic 3x3 and 5x5
+  entities. The canonical 3x3 output remains byte-identical to its earlier Git
+  blob (`ad49b540...27aa7`).
+- The new 5x5 compressor handles 25 taps / 50 signed rows at the approved
+  22-bit sum width. Its nine Dadda targets are
+  `42,28,19,13,9,6,4,3,2`, with register boundaries after levels 3 and 6.
+- `conv_channel.vhd` selects the 3x3 or 5x5 entity at elaboration and derives
+  its local sum/accumulator width from `C_N`. `conv_engine.vhd` now accepts
+  exactly N=3 or N=5.
+- User-executed Vivado 2025.2 regression PASS: existing 3x3 exact test,
+  existing 3x3 5,120-output all-shift pipeline test, new nonzero 5x5
+  exact/reload/backpressure test, and new 5x5 6,144-output all-shift/bias/ReLU
+  pipeline test. Tcl result was zero.
+- Evidence boundary and exact markers are recorded in
+  `report/research_builds/CFGLUT125_MATRIX/geometry_generalization_20260914.md`.
+
+This closes the behavioral F3/N=5 feasibility blocker only. Next: freeze this
+checkpoint, add the five 125 MHz release specs/catalog staging, run full
+wrapper/profile simulations, then synthesize/route each release. No new
+physical build or board claim follows from the geometry regression alone.

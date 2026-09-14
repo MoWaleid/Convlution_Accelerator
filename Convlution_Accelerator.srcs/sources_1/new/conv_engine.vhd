@@ -72,8 +72,8 @@ architecture rtl of conv_engine is
     attribute dont_touch : string;
     attribute dont_touch of window_banks : signal is "true";
 begin
-    assert C_N = 3
-        report "CFGLUT5 engine configuration is specialized for N=3"
+    assert C_N = 3 or C_N = 5
+        report "CFGLUT5 engine supports only N=3 or N=5"
         severity failure;
 
     -- The final truth bit is still in the distribution stage after active

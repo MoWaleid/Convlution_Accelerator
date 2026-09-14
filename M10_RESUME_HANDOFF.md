@@ -8,6 +8,13 @@
 > 5x5 generated bitheap; the current `conv_channel.vhd` intentionally fails
 > elaboration for N other than 3.
 
+**Geometry update:** the N=5 blocker described above has now been implemented
+and passed four user-executed Vivado regressions, including 6,144 N=5
+all-shift/bias/ReLU pipeline outputs. See
+`report/research_builds/CFGLUT125_MATRIX/geometry_generalization_20260914.md`.
+Physical C32 synthesis, 125 MHz timing, full-system simulation and board
+qualification remain open.
+
 **Written 2026-09-14 (end of session). Audience: the next assistant ("Codex"
 or equivalent) resuming this project. Read this file top to bottom before
 touching anything. It is context-reset safe: every claim below carries its

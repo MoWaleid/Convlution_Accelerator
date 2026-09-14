@@ -1,5 +1,5 @@
 -- ============================================================================
--- conv_channel.vhd -- Exact CFGLUT5 3x3 convolution channel
+-- conv_channel.vhd -- Exact CFGLUT5 3x3/5x5 convolution channel
 -- ============================================================================
 -- The two radix-16 partial products from every tap are sent directly into a
 -- column-aware Dadda bit heap.  It compresses only occupied columns and uses
@@ -7,8 +7,9 @@
 -- width CSA tree.
 --
 -- Pipeline:
---   S1  CFGLUT lookup + Dadda levels 1..3
---   S2  Dadda levels 4..6 + two-row register
+--   BH  CFGLUT lookup + generated Dadda compressor (one registered boundary
+--       for 3x3, two for 5x5)
+--   S2  two-row register
 --   S3  final carry-propagate sum + bias
 --   S4  arithmetic shift + discarded half-bit register
 --   S5  round-half-up increment, saturation and optional ReLU
@@ -44,8 +45,10 @@ end entity conv_channel;
 
 architecture rtl of conv_channel is
     constant C_TAPS   : positive := C_N * C_N;
-    constant C_TREE_W : positive := CFG_SUM_WIDTH;
-    constant C_FULL_W : positive := CFG_FULL_ACCUM_WIDTH;
+    constant C_TREE_W : positive :=
+        CFG_PRODUCT_WIDTH + clog2(C_N * C_N);
+    constant C_FULL_W : positive :=
+        max_int(C_TREE_W, CFG_BIAS_WIDTH) + 1;
     constant C_OUT_W  : positive := CFG_OUTPUT_WIDTH;
 
     type pp_array_t is
@@ -76,8 +79,8 @@ architecture rtl of conv_channel is
         (others => '0');
     signal valid_s5  : std_logic := '0';
 begin
-    assert C_N = 3
-        report "The exact CFGLUT5 bit heap is specialized for N=3"
+    assert C_N = 3 or C_N = 5
+        report "The exact CFGLUT5 bit heap supports only N=3 or N=5"
         severity failure;
     assert CFG_PIXEL_WIDTH = 8 and CFG_WEIGHT_WIDTH = 8
         report "cfglut5_kcm requires uint8 pixels and signed-int8 weights"
@@ -102,18 +105,37 @@ begin
         end generate gen_flatten_bits;
     end generate gen_kcm_taps;
 
-    bitheap_inst : entity work.cfglut5_bitheap_3x3
-        port map (
-            clk        => clk,
-            resetn     => resetn,
-            ce         => ce,
-            valid_in   => valid_in,
-            pp_lo_flat => pp_lo_flat,
-            pp_hi_flat => pp_hi_flat,
-            row_a_out  => bitheap_row_a,
-            row_b_out  => bitheap_row_b,
-            valid_out  => bitheap_valid_s1
-        );
+    gen_bitheap_3x3 : if C_N = 3 generate
+    begin
+        bitheap_inst : entity work.cfglut5_bitheap_3x3
+            port map (
+                clk        => clk,
+                resetn     => resetn,
+                ce         => ce,
+                valid_in   => valid_in,
+                pp_lo_flat => pp_lo_flat,
+                pp_hi_flat => pp_hi_flat,
+                row_a_out  => bitheap_row_a,
+                row_b_out  => bitheap_row_b,
+                valid_out  => bitheap_valid_s1
+            );
+    end generate gen_bitheap_3x3;
+
+    gen_bitheap_5x5 : if C_N = 5 generate
+    begin
+        bitheap_inst : entity work.cfglut5_bitheap_5x5
+            port map (
+                clk        => clk,
+                resetn     => resetn,
+                ce         => ce,
+                valid_in   => valid_in,
+                pp_lo_flat => pp_lo_flat,
+                pp_hi_flat => pp_hi_flat,
+                row_a_out  => bitheap_row_a,
+                row_b_out  => bitheap_row_b,
+                valid_out  => bitheap_valid_s1
+            );
+    end generate gen_bitheap_5x5;
 
     pipeline_process : process(clk)
         variable acc_tmp   : signed(C_FULL_W - 1 downto 0);
@@ -134,7 +156,7 @@ begin
                 result_s5 <= (others => '0');
                 valid_s5 <= '0';
             elsif ce = '1' then
-                -- S2: register the two rows produced by the bit heap.
+                -- S2: register the two rows produced by the selected bit heap.
                 tree_s2(0) <= signed(bitheap_row_a);
                 tree_s2(1) <= signed(bitheap_row_b);
                 valid_s2 <= bitheap_valid_s1;
