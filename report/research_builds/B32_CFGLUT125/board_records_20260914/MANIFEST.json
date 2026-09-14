@@ -1,0 +1,26 @@
+{
+  "schema": "b32-cfglut125-g3-board-evidence/1",
+  "qualification_date": "2026-09-14",
+  "hardware_release": "B32_CFGLUT125",
+  "build_id_ascii": "EF125K16N3W32R01",
+  "build_id_hex": "45463132354b31364e33573332523031",
+  "output_anchor_sha256": "5821c8b19a88fd34e3002dd7b0c7d60c7fcd79b8a61a326697d95b6e3ec3be94",
+  "note": "Board RTC is unset; 20180309 run timestamps are not real dates.",
+  "runs": [
+    {
+      "run_id": "20180309T131241Z-B32_CFGLUT125-library_alley_cat",
+      "frames": 3,
+      "record_sha256": "70d4cc728cb0378f3b7af75f25e107b3d336acd26665650d6733720bc66a48e3"
+    },
+    {
+      "run_id": "20180309T131821Z-extremes-B32_CFGLUT125",
+      "frames": 12,
+      "record_sha256": "e1ac710ee6b31ae4e9b8174657fb248926b3f536d1dad0b0c7213bd4015dddd9"
+    },
+    {
+      "run_id": "20180309T132021Z-soak100-B32_CFGLUT125-library_alley_cat",
+      "frames": 100,
+      "record_sha256": "3815ba560b12d2378fef2255d0b2ff4d8c94f5b4dbc1821372ea8a89c4c67566"
+    }
+  ]
+}

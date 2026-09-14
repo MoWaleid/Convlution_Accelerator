@@ -109,3 +109,29 @@ Observed terminal summary:
 M8 SOAK 20180309T132021Z-soak100-B32_CFGLUT125-library_alley_cat: PASS
 (100 frames, median 0.125 ms / p95 0.128)
 ```
+
+## Retrieved schema-v3 evidence
+
+The three complete run directories were packaged on the board, copied from
+the FAT boot partition, and verified on the Windows host. The original
+transport archive is preserved alongside the extracted records.
+
+- Transport archive:
+  `B32_CFGLUT125_G3_records_20260914.tar.gz`
+- Archive SHA-256:
+  `f9a36cde5ada13af40f1c91f85bd1d81d415ed6982110fc042773552c753038e`
+- Extracted evidence directory: `board_records_20260914/`.
+- Internal checksum manifest: PASS.
+- Manifest hardware release: `B32_CFGLUT125`; three runs.
+
+Record hashes:
+
+| Run | Frames | `record.json` SHA-256 |
+|---|---:|---|
+| `20180309T131241Z-B32_CFGLUT125-library_alley_cat` | 3 | `70d4cc728cb0378f3b7af75f25e107b3d336acd26665650d6733720bc66a48e3` |
+| `20180309T131821Z-extremes-B32_CFGLUT125` | 12 | `e1ac710ee6b31ae4e9b8174657fb248926b3f536d1dad0b0c7213bd4015dddd9` |
+| `20180309T132021Z-soak100-B32_CFGLUT125-library_alley_cat` | 100 | `3815ba560b12d2378fef2255d0b2ff4d8c94f5b4dbc1821372ea8a89c4c67566` |
+
+All three records use schema `m8-run-record/3`, outcome `PASS`, profile
+`B32_CFGLUT125`, and record `reloaded=false`, as expected for tests run while
+the research image was already live.

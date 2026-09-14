@@ -919,7 +919,8 @@ clock), and these Gate 3.3 sub-gates are complete:
    frames bit-exact; median `0.125 ms`, p95 `0.128 ms`; cleanup STATUS
    `0x00000181`.
 
-Board run records still on the rootfs:
+Board run records were retrieved from the rootfs and are now preserved in the
+repository (copies also remain on the board):
 
 - `/var/lib/conv-lab/results/20180309T131241Z-B32_CFGLUT125-library_alley_cat/record.json`
 - `/var/lib/conv-lab/results/20180309T131821Z-extremes-B32_CFGLUT125/record.json`
@@ -927,20 +928,24 @@ Board run records still on the rootfs:
 
 Full evidence narrative:
 `report/research_builds/B32_CFGLUT125/board_runtime_qualification_20260914.md`.
+The original record transport archive hashes to
+`f9a36cde5ada13af40f1c91f85bd1d81d415ed6982110fc042773552c753038e`;
+extracted schema-v3 evidence is under
+`report/research_builds/B32_CFGLUT125/board_records_20260914/`.
 
 ### 18.5 Exact remaining order
 
 Do not mark `B32_CFGLUT125` QUALIFIED yet. Resume Gate 3.3 in this order:
 
-1. **Preserve the three board run records.** Package them with a manifest and
-   SHA-256 on the board, copy through `/boot`/the SD card, verify on Windows,
-   then add them under the research evidence directory. Never treat terminal
-   excerpts as a substitute for the schema-v3 records.
-2. **Inventory before switching.** Read-only verify that the board still has
-   the A32 MAC firmware, `hardware_A32.json`, A32 bundle, catalog entry, and
-   their expected hashes. Do not request an A32 switch until this inventory
-   passes; the newly built WIC was only explicitly provisioned with the
-   research firmware overlay.
+1. **DONE — preserve the three board run records.** The archive and extracted
+   schema-v3 records are checked into the research evidence directory.
+2. **Inventory before switching.** The first read-only inventory proved that
+   the new image lacks the A32 firmware, manifest, and bundle while retaining
+   the correct catalog and anchor. A narrowly scoped restore archive is now on
+   the SD FAT partition: `A32_MAC100_restore_20260914.tar.gz`, SHA-256
+   `df078b551ade8727503fcf7992d6b38ef4d6d04296b8cc4f99359b45e19fae3c`.
+   Install it with backup and exact verification, then rerun the inventory.
+   Do not request an A32 switch until the inventory passes.
 3. **Repeated full-PL reconfiguration against the MAC baseline.** Exercise
    A32 MAC100 → B32_CFGLUT125 → A32 repeatedly (target at least 20 complete
    cycles), with identity validation and anchor-exact activation after every

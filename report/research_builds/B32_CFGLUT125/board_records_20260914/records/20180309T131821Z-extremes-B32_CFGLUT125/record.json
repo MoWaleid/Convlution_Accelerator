@@ -1,0 +1,183 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20180309T131821Z-extremes-B32_CFGLUT125",
+  "outcome": "PASS",
+  "started_utc": "2018-03-09T13:18:21Z",
+  "command": "/home/petalinux/m8_cli.py extremes --profile B32_CFGLUT125",
+  "profile": {
+    "name": "B32_CFGLUT125",
+    "release_id": "B32_CFGLUT125",
+    "shape_id": null,
+    "build_id_ascii": "EF125K16N3W32R01",
+    "build_id_hex": "45463132354b31364e33573332523031",
+    "N": 3,
+    "K": 16,
+    "W": 32,
+    "H": 32,
+    "tx_bytes": 1156,
+    "rx_bytes": 32768
+  },
+  "image_tag": "extremes",
+  "input": {},
+  "parameters": {
+    "bundle_dir": "B32",
+    "channel_config_sha256": "840ae86555126f5aa35af5aade728c0274fa8466ec36294a3d3895921fad3c13",
+    "weights": {
+      "kernel_ch0.mem": "d3c5204ca9d191a60366c185090b3930ecac162cff0104cf37b2f9322bb88f61",
+      "kernel_ch1.mem": "3161530188d7ca2f71b4ea609cf5926fe735f71c0eec37b0ac2cc89f6fdcfb6e",
+      "kernel_ch10.mem": "954505d9804d2e90be6c1d97210a57f98365d15187e93410ae9a56982da6052d",
+      "kernel_ch11.mem": "f7d037fe60fb388ef43be0422a6b6b9215f140ede64d700532051867d7d8d9af",
+      "kernel_ch12.mem": "cb58774d28b39dc5c6e878c46f2656ac44d99d68186e189f0f53c774f953945d",
+      "kernel_ch13.mem": "b037c022f3dbf599fc7918e80d9b4e171326b49b2dd6124f275b09b3851f518a",
+      "kernel_ch14.mem": "a3740f60a201e6f94294e8deb15f9b8e8b0bfa500a4f81cfdeb82f915d5e80db",
+      "kernel_ch15.mem": "a98deee41401b1ec5789b7495581f59d3202a276061c5d91aec2cde894e5231c",
+      "kernel_ch2.mem": "66800fed9ce681e867a09e085a0ac3775c0a6135bcb9180054d1503a424cef8e",
+      "kernel_ch3.mem": "3c2f27d0a5189b3abaab887ad8739d89d6a8d510606e0f22a23731d1dbd32f01",
+      "kernel_ch4.mem": "482592f99f6324e5285279fb412bf7afd188331ce56fcd7c101dea4e09656305",
+      "kernel_ch5.mem": "34ee0dad8da81e0b3e7f0de497492a09db0925c4a0138e0d883a21ecd79383cb",
+      "kernel_ch6.mem": "bc9fd6805d2a7243d86c6c265279438fd41481a9cbbeaaad9dabfd3ea22b6b31",
+      "kernel_ch7.mem": "ccaedf3fc53c9883f16e483fc33c4ccccfa047d8af926a0e7206d470e21bd558",
+      "kernel_ch8.mem": "e35cdb5dc53ca51e0a134548021806acda986a3903ef29ca5cb11a8655bbe04f",
+      "kernel_ch9.mem": "9a407fc80fb951697e9962d699447ea6a0c56a875d695a86ad1437fa905bfbab"
+    },
+    "bundle_sha256": "952cb13ce0adad04c42704c1e85bd964538cf66f8455783b2123bbce9d160cec"
+  },
+  "switch": {
+    "reloaded": false,
+    "wall_s": 2.005765259999862
+  },
+  "verification": {},
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "stimulus": "all_zero",
+      "sha256": "e4d5ce1e7fbe1732ff4d00750d535b60b788fd3d47c41946918a4645ed61311a",
+      "mismatches": 0,
+      "hw_ms": 0.14972300004956196,
+      "wall_ms": 31.0385979998955
+    },
+    {
+      "stimulus": "all_255",
+      "sha256": "9131ad0612986246fb424986b52268643810d301d54fbdc8b8f6ddf2f84f947e",
+      "mismatches": 0,
+      "hw_ms": 0.13899100008529786,
+      "wall_ms": 31.277372999966246
+    },
+    {
+      "stimulus": "saturation_params",
+      "sha256": "88fe41f05ae1971057a0fc8528876f160437d99a950886d498c6d06b966de324",
+      "mismatches": 0,
+      "hw_ms": 0.12992000006306625,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_24",
+      "sha256": "4708c7925f0d5fd26606b46802c706e708af42dd41bcdfeacc383cccf2578813",
+      "mismatches": 0,
+      "hw_ms": 0.13163100015844975,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_25",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.12825299995711248,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_26",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.12942799980919517,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_27",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.13115100000504754,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_28",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.1310640000156127,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_29",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.13063400001556147,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_30",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.13086800004202814,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_31",
+      "sha256": "c35020473aed1b4642cd726cad727b63fff2824ad68cedd7ffb73c7cbd890479",
+      "mismatches": 0,
+      "hw_ms": 0.13125499981470057,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "reinstall_activation",
+      "sha256": "5821c8b19a88fd34e3002dd7b0c7d60c7fcd79b8a61a326697d95b6e3ec3be94",
+      "mismatches": 0,
+      "hw_ms": 0.13055299996267422,
+      "wall_ms": 0.0
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; declared fabric clock 125 MHz",
+    "total_wall_s": 13.860023098000056
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "783b5918f5139c4877edbe65a6606cc8",
+    "m7_switch_md5": "b4d99d0f5206cbafa420a0591c797ad1"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 125000000,
+    "fclk0_source": "release manifest; not a live measurement"
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "extremes": {
+    "stimuli": [
+      "all_zero",
+      "all_255",
+      "saturation_params",
+      "shift_24",
+      "shift_25",
+      "shift_26",
+      "shift_27",
+      "shift_28",
+      "shift_29",
+      "shift_30",
+      "shift_31",
+      "reinstall_activation"
+    ]
+  },
+  "counters_final": {
+    "input_accept": 1156,
+    "input_consumed": 1156,
+    "core_accept": 1024,
+    "output_accept": 32768,
+    "status": 413,
+    "error_flags": 0
+  }
+}
