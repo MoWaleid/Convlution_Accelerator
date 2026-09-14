@@ -38,10 +38,10 @@
   },
   "layout_note": "runtime derives the approved four-guard layout via conv_lab/compute_layout from expected byte counts and the discovered buffer; the manifest deliberately carries no rx_offset (IP-07 single source of truth)",
   "artifacts": {
-    "bitstream_sha256": "TBD_FIRST_BUILD",
-    "firmware_bin_sha256": "TBD_FIRST_BUILD",
+    "bitstream_sha256": "133713c5eca1f8a41a7baa40719e1c101364f3a835111028db925a7d7a309858",
+    "firmware_bin_sha256": "4e827310eb7f1e8c9278d0c9b36905eb4b7c766d9878a3a551e1909843d5b73b",
     "bitstream_file": "bitstreams/b32_cfglut125_125mhz.bit",
     "firmware_file": "bitstreams/b32_cfglut125_125mhz.bit.bin",
-    "note": "hashes are filled from work/research_B32_CFGLUT125/artifacts after the first research build; all hardware paths fail closed until then"
+    "note": "first isolated research build passed timing, DRC and route gates; board validation remains NOT_RUN"
   }
 }
