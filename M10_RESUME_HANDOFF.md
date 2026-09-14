@@ -181,11 +181,13 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       protocol, per-chunk md5 — see AI_HANDOFF §9/§17.5).
 
 ### Gate 3 — board qualification at 125 MHz (needs VM + board)
-- [ ] G3.1 VM: import the XSA into the PetaLinux project, rebuild
+- [x] G3.1 VM: import the XSA into the PetaLinux project, rebuild
       FSBL/BOOT.BIN with the 125 MHz bitstream (QUICKSTART procedure),
-      flash SD.
-- [ ] G3.2 Board: **measured** FCLK0 = 125 MHz (regulator/clock-rate check
-      — never assume).
+      flash SD. Actual WIC SHA-256 `c99781f6e30a651c1fe878e9806f9e6b78a605eb46f0d6315516c0af6265e5f4`;
+      live BUILD_ID `EF125K16N3W32R01`.
+- [x] G3.2 Board: **measured** FCLK0 = 125 MHz (live SLCR derivation:
+      IO PLL FBDIV=30, DIVISOR0=4, DIVISOR1=2; evidence in
+      `report/research_builds/B32_CFGLUT125/board_boot_identity_20260914.md`).
 - [ ] G3.3 Full gate via `m7_switch`/`m8_cli` on the new release:
       identity validation → anchor-exact activation (`5821c8b1…`) →
       ≥100-frame soak → extremes (shift 24–31 now live and must PASS) →
