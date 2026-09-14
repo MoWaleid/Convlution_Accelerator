@@ -1,0 +1,128 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20260913T042145Z-soak5-A32-library_alley_cat",
+  "outcome": "PASS",
+  "started_utc": "2026-09-13T04:21:45Z",
+  "command": "/home/petalinux/m8_cli.py soak --profile A32 --frames 5",
+  "profile": {
+    "name": "A32",
+    "build_id_ascii": "M4N3K8W32-260911",
+    "build_id_hex": "4d344e334b385733322d323630393131",
+    "N": 3,
+    "K": 8,
+    "W": 32,
+    "H": 32,
+    "tx_bytes": 1156,
+    "rx_bytes": 16384
+  },
+  "image_tag": "library_alley_cat",
+  "input": {
+    "source_path": "library:alley_cat_s_000013",
+    "padded_tx_sha256": "967c1c7687d3775d4512bd30eaa7f07fc8e1956145ed82326b35eb8cff28f74e"
+  },
+  "parameters": {
+    "channel_config_sha256": "f0b896bbcde13e9b9c6a358a122ce3230b4e12a47b485cbf9376e0440a1d0e3c",
+    "weights": {
+      "kernel_ch0.mem": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86",
+      "kernel_ch1.mem": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405",
+      "kernel_ch2.mem": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc",
+      "kernel_ch3.mem": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e",
+      "kernel_ch4.mem": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181",
+      "kernel_ch5.mem": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914",
+      "kernel_ch6.mem": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31",
+      "kernel_ch7.mem": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f"
+    },
+    "bundle_sha256": "367fb1f5a45a3271c2967ae4f0cadb1b50661470dc4df50496dbf36dce895469"
+  },
+  "switch": {
+    "reloaded": false,
+    "wall_s": 0.8739500190000058
+  },
+  "verification": {
+    "mode": "anchor_sha256",
+    "anchor": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705"
+  },
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "index": 1,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": null,
+      "hw_ms": 0.14819099999385799,
+      "wall_ms": 2.183816000012939
+    },
+    {
+      "index": 2,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": null,
+      "hw_ms": 0.12676899999064517,
+      "wall_ms": 2.113833999999315
+    },
+    {
+      "index": 3,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": null,
+      "hw_ms": 0.12520000001359222,
+      "wall_ms": 2.1590769999875192
+    },
+    {
+      "index": 4,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": null,
+      "hw_ms": 0.13171700001635145,
+      "wall_ms": 2.0990589999883014
+    },
+    {
+      "index": 5,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": null,
+      "hw_ms": 0.12383400002136113,
+      "wall_ms": 2.0657299999982115
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; fabric clock 100 MHz",
+    "preprocess_s": 0.7823659760000226,
+    "hw_ms": {
+      "median": 0.12676899999064517,
+      "min": 0.12383400002136113,
+      "max": 0.14819099999385799,
+      "p95": 0.14819099999385799
+    },
+    "wall_ms": {
+      "median": 2.113833999999315,
+      "min": 2.0657299999982115,
+      "max": 2.183816000012939,
+      "p95": 2.183816000012939
+    },
+    "total_wall_s": 1.698946661000008
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "9b38d584d9102a0f3bf338e3e02fe5f0",
+    "m7_switch_md5": "8c87221dac42e8ac4c52d4744c50c140"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 100000000
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "soak": {
+    "frames": 5
+  },
+  "counters_final": {
+    "input_accept": 1156,
+    "input_consumed": 1156,
+    "core_accept": 1024,
+    "output_accept": 16384,
+    "status": 413,
+    "error_flags": 0
+  }
+}

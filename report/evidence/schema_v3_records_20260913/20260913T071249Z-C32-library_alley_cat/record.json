@@ -1,0 +1,92 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20260913T071249Z-C32-library_alley_cat",
+  "outcome": "PASS",
+  "started_utc": "2026-09-13T07:12:49Z",
+  "command": "/home/petalinux/m8_cli.py run --profile C32 --frames 1",
+  "profile": {
+    "name": "C32",
+    "build_id_ascii": "CN5K08W32-260912",
+    "build_id_hex": "434e354b30385733322d323630393132",
+    "N": 5,
+    "K": 8,
+    "W": 32,
+    "H": 32,
+    "tx_bytes": 1296,
+    "rx_bytes": 16384
+  },
+  "image_tag": "library_alley_cat",
+  "input": {
+    "source_path": "library:alley_cat_s_000013",
+    "source_sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+    "geometry_policy": "exact",
+    "canonical_sha256": "a240bb760e2a85951f5c4e27c95041e98d4919c5cc32114cc4f5191f6ffb6771",
+    "padded_tx_sha256": "eb8404f5a63120fbb839ee73d50880e0274d78ce5a00cf9f703870d9bb142c9f"
+  },
+  "parameters": {
+    "channel_config_sha256": "eeeab5812a6a54be1dd172af5247fa1231b8eb982656569150ea0ab858a4f565",
+    "weights": {
+      "kernel_ch0.mem": "9a5621879ccbd73f92261d1a0563f10afcace8bd8438117ff3e7d693bd754731",
+      "kernel_ch1.mem": "bfe57355daa8736afbb5bb454cfc235e055c779f095a0ba3af8ed5b308639a99",
+      "kernel_ch2.mem": "769fb9e21cb3c0011b71dc69b518b9413af04b4edad5d85d60df459f7594b5cf",
+      "kernel_ch3.mem": "ef2da04fac16e7c2af24c04f16b5c3c400f8bd0e7dfe3c92489e77ace1318b7e",
+      "kernel_ch4.mem": "498303536494153b008264426c6b8103f91e9e7aa51216743d419e4e1d80b670",
+      "kernel_ch5.mem": "118c983f8a6bd71746738c6305724fee3a5e1529f65be92a0f77eacc59539b85",
+      "kernel_ch6.mem": "2e6444b151f58c1e50c53b3e68b4c7f149b8ddc52f0646d7bd4869e6635c3ee4",
+      "kernel_ch7.mem": "fe8125010d07aa42760ffb173bcb17a3e3c0004dac8be825471bd52f486acd0f"
+    },
+    "bundle_sha256": "c9ba0dba0ae7d704fff3160d9cbfa38d069bc81102f4fa03feef8b08bc59d3bb"
+  },
+  "switch": {
+    "reloaded": true,
+    "wall_s": 1.4799757969999945
+  },
+  "verification": {
+    "mode": "anchor_sha256",
+    "anchor": "b6ab2d53dd9517f3892865b386c6206adf24c4137ca8cc259ef3c3ed938d018c"
+  },
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "index": 1,
+      "sha256": "b6ab2d53dd9517f3892865b386c6206adf24c4137ca8cc259ef3c3ed938d018c",
+      "mismatches": null,
+      "hw_ms": 0.14530500000375923,
+      "wall_ms": 2.1516309999896066
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; fabric clock 100 MHz",
+    "preprocess_s": 0.8099543759999932,
+    "reference_s": 4.744600001060917e-05,
+    "frames_total_s": 0.0021516309999896066,
+    "total_wall_s": 2.3320015819999895
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "5542738961b01b2a2b1be4ac18136313",
+    "m7_switch_md5": "2fe949ca9040dd3fda990016c78a4474"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 100000000
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "catalog_sha256": "3a26bafe35004d396131d126f6ca2ea13ffad99c7bb23838aeba6097be317498",
+  "anchors_sha256": "5dea1257049545d3fe58df1126d7f3bd788d2fee054af4a44d30b9acb63e9cd0",
+  "counters_final": {
+    "input_accept": 1296,
+    "input_consumed": 1296,
+    "core_accept": 1024,
+    "output_accept": 16384,
+    "status": 413,
+    "error_flags": 0
+  }
+}

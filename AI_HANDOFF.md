@@ -680,11 +680,14 @@ switching/cold-boot requirements remain; this amendment claims no qualification.
 - M0–M7: closed (evidence in §10 + report/evidence/). M8: functionally
   complete and board-proven (E2 closed, ac84c3e) BUT Codex review R14-02/03
   found P1 defects in the NEW soak path and exit-code semantics — M8
-  acceptance is CONDITIONAL on the repair batch below. M9: §1 done,
-  §2 done (1,000-frame varied soak, 6/6 legs PASS, ef5c614), §3 done (five
-  true power-cycle boots, a3f31a5), §4 (clean-build reproduction) and §5
-  (tag v1-m9-release + known-limits) OPEN. The tag must NOT be applied
-  until Gate 0 closes (see 17.4).
+  acceptance was CONDITIONAL on the repair batch: that batch is now COMMITTED
+  (73bb803, R14-02..05 + R14-01 containment option (b) with max_shift=23)
+  and BOARD-REVALIDATED 2026-09-14 (soak5-A32 + A32 image run PASS on the
+  repaired code; records in report/evidence/schema_v3_records_20260913/).
+  M9: §1 done, §2 done (1,000-frame varied soak, 6/6 legs PASS, ef5c614),
+  §3 done (five true power-cycle boots, a3f31a5), §4 (clean-build
+  reproduction) and §5 (tag v1-m9-release + known-limits) OPEN. The tag
+  must NOT be applied until Gate 0 closes (see 17.4).
 - User directive: deadline pressure is OFF (user's own business). Quality
   and evidence discipline govern sequencing.
 - Branch `v1-bringup` is 17+ commits ahead of origin/v1-bringup — PUSH
@@ -724,19 +727,20 @@ recoverable → Gate 1 research build contract → Gate 2 B32_CFGLUT125 first
 → Gate 4 matched comparison (MAC100/CFGLUT100/CFGLUT125).
 
 ### 17.4 ACTION QUEUE (exact order, awaiting user GO per item)
-1. **Repair batch (host-only, no board):** R14-02 (shared finalization +
-   nonzero exit + lock in outermost finally), R14-03 (hoist soak image
-   admission before switch_to), R14-04 (hw bias_width into load_params),
-   R14-05 (bounded read MAX+1 in supervisor), mock negative cases for each.
-   Commit. (R14-01 RTL containment: user decision pending — recommended
-   option (b): admission-restrict legacy profiles to shift<=8 + document.)
-2. **Board session — artifact recovery + revalidation:** recover
-   /lib/firmware/m7_A32.bin (b59378e4…) + runtime hardware_A32.json to the
-   repo (FP-02: A32 .bit 8bc608… exists nowhere else); revalidate repaired
-   soak/run paths (1 short soak + 1 image run); pull the true schema-v3
-   records for the 1,000-frame soak + full matrix log (Codex: current
-   evidence files are excerpts).
-3. **R14-01 RTL fix** (per user decision) or admission restriction.
+1. **DONE 2026-09-14 (commit 73bb803):** repair batch R14-02..05 (shared
+   finalization + nonzero exit + lock in outermost finally; soak image
+   admission hoisted above switch_to; hw bias_width threaded into
+   load_params; bounded supervisor read) + mock negatives 8->17 cases all
+   PASS + C_FULL_W stale comment fixed. R14-01 containment: option (b)
+   IMPLEMENTED as admission max_shift=23 (defective range is 24..31; note
+   the plan's "shift<=8" premise was wrong — B32 ch2 ships shift 9).
+2. **DONE 2026-09-14 (board):** /lib/firmware/m7_A32.bin (b59378e4…) and
+   runtime hardware_A32.json recovered to the repo (bitstreams/m7_A32.bin,
+   software/hardware_A32.json — FP-02 closed); repaired soak + image run
+   PASS on board; the true schema-v3 soak records pulled to
+   report/evidence/schema_v3_records_20260913/ (see its MANIFEST.md for the
+   extremes-records and matrix-log gaps that remain open).
+3. **DONE (folded into 1):** R14-01 admission restriction (option b).
 4. **M9 §4:** clean-build reproduction (user-executed Vivado; D640
    projection reproduces dn3k04_w640480 hash 64849132…; or A32 via
    prepare_profile) + §5 tag v1-m9-release + known-limits (incl. R14-01

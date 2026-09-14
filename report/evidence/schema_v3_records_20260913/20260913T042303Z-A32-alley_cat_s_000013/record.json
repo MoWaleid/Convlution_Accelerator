@@ -1,0 +1,131 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20260913T042303Z-A32-alley_cat_s_000013",
+  "outcome": "PASS",
+  "started_utc": "2026-09-13T04:23:03Z",
+  "command": "/home/petalinux/m8_cli.py run --profile A32 --frames 2 --image /opt/conv-lab/library/datasets/m0-cifar-cat/converted-1/images/alley_cat_s_000013.png",
+  "profile": {
+    "name": "A32",
+    "build_id_ascii": "M4N3K8W32-260911",
+    "build_id_hex": "4d344e334b385733322d323630393131",
+    "N": 3,
+    "K": 8,
+    "W": 32,
+    "H": 32,
+    "tx_bytes": 1156,
+    "rx_bytes": 16384
+  },
+  "image_tag": "alley_cat_s_000013",
+  "input": {
+    "source_sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+    "source_format": "PNG",
+    "source_mode": "RGB",
+    "source_width": 32,
+    "source_height": 32,
+    "exif_orientation": null,
+    "oriented_width": 32,
+    "oriented_height": 32,
+    "target_width": 32,
+    "target_height": 32,
+    "geometry_policy": "exact",
+    "resize_filter": "NONE",
+    "aspect_ratio_changed": false,
+    "canonical_sha256": "a240bb760e2a85951f5c4e27c95041e98d4919c5cc32114cc4f5191f6ffb6771",
+    "pillow_version": "10.3.0",
+    "decoder_versions": [
+      {
+        "name": "zlib",
+        "version": "1.3.1"
+      }
+    ],
+    "preprocessing_version": "1",
+    "decode_policy": {
+      "max_source_bytes": 8388608,
+      "max_width": 4096,
+      "max_height": 4096,
+      "max_pixels": 2097152,
+      "resource_strategy": "linux-process-rlimit-as-supervised-v1"
+    },
+    "extensions": {
+      "worker_uid": 1000,
+      "address_space_limit": 134217728,
+      "no_new_privs": true,
+      "python_version": "3.12.11 (main, Jun  3 2025, 15:41:47) [GCC 13.4.0]",
+      "hardware_descriptors_inherited": false
+    },
+    "source_path": "/opt/conv-lab/library/datasets/m0-cifar-cat/converted-1/images/alley_cat_s_000013.png",
+    "padded_tx_sha256": "967c1c7687d3775d4512bd30eaa7f07fc8e1956145ed82326b35eb8cff28f74e"
+  },
+  "parameters": {
+    "channel_config_sha256": "f0b896bbcde13e9b9c6a358a122ce3230b4e12a47b485cbf9376e0440a1d0e3c",
+    "weights": {
+      "kernel_ch0.mem": "f96770403a134870da6c76f62947009b2a62226ba4cbd913eb3dd88fef3bdd86",
+      "kernel_ch1.mem": "bad3cd48fe92bd3d189626c959b47c7d0c51f0bcb0a3d5a302b1d68fda20c405",
+      "kernel_ch2.mem": "067e4a0f0bf5fc552722d5f5c5f1687f371c2b10296d844e272bc566fe9405dc",
+      "kernel_ch3.mem": "3e348cbcc0b04bbeebdfb1ace0a84fda3c5a63be0483742d613bc3d79d505d8e",
+      "kernel_ch4.mem": "82e3d0895d8cbce1fed9bb6060f641c690a9ab4fda9c79ff2a6cdb7152a3c181",
+      "kernel_ch5.mem": "5bd92a11869241645f961afb210f89218eceb958625bc1ad1d284bf17efd5914",
+      "kernel_ch6.mem": "ca3d957ec5396f2ba25ab9652a47275ec458c27313c2bfa770b4ddf25fbe4c31",
+      "kernel_ch7.mem": "4bcb45c89c7259e978f1fab8c579a67a03f26080e2bbeb0bf7e378804100656f"
+    },
+    "bundle_sha256": "367fb1f5a45a3271c2967ae4f0cadb1b50661470dc4df50496dbf36dce895469"
+  },
+  "switch": {
+    "reloaded": false,
+    "wall_s": 1.1620885210000438
+  },
+  "verification": {
+    "mode": "exact_reference"
+  },
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "index": 1,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": 0,
+      "hw_ms": 0.15169800002468037,
+      "wall_ms": 16.326837000008254
+    },
+    {
+      "index": 2,
+      "sha256": "cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b6863d9be705",
+      "mismatches": 0,
+      "hw_ms": 0.1276239999583595,
+      "wall_ms": 16.219230999979573
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; fabric clock 100 MHz",
+    "preprocess_s": 2.166498897999986,
+    "reference_s": 0.5463888539999857,
+    "frames_total_s": 0.03254606799998783,
+    "total_wall_s": 3.9401839029999906
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "9b38d584d9102a0f3bf338e3e02fe5f0",
+    "m7_switch_md5": "8c87221dac42e8ac4c52d4744c50c140"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 100000000
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "catalog_sha256": "3a26bafe35004d396131d126f6ca2ea13ffad99c7bb23838aeba6097be317498",
+  "anchors_sha256": "5dea1257049545d3fe58df1126d7f3bd788d2fee054af4a44d30b9acb63e9cd0",
+  "counters_final": {
+    "input_accept": 1156,
+    "input_consumed": 1156,
+    "core_accept": 1024,
+    "output_accept": 16384,
+    "status": 413,
+    "error_flags": 0
+  }
+}

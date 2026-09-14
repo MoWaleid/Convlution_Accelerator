@@ -1,0 +1,88 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20260913T071557Z-D32-library_alley_cat",
+  "outcome": "PASS",
+  "started_utc": "2026-09-13T07:15:57Z",
+  "command": "/home/petalinux/m8_cli.py run --profile D32 --frames 1",
+  "profile": {
+    "name": "D32",
+    "build_id_ascii": "DN3K04W32-260912",
+    "build_id_hex": "444e334b30345733322d323630393132",
+    "N": 3,
+    "K": 4,
+    "W": 32,
+    "H": 32,
+    "tx_bytes": 1156,
+    "rx_bytes": 8192
+  },
+  "image_tag": "library_alley_cat",
+  "input": {
+    "source_path": "library:alley_cat_s_000013",
+    "source_sha256": "200f5baa120d957838037c7e28052ac998e82ddd94aef937173e37c3dfb470b0",
+    "geometry_policy": "exact",
+    "canonical_sha256": "a240bb760e2a85951f5c4e27c95041e98d4919c5cc32114cc4f5191f6ffb6771",
+    "padded_tx_sha256": "967c1c7687d3775d4512bd30eaa7f07fc8e1956145ed82326b35eb8cff28f74e"
+  },
+  "parameters": {
+    "channel_config_sha256": "96cff789191b926becda965c444231f3a5731dd2cb9176791e3594cdb4073cda",
+    "weights": {
+      "kernel_ch0.mem": "a9480618be6d6041cba865624e571baad2f1209c154ed865aafc571738c4b29f",
+      "kernel_ch1.mem": "69c5594cf186ce567b991c220254fff861c11ef61ac3aa9ac8e4628f15a709a0",
+      "kernel_ch2.mem": "a671d5a394f26786ead97fef96af593b7977aa2beda0dc31d824473541f9434d",
+      "kernel_ch3.mem": "cd31aee3e4078f64c3f6268099160b2f3910d7fcef857838ce60fa6550783ea9"
+    },
+    "bundle_sha256": "d735ca24a505b7f00e7d71ed283e3d3cb0f5ac76903f55c658bc1078e2a706d8"
+  },
+  "switch": {
+    "reloaded": true,
+    "wall_s": 0.6140472289999934
+  },
+  "verification": {
+    "mode": "anchor_sha256",
+    "anchor": "6cb736f6a80132d8d67bd69854d3d47c5222b3c3936951531632fd6bbf756d5f"
+  },
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "index": 1,
+      "sha256": "6cb736f6a80132d8d67bd69854d3d47c5222b3c3936951531632fd6bbf756d5f",
+      "mismatches": null,
+      "hw_ms": 0.14285599999652732,
+      "wall_ms": 1.702757000003885
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; fabric clock 100 MHz",
+    "preprocess_s": 0.8099662780000045,
+    "reference_s": 4.580899999950816e-05,
+    "frames_total_s": 0.001702757000003885,
+    "total_wall_s": 1.4501370459999947
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "5542738961b01b2a2b1be4ac18136313",
+    "m7_switch_md5": "2fe949ca9040dd3fda990016c78a4474"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 100000000
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "catalog_sha256": "3a26bafe35004d396131d126f6ca2ea13ffad99c7bb23838aeba6097be317498",
+  "anchors_sha256": "5dea1257049545d3fe58df1126d7f3bd788d2fee054af4a44d30b9acb63e9cd0",
+  "counters_final": {
+    "input_accept": 1156,
+    "input_consumed": 1156,
+    "core_accept": 1024,
+    "output_accept": 8192,
+    "status": 413,
+    "error_flags": 0
+  }
+}
