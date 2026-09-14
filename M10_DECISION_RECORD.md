@@ -90,6 +90,16 @@ counterexample → −1 vs reference 0). Static verification is done; the xsim
 run is scheduled as the first item on this branch's testbench work, before
 any transplant.
 
+## D5 — EF125 WNS provenance resolved (2026-09-14)
+
+The teammate confirmed: **+0.178 ns is the current EF125 WNS** (matching the
+tracked `release/STATUS.md`); the +0.201 ns in the handoff table belonged to
+an earlier design iteration and is not relevant. All EF125 physical numbers
+are normalized to WNS +0.178 / WHS +0.019. They remain **provisional until
+the teammate's artifact/report package arrives** (no tracked routed reports
+exist), but the discrepancy itself is closed. IP-02's remaining action is
+artifact acquisition only.
+
 ## Gate-1 remainder (after sign-off)
 
 1. **DONE 2026-09-14 (85c077a):** D2 implemented — catalog v2 `releases`
@@ -99,13 +109,19 @@ any transplant.
    `release_id`/`shape_id`, mock suites 17→18 cases all PASS.
 2. **Bitheap provenance DONE 2026-09-14:** the committed
    `cfglut5_bitheap_3x3.vhd` on `00a6e11` regenerates **byte-identically**
-   from `scripts/generate_cfglut_bitheap.py` (sha256 `ad49b540…`). The
-   research build-flow stand-up (D3 scripts) remains.
+   from `scripts/generate_cfglut_bitheap.py` (sha256 `ad49b540…`).
+   **Research build flow STOOD UP 2026-09-14:** `scripts/research_release/`
+   (fresh-project Tcl with fail-closed gates + host driver with catalog
+   cross-check, rendered config_pkg, IP-08 build manifest; README with batch
+   and GUI-Tcl-console usage). The `B32_CFGLUT125` spec is committed and
+   fails closed until the Gate-2 transplant provides its sources; first
+   full exercise happens at Gate 2.
 3. **F1 xsim confirmation DONE 2026-09-14:** `tb_conv_channel_shifts` ran on
    the baseline (Vivado 2025.2 xsim): case 0 (shift 8) OK; cases 1-3
    (shift 25 zero-acc, shift 26/31 acc −1) each returned **−1 vs reference
    0**. Verdict line: `TB_R14_01_SIM: DEFECT CONFIRMED BY SIMULATION - 3 of
    4 large-shift cases`. R14-01 is sim-proven on our baseline; the M9
    known-limit statement is simulation-backed.
-4. Teammate artifact/evidence package request (resolve +0.201/+0.178 WNS —
-   IP-02) or clean rebuild of the research line.
+4. **WNS provenance RESOLVED 2026-09-14 (D5):** teammate confirmed +0.178
+   as the current EF125 number; +0.201 was an earlier design. Artifact
+   package request remains open for full provenance.

@@ -722,7 +722,10 @@ corrections), R14-01..10 (current-work findings). Key verified facts:
 
 ### 17.3 Research branch (feature/k16-cfglut5-edgefree-125mhz @ 00a6e11)
 Teammate handoff committed: HANDOFF_v1bringup_to_edgefree125.md.
-EF125K16N3W32R01, 125 MHz WNS(provisional), CFGLUT5/Dadda bitheap, edge-free
+EF125K16N3W32R01, 125 MHz WNS +0.178 (teammate-confirmed 2026-09-14; the
++0.201 in the handoff table was an earlier design — IP-02 discrepancy
+closed; routed reports still untracked, numbers provisional until the
+artifact package arrives), CFGLUT5/Dadda bitheap, edge-free
 windowing (judge bonus), 5-stage pipeline, host-only qualification
 (1,007 tests + A-H wrapper incl. edge-bubble metrics; Board NOT_RUN).
 M10-M12 plan committed with Addendum A corrections: Gate 0 baseline
