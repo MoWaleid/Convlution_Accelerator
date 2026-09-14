@@ -1489,12 +1489,31 @@ C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — B32 archive, then rebuild
+### 19.4 Immediate action — B32 rebuild
 
-A32 and D32 are accepted (§18.15, §18.16). The next action is the §19.6 B32
-flow: verify tracked B32 evidence and hashes, archive the old work directory
-and final artifacts under dated/recovery names, re-render, then rebuild.
-No B32 build command is issued until the archive steps are accepted.
+A32 and D32 are accepted (§18.15, §18.16). The §19.6 B32 archive flow is
+complete (steps 1-4 verified; record:
+`report/research_builds/B32_CFGLUT125/REBUILD_ARCHIVE_20260915.md`): old work
+directory archived and hash-verified to `work/archive/`, board-qualified
+BIT/BIN/XSA preserved under `bitstreams/history/20260914_b32_board_qualified/`,
+and the re-render is pristine (only `src/config_pkg.vhd`, SHA
+`1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d`).
+After confirming clean state, give the user:
+
+```tcl
+if {[llength [get_projects -quiet]]} { close_project }
+cd {D:/MyProjects/Convlution_Accelerator}
+set research_release_id B32_CFGLUT125
+set build_rc [catch { source {scripts/research_release/research_build.tcl} } build_msg build_opts]
+puts "BUILD RESULT: $build_rc"
+puts "BUILD MESSAGE: $build_msg"
+if {$build_rc} { puts [dict get $build_opts -errorinfo] }
+```
+
+Accept only `RESEARCH_BUILD_OK: B32_CFGLUT125` with nonnegative WNS/WHS and
+`BUILD RESULT: 0`. On failure inspect the preserved run; never rerun blindly.
+PSU-1..4 negative-DQS-skew critical warnings are expected (ZedBoard preset;
+§18.15).
 
 ### 19.5 Mandatory post-build acceptance
 
@@ -1524,18 +1543,24 @@ Final names: A32 `a32_cfglut125_125mhz.bit/.xsa`; D32
 
 ### 19.6 Remaining order and B32 trap
 
-C32, D640, A32 and D32 are all built and accepted. B32 remains, but it is
-**not pristine**: `work/research_B32_CFGLUT125/` has the older full build
-(787 files). Do not delete it or weaken the guard. Archive sequence:
+C32, D640, A32 and D32 are all built and accepted. B32 was **not pristine**
+(787-file older build); its archive sequence is now executed, verified and
+recorded in `report/research_builds/B32_CFGLUT125/REBUILD_ARCHIVE_20260915.md`:
 
-1. Verify tracked B32 build/board evidence and hashes.
-2. Hash/archive the entire old work directory to a unique recovery path;
-   verify, then move it to unique `work/archive/` storage.
-3. Preserve old final B32 BIT/BIN/XSA under dated/history names before replacement.
-4. Run `research_release.py prepare B32_CFGLUT125`; require render SHA
-   `1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d`
-   and only `src/config_pkg.vhd`.
-5. Build/accept normally. Old qualification is history; new B32 needs fresh binding.
+1. DONE — tracked B32 build/board evidence and hashes verified (BIT
+   `133713c5…`, BIT.BIN `4e827310…`, XSA `e90b8441…` all match §18.2).
+2. DONE — all 787 files hash-manifested, tarball-archived and
+   extraction-re-verified to `work/archive/`; original moved to
+   `work/archive/research_B32_CFGLUT125_old_20260914T231157Z/`.
+3. DONE — board-qualified BIT/BIN/XSA copied to
+   `bitstreams/history/20260914_b32_board_qualified/` with SHA256SUMS;
+   canonical paths untouched pending new-build acceptance.
+4. DONE — `research_release.py prepare B32_CFGLUT125`: pristine render, only
+   `src/config_pkg.vhd`, SHA
+   `1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d`.
+5. Build/accept normally (§19.4 command). Old qualification is history; new
+   B32 needs fresh binding. At acceptance, the preserved dated copies prove
+   the replacement of the canonical `bitstreams/b32_cfglut125_125mhz.*` files.
 
 ### 19.7 After five routed builds
 
