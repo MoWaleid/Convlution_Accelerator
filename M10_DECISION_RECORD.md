@@ -1,0 +1,100 @@
+# M10 decision record — integration groundwork (Gate 1)
+
+Status: DRAFT for user sign-off (Gate 1 requires a signed decision record).
+Branch: `integration/m10-cfglut5` (created from `v1-m9-release` = 82a4812 —
+the local tagged HEAD, per the corrected execution order; never from stale
+`origin/v1-bringup`).
+Inputs: INTEGRATION_PLAN_M10_M12.md + Addendum A (verified dispositions),
+HANDOFF_v1bringup_to_edgefree125.md (independently verified), R14/FP/IP
+review series.
+
+## D1 — Physical board: ZedBoard (IP-04 gate)
+
+**Decision: ZedBoard `xc7z020clg484-1`.**
+
+Rationale: every qualified artifact and constraint targets it —
+`Zedboard-Master.xdc`, the ZedBoard PS7 preset, all 1,966 board frames of
+evidence, the recovered firmware/manifest chain, and the PetaLinux runtime.
+The teammate EF125 package is likewise ZedBoard-targeted (`xc7z020clg484-1`,
+Zedboard XDC, `platform: zedboard_linux`). No competition requirement for
+PYNQ-Z2 has been identified for our entry.
+
+Consequence: if a PYNQ-Z2 requirement appears later, it forces a constraint +
+PS-configuration port and full re-qualification; nothing in the Gate-1
+identity or build-flow work below is wasted by that (only the platform layer
+changes). Revisit explicitly before any FSBL work.
+
+## D2 — Orthogonal runtime identities (FP-05)
+
+**Problem:** the current catalog maps one identity (`A32`…`D640`) to one
+firmware manifest AND one parameter directory. A controlled comparison needs
+`B32_MAC100` vs `B32_CFGLUT100` vs `B32_CFGLUT125` on the same N3/K16 weights,
+which that schema cannot express.
+
+**Decision: three orthogonal identifiers.**
+
+1. **Shape/ABI compatibility ID** — geometry + ABI + numerical contract:
+   `N3K16W32H32-CVH1` style. Declared by both hardware releases and model
+   bundles; a release and a bundle are compatible only on exact shape-ID
+   match (plus the existing WIDTHS/geometry register checks).
+2. **Hardware-release ID** — one compiled implementation: `B32_MAC100`,
+   `B32_CFGLUT125`, … Maps to: firmware image + hardware manifest (which
+   keeps `build_id_hex` as the in-silicon identity) + shape ID.
+3. **Model-bundle ID** — one parameter bundle, hardware-independent:
+   content-addressed (whole-bundle SHA-256, already computed by
+   `load_params`) plus a human tag. Shape ID declared by the bundle's
+   catalog entry.
+
+**Schema mechanics (deliberately non-invasive):**
+
+- The canonical-flat-2 bundle grammar stays EXACTLY as is — strict admission
+  (`obj()` exact field sets) is not loosened and the bundles are not
+  re-frozen. Identity lives one level up.
+- `profiles/m7_profiles.json` gains a `releases` section alongside the
+  existing profiles: each release entry = {release_id, shape_id,
+  firmware_file, manifest_file, bundle_dir, bundle_sha256_expected}.
+- `switch_to` resolves release → manifest → bundle, cross-validates
+  shape IDs, and admits the bundle (unchanged strict path).
+- Run record (schema v3) gains `release_id` and `shape_id` alongside the
+  already-bound `bundle_sha256` / catalog / anchor hashes.
+
+**Comparison-facing consequence (M12):** `B32_MAC100` and `B32_CFGLUT125`
+are two releases sharing one shape ID and one bundle — the honest controlled
+comparison falls out of the schema instead of being hand-assembled.
+
+## D3 — Authoritative research build flow (FP-04)
+
+**Decision: adapt the teammate's fresh-project release builder** to our
+profile discipline; the baseline flow stays for reproduction only.
+
+- The existing `scripts/prepare_profile.py` + `scripts/build_profile.tcl`
+  remain the *baseline* reproduction path (they clone the root XPR; they do
+  not know CFGLUT sources — by design, that is FP-04's trap).
+- The research flow is a new `scripts/research_release/` pair (Tcl + driver)
+  modeled on the teammate's `release.ps1`/`release_build.tcl` pattern: fresh
+  project per build, explicit source list including
+  `cfglut5_kcm.vhd` + `cfglut5_bitheap_3x3.vhd` + generated siblings, fail-
+  closed timing/DRC/route gates, build-input manifest (BD/XDC/generator/IP
+  config/tool settings per IP-08) written next to the artifacts.
+- `scripts/create_accelerator_dma_bd.tcl` is formally retired as
+  non-authoritative for research builds (IP-05) — the release imports the
+  committed 125 MHz `.bd`; a reconciliation task may regenerate it later.
+
+## D4 — F1/R14-01 status
+
+Containment decision D4 was taken (option b) and shipped in 73bb803:
+admission rejects shift ≥ 24; defective range 24–31 documented in
+RELEASE_MANIFEST_v1-m9-release.md. **Open item:** the plan requires the
+diagnosis confirmed by simulation on OUR conv_channel (shift-25 zero-input
+counterexample → −1 vs reference 0). Static verification is done; the xsim
+run is scheduled as the first item on this branch's testbench work, before
+any transplant.
+
+## Gate-1 remainder (after sign-off)
+
+1. Implement D2 in catalog + manager + run record (+ mock cases).
+2. Stand up D3's research build flow; generate + byte-compare the bitheap
+   (`generate_cfglut_bitheap.py` vs committed `cfglut5_bitheap_3x3.vhd`).
+3. F1 xsim confirmation (D4 above).
+4. Teammate artifact/evidence package request (resolve +0.201/+0.178 WNS —
+   IP-02) or clean rebuild of the research line.
