@@ -5,7 +5,7 @@
 
 module conv_axis_wrapper_bd (
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clk CLK" *)
-    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME clk, ASSOCIATED_BUSIF S_AXI:S_AXIS:M_AXIS, ASSOCIATED_RESET resetn, FREQ_HZ 100000000" *)
+    (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME clk, ASSOCIATED_BUSIF S_AXI:S_AXIS:M_AXIS, ASSOCIATED_RESET resetn, FREQ_HZ 125000000" *)
     input wire clk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 resetn RST" *)
     (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME resetn, POLARITY ACTIVE_LOW" *)
@@ -47,8 +47,6 @@ module conv_axis_wrapper_bd (
     (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 M_AXIS TLAST" *) output wire m_axis_tlast
 );
 
-    // No geometry/ID override: defaults travel together from config_pkg.
-    // Do not pin an A32 identifier in the BD adapter.
     conv_axis_wrapper accelerator_i (
         .clk(clk),
         .resetn(resetn),

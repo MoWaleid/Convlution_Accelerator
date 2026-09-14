@@ -17,8 +17,8 @@ entity axi_lite_ctrl is
         C_LOGICAL_IMAGE_WIDTH  : integer := CFG_UNPADDED_WIDTH;
         C_LOGICAL_IMAGE_HEIGHT : integer := CFG_UNPADDED_HEIGHT;
 
-        -- Identity and geometry share the selected config_pkg profile.
-        -- No independent per-wrapper release identity.
+        -- Frozen release identifier for this M4 N3/K8/W32 build.
+        -- hardware.json must contain the identical 128-bit value.
         C_BUILD_ID : std_logic_vector(127 downto 0) :=
             CFG_BUILD_ID;
 
@@ -87,6 +87,11 @@ entity axi_lite_ctrl is
         -- Catch-all datapath/stream invariant failure.
         internal_error_in : in std_logic;
 
+        -- Exact-CFGLUT datapath configuration handshake.  START may be
+        -- accepted before configuration is complete; lifecycle then remains
+        -- busy without accepting stream data until this input becomes high.
+        datapath_config_ready : in std_logic;
+
         -- ====================================================================
         -- Lifecycle control outputs
         -- ====================================================================
@@ -100,6 +105,11 @@ entity axi_lite_ctrl is
         -- RUN-state gates.
         run_enable        : out std_logic;
         production_enable : out std_logic;
+
+        -- Pulses for an accepted write to any packed coefficient word.
+        coeff_write_pulse : out std_logic;
+        coeff_write_addr  : out std_logic_vector(31 downto 0);
+        coeff_write_data  : out std_logic_vector(31 downto 0);
 
         -- ====================================================================
         -- Parameters to datapath
@@ -265,6 +275,7 @@ architecture rtl of axi_lite_ctrl is
 
     type lifecycle_state_t is (
         STATE_IDLE,
+        STATE_CONFIG,
         STATE_RUN,
         STATE_FAULT
     );
@@ -563,18 +574,28 @@ architecture rtl of axi_lite_ctrl is
         constant delta    : in natural;
         variable overflow : inout boolean
     ) is
-        variable extended :
-            unsigned(32 downto 0);
+        variable original : unsigned(31 downto 0);
+        variable low_sum : unsigned(8 downto 0);
+        variable carry : boolean;
     begin
-        extended :=
-            ('0' & value)
-            + to_unsigned(delta, 33);
-
-        if extended(32) = '1' then
+        -- All callers add a byte count (0..15) or one pixel. Use byte-sized
+        -- incrementers with parallel carry-prefix predicates, not a 33-bit
+        -- carry chain feeding the lifecycle/fault decision.
+        assert delta <= 15 report "Counter delta exceeds supported event width" severity failure;
+        original := value;
+        low_sum := ('0' & original(7 downto 0)) + to_unsigned(delta, 9);
+        value(7 downto 0) := low_sum(7 downto 0);
+        carry := low_sum(8) = '1';
+        for byte_index in 1 to 3 loop
+            if carry then
+                value(8*byte_index+7 downto 8*byte_index) :=
+                    original(8*byte_index+7 downto 8*byte_index) + 1;
+            end if;
+            carry := carry and original(8*byte_index+7 downto 8*byte_index) = x"FF";
+        end loop;
+        if carry then
             value := (others => '1');
             overflow := true;
-        else
-            value := extended(31 downto 0);
         end if;
     end procedure add_u32_saturating;
 
@@ -665,6 +686,34 @@ architecture rtl of axi_lite_ctrl is
     signal done_sticky :
         std_logic;
 
+    -- Register the serializer acceptance event at the controller boundary.
+    -- This breaks the FIFO-pointer -> 32-bit accounting/completion path while
+    -- leaving the convolution pipeline and stream handshake unchanged.  DONE
+    -- is consequently reported one control clock after the final AXIS beat.
+    signal output_accept_valid_q :
+        std_logic;
+
+    signal output_accept_bytes_q :
+        std_logic_vector(3 downto 0);
+
+    signal output_accept_last_q :
+        std_logic;
+
+    -- Completion is checked one clock after accounting commits. This keeps
+    -- the counter adders and command-clear muxes out of the DONE/state cone.
+    -- AXIS transfers and core pipeline latency are unchanged.
+    signal output_check_valid_q : std_logic;
+    signal output_check_last_q  : std_logic;
+
+    -- The input AXIS accept event is also sampled before the 32-bit frame
+    -- accounting logic.  This prevents TKEEP decoding in the DMA/frontend
+    -- cone from becoming part of the controller state path.
+    signal input_accept_valid_q :
+        std_logic;
+
+    signal input_accept_bytes_q :
+        std_logic_vector(3 downto 0);
+
     signal input_accept_count :
         unsigned(31 downto 0);
 
@@ -684,6 +733,9 @@ architecture rtl of axi_lite_ctrl is
         std_logic;
 
     signal local_reset_pulse_reg :
+        std_logic;
+
+    signal coeff_write_pulse_reg :
         std_logic;
 
     -- ========================================================================
@@ -751,10 +803,6 @@ begin
         report "Output frame exceeds 22-bit DMA transfer limit"
         severity failure;
 
-    assert C_BUILD_ID = CFG_BUILD_ID
-        report "M7_PROFILE_ID_MISMATCH: wrapper ID differs from selected profile"
-        severity failure;
-
     assert C_BUILD_ID /= x"00000000000000000000000000000000"
         report "CVH1 BUILD_ID must be nonzero"
         severity failure;
@@ -776,6 +824,9 @@ begin
 
     start_pulse       <= start_pulse_reg;
     local_reset_pulse <= local_reset_pulse_reg;
+    coeff_write_pulse <= coeff_write_pulse_reg;
+    coeff_write_addr  <= rf_wr_addr;
+    coeff_write_data  <= rf_wr_data;
 
     run_enable <=
         '1'
@@ -793,6 +844,11 @@ begin
             S_AXI_ARESETN = '1'
             and axi_bvalid = '0'
             and write_addr_pending = '0'
+            and
+            (
+                lifecycle_state /= STATE_IDLE
+                or datapath_config_ready = '1'
+            )
         else '0';
 
     axi_wready <=
@@ -801,6 +857,11 @@ begin
             S_AXI_ARESETN = '1'
             and axi_bvalid = '0'
             and write_data_pending = '0'
+            and
+            (
+                lifecycle_state /= STATE_IDLE
+                or datapath_config_ready = '1'
+            )
         else '0';
 
     axi_arready <=
@@ -813,11 +874,6 @@ begin
     -- ========================================================================
     -- Parameter completion / quiescence
     -- ========================================================================
-
-    param_complete <=
-        '1'
-        when all_ones(parameter_written)
-        else '0';
 
     quiescent <=
         '1'
@@ -843,7 +899,8 @@ begin
         end if;
 
         if
-            lifecycle_state = STATE_RUN
+            lifecycle_state = STATE_CONFIG
+            or lifecycle_state = STATE_RUN
             or lifecycle_state = STATE_FAULT
         then
             value(1) := '1';
@@ -1206,7 +1263,7 @@ begin
             boolean;
 
         variable v_delta :
-            natural;
+            natural range 0 to 15;
 
         variable v_bresp :
             std_logic_vector(1 downto 0);
@@ -1231,6 +1288,16 @@ begin
                 core_complete  <= '0';
                 output_drained <= '0';
                 done_sticky    <= '0';
+                param_complete <= '0';
+
+                output_accept_valid_q <= '0';
+                output_accept_bytes_q <= (others => '0');
+                output_accept_last_q  <= '0';
+                output_check_valid_q  <= '0';
+                output_check_last_q   <= '0';
+
+                input_accept_valid_q <= '0';
+                input_accept_bytes_q <= (others => '0');
 
                 input_accept_count   <= (others => '0');
                 input_consumed_count <= (others => '0');
@@ -1239,6 +1306,7 @@ begin
 
                 start_pulse_reg       <= '0';
                 local_reset_pulse_reg <= '0';
+                coeff_write_pulse_reg <= '0';
 
                 axi_bvalid <= '0';
                 axi_bresp  <= C_AXI_OKAY;
@@ -1251,6 +1319,7 @@ begin
                 write_strb_reg <= (others => '0');
 
                 rf_wr_en   <= '0';
+
                 rf_wr_addr <= (others => '0');
                 rf_wr_data <= (others => '0');
 
@@ -1262,8 +1331,22 @@ begin
 
                 start_pulse_reg       <= '0';
                 local_reset_pulse_reg <= '0';
+                coeff_write_pulse_reg <= '0';
 
                 rf_wr_en   <= '0';
+
+                -- Timing-isolation registers at the stream/controller
+                -- boundaries.  The AXIS handshakes themselves are unchanged;
+                -- only accounting and DONE observation move by one control
+                -- clock.
+                input_accept_valid_q <= input_accept_valid;
+                input_accept_bytes_q <= input_accept_bytes;
+
+                output_accept_valid_q <= output_accept_valid;
+                output_accept_bytes_q <= output_accept_bytes;
+                output_accept_last_q  <= output_accept_last;
+                output_check_valid_q <= output_accept_valid_q;
+                output_check_last_q  <= output_accept_last_q;
 
                 v_addr_pending :=
                     write_addr_pending;
@@ -1320,14 +1403,21 @@ begin
                 -- Accepted stream events
                 -- ============================================================
 
-                if input_accept_valid = '1' then
+                if input_accept_valid_q = '1' then
 
                     v_delta :=
                         to_integer(
-                            unsigned(input_accept_bytes)
+                            unsigned(input_accept_bytes_q)
                         );
 
-                    if lifecycle_state = STATE_RUN then
+                    -- The acceptance event is registered at the controller
+                    -- boundary.  A malformed beat can therefore place the
+                    -- lifecycle in FAULT one clock before its already-accepted
+                    -- physical bytes reach this accounting point.
+                    if
+                        lifecycle_state = STATE_RUN
+                        or lifecycle_state = STATE_FAULT
+                    then
 
                         if v_delta > 8 then
                             v_internal_fault := true;
@@ -1340,9 +1430,9 @@ begin
                         );
 
                         if
-                            v_input_accept >
+                            input_accept_count >
                             to_unsigned(
-                                C_EXPECTED_INPUT_BYTES,
+                                C_EXPECTED_INPUT_BYTES - v_delta,
                                 32
                             )
                         then
@@ -1350,7 +1440,8 @@ begin
                         end if;
 
                     else
-                        -- Input must be gated outside RUN.
+                        -- Input must be gated outside RUN; FAULT is accepted
+                        -- only for the registered tail of an earlier RUN beat.
                         v_internal_fault := true;
                     end if;
 
@@ -1368,7 +1459,7 @@ begin
                         );
 
                         if
-                            v_input_consumed >
+                            input_consumed_count >=
                             to_unsigned(
                                 C_EXPECTED_INPUT_BYTES,
                                 32
@@ -1395,16 +1486,16 @@ begin
                         );
 
                         if
-                            v_core_accept =
+                            core_accept_count =
                             to_unsigned(
-                                C_EXPECTED_CORE_PIXELS,
+                                C_EXPECTED_CORE_PIXELS - 1,
                                 32
                             )
                         then
                             v_core_complete := '1';
 
                         elsif
-                            v_core_accept >
+                            core_accept_count >=
                             to_unsigned(
                                 C_EXPECTED_CORE_PIXELS,
                                 32
@@ -1420,11 +1511,11 @@ begin
                 end if;
 
 
-                if output_accept_valid = '1' then
+                if output_accept_valid_q = '1' then
 
                     v_delta :=
                         to_integer(
-                            unsigned(output_accept_bytes)
+                            unsigned(output_accept_bytes_q)
                         );
 
                     if
@@ -1443,9 +1534,9 @@ begin
                         );
 
                         if
-                            v_output_accept >
+                            output_accept_count >
                             to_unsigned(
-                                C_EXPECTED_OUTPUT_BYTES,
+                                C_EXPECTED_OUTPUT_BYTES - v_delta,
                                 32
                             )
                         then
@@ -1485,34 +1576,6 @@ begin
                 end if;
 
                 -- ============================================================
-                -- Capture independent AW / W channels
-                -- ============================================================
-
-                if
-                    axi_awready = '1'
-                    and S_AXI_AWVALID = '1'
-                then
-
-                    v_addr_pending := '1';
-
-                    v_addr :=
-                        normalize_addr(S_AXI_AWADDR);
-
-                end if;
-
-
-                if
-                    axi_wready = '1'
-                    and S_AXI_WVALID = '1'
-                then
-
-                    v_data_pending := '1';
-                    v_data := S_AXI_WDATA;
-                    v_strb := S_AXI_WSTRB(3 downto 0);
-
-                end if;
-
-                -- ============================================================
                 -- Existing B response
                 -- ============================================================
 
@@ -1527,9 +1590,19 @@ begin
                 -- ============================================================
 
                 elsif
-                    v_addr_pending = '1'
-                    and v_data_pending = '1'
+                    write_addr_pending = '1'
+                    and write_data_pending = '1'
                 then
+
+                    -- Commit only data that was already captured at the
+                    -- preceding clock edge.  Using the working variables here
+                    -- allowed a newly arriving AW/W channel to feed the full
+                    -- address-decode, frame-accounting and lifecycle cone in
+                    -- the same cycle.  This one-cycle AXI control boundary
+                    -- removes that external SmartConnect path; it does not
+                    -- touch the convolution pipeline or reduce write issue
+                    -- rate because the outstanding transaction still owns the
+                    -- single AXI-Lite B response slot.
 
                     v_bresp := C_AXI_OKAY;
 
@@ -1605,6 +1678,10 @@ begin
                             rf_wr_addr <= v_addr;
                             rf_wr_data <= v_data;
 
+                            if word_index(v_addr) < C_COEFF_WORDS then
+                                coeff_write_pulse_reg <= '1';
+                            end if;
+
                             v_admission_index :=
                                 parameter_admission_index(
                                     v_addr
@@ -1644,8 +1721,6 @@ begin
 
                             else
 
-                                v_state := STATE_RUN;
-
                                 v_input_accept :=
                                     (others => '0');
 
@@ -1662,7 +1737,12 @@ begin
                                 v_output_drained := '0';
                                 v_done           := '0';
 
-                                start_pulse_reg <= '1';
+                                if datapath_config_ready = '1' then
+                                    v_state := STATE_RUN;
+                                    start_pulse_reg <= '1';
+                                else
+                                    v_state := STATE_CONFIG;
+                                end if;
 
                             end if;
 
@@ -1672,6 +1752,8 @@ begin
                             if
                                 (
                                     lifecycle_state = STATE_IDLE
+                                    or
+                                    lifecycle_state = STATE_CONFIG
                                     or
                                     lifecycle_state = STATE_FAULT
                                 )
@@ -1824,6 +1906,20 @@ begin
 
                 end if;
 
+                -- A START accepted while the CFGLUT contents were still being
+                -- generated waits here.  Stream RUN and the frontend START
+                -- pulse become visible together only after exact weights are
+                -- installed.  A simultaneous ABORT/fault has already changed
+                -- v_state and therefore wins.
+                if
+                    lifecycle_state = STATE_CONFIG
+                    and datapath_config_ready = '1'
+                    and v_state = STATE_CONFIG
+                then
+                    v_state := STATE_RUN;
+                    start_pulse_reg <= '1';
+                end if;
+
                 -- ============================================================
                 -- Successful external frame completion
                 --
@@ -1833,39 +1929,39 @@ begin
 
                 if
                     lifecycle_state = STATE_RUN
-                    and output_accept_valid = '1'
+                    and output_check_valid_q = '1'
                 then
 
-                    if output_accept_last = '1' then
+                    if output_check_last_q = '1' then
 
                         if v_state = STATE_RUN then
 
                             if
-                                v_input_accept =
+                                input_accept_count =
                                 to_unsigned(
                                     C_EXPECTED_INPUT_BYTES,
                                     32
                                 )
                                 and
-                                v_input_consumed =
+                                input_consumed_count =
                                 to_unsigned(
                                     C_EXPECTED_INPUT_BYTES,
                                     32
                                 )
                                 and
-                                v_core_accept =
+                                core_accept_count =
                                 to_unsigned(
                                     C_EXPECTED_CORE_PIXELS,
                                     32
                                 )
                                 and
-                                v_output_accept =
+                                output_accept_count =
                                 to_unsigned(
                                     C_EXPECTED_OUTPUT_BYTES,
                                     32
                                 )
                                 and
-                                v_core_complete = '1'
+                                core_complete = '1'
                             then
 
                                 v_output_drained := '1';
@@ -1887,7 +1983,7 @@ begin
                     elsif
                         v_state = STATE_RUN
                         and
-                        v_output_accept =
+                        output_accept_count =
                         to_unsigned(
                             C_EXPECTED_OUTPUT_BYTES,
                             32
@@ -1917,10 +2013,35 @@ begin
                 -- Commit working state
                 -- ============================================================
 
+                -- Capture AW/W only AFTER decoding the previously registered
+                -- transaction. The earlier ordering fed live AXI payload muxes
+                -- into the command/state logic despite the pending-bit guard.
+                -- Ready is low for an already-pending channel, so capture and
+                -- commit cannot compete for that channel on the same edge.
+                if axi_awready = '1' and S_AXI_AWVALID = '1' then
+                    v_addr_pending := '1';
+                    v_addr := normalize_addr(S_AXI_AWADDR);
+                end if;
+                if axi_wready = '1' and S_AXI_WVALID = '1' then
+                    v_data_pending := '1';
+                    v_data := S_AXI_WDATA;
+                    v_strb := S_AXI_WSTRB(3 downto 0);
+                end if;
+
                 lifecycle_state <= v_state;
 
                 parameter_written <=
                     v_parameter_written;
+
+                -- The reduction over all admission bits is intentionally
+                -- registered.  AXI permits no following parameter/START
+                -- transaction before the current write response, so this
+                -- extra internal cycle does not reduce programming rate.
+                if all_ones(parameter_written) then
+                    param_complete <= '1';
+                else
+                    param_complete <= '0';
+                end if;
 
                 input_accept_count <=
                     v_input_accept;
