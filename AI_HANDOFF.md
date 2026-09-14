@@ -1322,7 +1322,21 @@ passed all 16 `SHA256SUMS.txt` entries.
 
 The repaired staging state was already committed as `8253be2`; the evidence
 hardening followed as `1f68ccf`. The wrapper-simulation gate is therefore
-closed. Next gate is the risk-first C32_CFGLUT125 routed build, followed by
-D640, A32, D32 and a B32 rebuild for uniform provenance. Only the historical
-B32 125 MHz CFGLUT5 artifact is board-qualified at this point; do not infer
-board qualification for the four unbuilt profiles from simulator evidence.
+closed.
+
+The risk-first C32_CFGLUT125 routed build then passed from clean commit
+`9c725cc4d667888cece0bb3982d95b6648725b5b`: 125 MHz, WNS +0.003 ns,
+WHS +0.037 ns, zero timing failures, clean routing, zero DRC errors, and a
+source-bound build manifest. Preserved BIT SHA-256 is
+`8108a82fcbb7cec73aca919e58ef1c6725561444bfd6ee5887e8aa51315d866f`;
+XSA SHA-256 is
+`eb777ad376eb81687a834a7beb66de2f4085e0757522df53480d7b0dd6b43538`.
+Reports are under `report/research_builds/C32_CFGLUT125/`; immutable artifacts
+are under `bitstreams/`. C32 is BUILT, not board-qualified, and its candidate
+runtime manifest remains fail-closed until `.bit.bin` generation and the board
+gates.
+
+Next routed build is D640_CFGLUT125, followed by A32, D32 and a B32 rebuild
+for uniform provenance. Only the historical B32 125 MHz CFGLUT5 artifact is
+board-qualified at this checkpoint; do not infer board qualification for C32
+or the three unbuilt profiles from simulator or routed-build evidence.
