@@ -11,9 +11,11 @@
 #   GUI:    set research_release_id <RELEASE_ID>
 #           source scripts/research_release/research_build.tcl
 #
-# Fail-closed: the output directory must not exist; timing/DRC/route gates
-# must pass; exactly one clock at the spec frequency; the committed BD must
-# match the spec clock and the approved DMA configuration.
+# Fail-closed: the output directory must either not exist (for specs that do
+# not render config_pkg) or contain only the prepared rendered config_pkg.
+# Stale projects/artifacts are never reused. Timing/DRC/route gates must pass;
+# exactly one clock at the spec frequency; the isolated imported BD is set to
+# the checked profile clock and must retain the approved DMA configuration.
 
 set script_dir [file normalize [file dirname [info script]]]
 set root [file normalize [file join $script_dir .. ..]]
@@ -33,8 +35,22 @@ foreach key {release_id shape_id n k w h build_id_hex clock_mhz profile render_c
 if {$spec(release_id) ne $research_release_id} { error "spec release_id mismatch" }
 
 set out [file join $root work research_${research_release_id}]
-if {[file exists $out]} { error "Build directory exists: $out. Archive it before rebuilding; nothing was deleted." }
-file mkdir $out
+set rendered_config [file join $out src config_pkg.vhd]
+if {[file exists $out]} {
+    if {!$spec(render_config_pkg)} {
+        error "Build directory exists: $out. Archive it before rebuilding; nothing was deleted."
+    }
+    set out_entries [glob -nocomplain -tails -directory $out *]
+    set src_entries [glob -nocomplain -tails -directory [file join $out src] *]
+    if {$out_entries ne {src} || $src_entries ne {config_pkg.vhd} || ![file isfile $rendered_config]} {
+        error "Prepared build directory is not pristine: expected only src/config_pkg.vhd under $out. Nothing was deleted."
+    }
+} else {
+    if {$spec(render_config_pkg)} {
+        error "Rendered config missing: run research_release.py prepare $research_release_id first"
+    }
+    file mkdir $out
+}
 set artifacts [file join $out artifacts]
 file mkdir $artifacts
 
@@ -43,6 +59,31 @@ puts $fd [version -short]
 close $fd
 
 create_project research_$research_release_id [file join $out project] -part xc7z020clg484-1
+set zedboard_part digilentinc.com:zedboard:part0:1.1
+set board_repo_candidates {}
+if {[info exists env(VIVADO_BOARD_REPO_PATHS)]} {
+    foreach repo [split $env(VIVADO_BOARD_REPO_PATHS) ";"] {
+        if {$repo ne ""} { lappend board_repo_candidates [file normalize $repo] }
+    }
+}
+if {[info exists env(APPDATA)]} {
+    set vivado_version [version -short]
+    lappend board_repo_candidates [file normalize [file join \
+        $env(APPDATA) Xilinx Vivado $vivado_version xhub board_store \
+        xilinx_board_store XilinxBoardStore Vivado $vivado_version boards]]
+}
+foreach repo $board_repo_candidates {
+    if {![file isdirectory $repo]} { continue }
+    set_property board_part_repo_paths [list $repo] [current_project]
+    if {[llength [get_board_parts -quiet $zedboard_part]]} {
+        puts "ZEDBOARD_REPO: $repo"
+        break
+    }
+}
+if {![llength [get_board_parts -quiet $zedboard_part]]} {
+    error "Required board part is unavailable: $zedboard_part. Install the board files or set VIVADO_BOARD_REPO_PATHS."
+}
+set_property board_part $zedboard_part [current_project]
 set_property target_language VHDL [current_project]
 set_property simulator_language Mixed [current_project]
 set_property source_mgmt_mode All [current_project]
@@ -51,8 +92,9 @@ set rtl [file join $root Convlution_Accelerator.srcs sources_1 new]
 set imported {}
 foreach name $spec(sources) {
     if {$name eq "config_pkg.vhd" && $spec(render_config_pkg)} {
-        # Rendered by research_release.py from the repo template + spec
-        # (selected-profile block); the repo template itself is never touched.
+        # Rendered by research_release.py from the repo template + spec.
+        # Each selected-profile constant is replaced exactly once; the repo
+        # template itself is never touched.
         set path [file join $out src config_pkg.vhd]
     } else {
         set path [file join $rtl $name]
@@ -73,9 +115,13 @@ update_compile_order -fileset sources_1
 set bd [get_files */accelerator_dma.bd]
 open_bd_design $bd
 set ps [get_bd_cells processing_system7_0]
-if {abs([get_property CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $ps] - $spec(clock_mhz)) > 0.001} {
-    error "BD PS frequency differs from spec clock $spec(clock_mhz) MHz (reconcile the committed BD before building)"
+set preset_clock_mhz [get_property CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ $ps]
+set_property CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $spec(clock_mhz) $ps
+set actual_clock_mhz [get_property CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ $ps]
+if {abs($actual_clock_mhz - $spec(clock_mhz)) > 0.001} {
+    error "Unable to apply spec clock $spec(clock_mhz) MHz to isolated BD: effective frequency is $actual_clock_mhz MHz"
 }
+puts "BD_CLOCK: board preset $preset_clock_mhz MHz -> isolated profile $actual_clock_mhz MHz"
 set dma [get_bd_cells axi_dma_0]
 foreach {key value} {c_sg_length_width 22 c_include_sg 0 c_m_axi_mm2s_data_width 64 c_m_axi_s2mm_data_width 64 c_m_axis_mm2s_tdata_width 64 c_s_axis_s2mm_tdata_width 64} {
     if {[get_property CONFIG.$key $dma] != $value} { error "DMA mismatch: $key" }
