@@ -1,5 +1,30 @@
 # Integration plan — M10/M11/M12: v1-bringup ← feature/k16-cfglut5-edgefree-125mhz
 
+> **SUPERSEDING FINAL-TARGET DIRECTIVE — 2026-09-14**
+>
+> The polished project will contain exactly five active hardware profiles,
+> all using the exact CFGLUT5 generated bitheap, the edge-free window/prefetch
+> strategy, and a nominal 125 MHz PS FCLK0:
+>
+> | Active profile | Geometry | Final BUILD_ID ASCII |
+> |---|---|---|
+> | A32 | N=3, K=8, 32x32 | `EF125K08N3W32R01` |
+> | B32 | N=3, K=16, 32x32 | `EF125K16N3W32R01` |
+> | C32 | N=5, K=8, 32x32 | `EF125K08N5W32R01` |
+> | D32 | N=3, K=4, 32x32 | `EF125K04N3W32R01` |
+> | D640 | N=3, K=4, 640x480 | `EF125N3K04VGA-R1` |
+>
+> The legacy MAC/100 MHz builds and the experimental
+> `B32_CFGLUT100` build are report-only historical comparison evidence. They
+> must not appear in the final runtime catalog, firmware library, deployment
+> image, demo selector, or polished source/build matrix. Existing evidence is
+> preserved; it is not silently relabelled as a final release.
+>
+> This directive supersedes the old Gate-4 common-clock/dual-release target
+> wherever this document conflicts with it. The current N=3 CFGLUT5 bitheap
+> is not yet N=5-capable: C32 requires a separately generated and verified
+> exact 5x5 compressor before the five-profile target is achieved.
+
 Source: teammate handoff `HANDOFF_v1bringup_to_edgefree125.md` (2026-09-13,
 comparison fb66066..00a6e11) + independent branch inspection
 (AI_HANDOFF/config_pkg/hardware.json/STATUS/QUICKSTART read first-hand).

@@ -935,6 +935,53 @@ extracted schema-v3 evidence is under
 
 ### 18.5 Exact remaining order
 
+**Superseding user directive (2026-09-14):** do not continue the previously
+planned 100 MHz common-clock product path. The final polished system contains
+five active releases only—A32, B32, C32, D32 and D640—and every one must use
+the exact CFGLUT5 datapath, edge-free strategy and nominal 125 MHz FCLK0.
+Legacy MAC/100 MHz artifacts and `B32_CFGLUT100` remain immutable historical
+report evidence, but are excluded from the final catalog, firmware library,
+PetaLinux image, demo UI and active build matrix.
+
+The implementation order is now:
+
+1. Generalize the deterministic CFGLUT5 bitheap generator to emit separately
+   named exact 3x3 and 5x5 compressors. Preserve regeneration byte identity
+   for the qualified 3x3 output.
+2. Select the proper generated compressor in `conv_channel.vhd`; prove N=3
+   has not regressed and add independent N=5 exactness, all-shift,
+   saturation, ReLU, backpressure and configuration-lifecycle tests.
+3. Create isolated 125 MHz research-release specs for A32, B32, C32, D32
+   and D640, with unique BUILD_IDs and their existing canonical parameter
+   bundles. Build all five and require nonnegative setup/hold slack, clean
+   routing/DRC and artifact-bound manifests.
+4. Replace the active runtime catalog/manifests/firmware library with those
+   five releases only. Add a fail-closed live-FCLK compatibility check before
+   FPGA Manager access. Historical releases stay under report/history paths.
+5. On the verified 125 MHz PetaLinux boot, run identity + anchor activation,
+   numerical extremes and at least 100 consecutive exact frames per release;
+   run the full ordered switching matrix, recovery/fault tests and true cold
+   boot qualification. D640 additionally proves the 640x480 static-image
+   path and 4 MiB DMA allocation.
+6. Pull and hash all evidence, freeze the five-release package, then update
+   the report/demo. The report may compare against legacy 100 MHz results,
+   clearly labelled historical and not normalized as a controlled
+   same-source frequency experiment.
+
+Final BUILD_IDs are:
+
+| Profile | ASCII | Hex |
+|---|---|---|
+| A32 | `EF125K08N3W32R01` | `45463132354b30384e33573332523031` |
+| B32 | `EF125K16N3W32R01` | `45463132354b31364e33573332523031` |
+| C32 | `EF125K08N5W32R01` | `45463132354b30384e35573332523031` |
+| D32 | `EF125K04N3W32R01` | `45463132354b30344e33573332523031` |
+| D640 | `EF125N3K04VGA-R1` | `45463132354e334b30345647412d5231` |
+
+The older numbered list below is retained as historical execution context;
+where it requests 100 MHz building, booting, switching or deployment, this
+new directive overrides it.
+
 Do not mark `B32_CFGLUT125` QUALIFIED yet. Resume Gate 3.3 in this order:
 
 1. **DONE — preserve the three board run records.** The archive and extracted

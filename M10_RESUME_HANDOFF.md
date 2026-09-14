@@ -1,5 +1,13 @@
 # M10_RESUME_HANDOFF.md — resumption brief for the next AI session
 
+> **Target correction — 2026-09-14:** the final product is a five-profile
+> CFGLUT5 edge-free library at 125 MHz: A32, B32, C32, D32 and D640. The
+> legacy 100 MHz/MAC releases and `B32_CFGLUT100` are historical report
+> evidence only. Any common-clock comparison instructions below are
+> superseded and must not drive final deployment work. C32 needs a new exact
+> 5x5 generated bitheap; the current `conv_channel.vhd` intentionally fails
+> elaboration for N other than 3.
+
 **Written 2026-09-14 (end of session). Audience: the next assistant ("Codex"
 or equivalent) resuming this project. Read this file top to bottom before
 touching anything. It is context-reset safe: every claim below carries its
