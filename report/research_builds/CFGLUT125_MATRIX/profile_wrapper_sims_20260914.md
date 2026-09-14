@@ -1,7 +1,8 @@
 # Profile-matrix wrapper simulations — 2026-09-14 (CFGLUT125 releases)
 
-Status: **provisional simulator evidence exists for all five releases; official
-user-executed transcripts and four physical builds remain open.** Fixture: the A-H
+Status: **official user-executed simulator evidence passes for all five releases;
+four first physical builds plus the uniform-provenance B32 rebuild remain
+open.** Fixture: the A-H
 comprehensive wrapper regression (`sim_1/imports/new/tb_conv_axis_wrapper.vhd`,
 generalized 2026-09-14 to take all geometry from config_pkg), run per release
 against the rendered `work/research_<ID>/src/config_pkg.vhd` in isolated
@@ -75,13 +76,19 @@ five geometries.
 
 ## Boundary
 
-These are AI-driven batch xsim runs on the Windows workstation, preserved at
-`wrapper_glm_provisional_20260914/`. A32 and B32 reached the wrapper completion
-marker and measured zero external gaps, but that GLM runner invocation exited
-1 afterward because of a Tcl procedure-scope error; therefore the collection
-is explicitly provisional. The official Gate-3 wrapper-sim evidence is the
-user-executed run of `scripts/research_release/test_profile_wrappers.tcl`
-per release (B32/A32 `optimized`; C32/D32/D640 `optimized_relaxed`), whose
-transcripts are recorded alongside the physical-build evidence. Board-level
-correctness (anchors, soaks, extremes) is a separate, already-proven axis
-for B32 and follows for the other releases after their builds.
+The historical AI-driven collection remains preserved at
+`wrapper_glm_provisional_20260914/` and remains explicitly provisional because
+its A32/B32 Tcl wrapper exited nonzero after successful simulation.
+
+The official Gate-3 matrix was subsequently executed by the user with Vivado
+2025.2 from clean commit `1f68ccf3e2e20a7c228365ef8b03de72ff22f99f` using
+`scripts/research_release/test_profile_wrappers.tcl`: B32/A32 used `optimized`;
+C32/D32/D640 used `optimized_relaxed`. All five emitted the exact identity and
+PASS markers and returned Tcl RC=0. The source-bound evidence is preserved at
+`wrapper_official_user_20260914T210835Z/`; its manifest binds each run to the
+commit, Vivado version, runner, testbench and rendered-config SHA-256 values.
+All 16 entries in its `SHA256SUMS.txt` were independently reverified after
+collection.
+
+Board-level correctness (anchors, soaks, extremes) is a separate axis already
+proven for B32. It remains pending for the other releases after routed builds.

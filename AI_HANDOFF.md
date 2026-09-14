@@ -1150,9 +1150,10 @@ table. Local canonical bundles verified byte-exact against the catalog
   place; the B32 re-render is byte-identical to the qualified build's
   (sha256 1e24e3a8...), so its provenance is untouched.
 
-Pending: user-executed Vivado wrapper sims per release (optimized variant;
-D640 is a long sim), then the five `research_build.tcl` routed builds,
-then board qualification per §18.5 steps 5-6.
+Superseded status: the user-executed five-profile wrapper matrix later passed
+from a clean, source-bound commit; see §18.13. The remaining sequence is the
+five `research_build.tcl` routed builds, then board qualification per §18.5
+steps 5-6.
 
 ### 18.10 Wrapper-sim bring-up: duplicate-beat bug + edge-free claim scope (2026-09-14 evening)
 
@@ -1297,3 +1298,31 @@ official wrapper regressions from that clean commit (A32/B32 `optimized`,
 C32/D32/D640 `optimized_relaxed`). After collection passes, build risk-first:
 C32, D640, A32, D32, then rebuild B32 for uniform provenance. Only B32 has a
 routed and board-qualified 125 MHz CFGLUT5 artifact at this checkpoint.
+
+### 18.13 Official five-profile wrapper matrix accepted (2026-09-15)
+
+The user executed the complete official Vivado 2025.2 wrapper matrix from
+clean commit `1f68ccf3e2e20a7c228365ef8b03de72ff22f99f`. Every profile passed
+the A-H wrapper regression, emitted the exact profile identity marker and
+returned Tcl RC=0:
+
+- B32_CFGLUT125 `optimized`: frame-D invalid advances / external gaps = 0 / 0.
+- A32_CFGLUT125 `optimized`: 31 / 0; external gapless, internal bubbles recorded.
+- C32_CFGLUT125 `optimized_relaxed`: 62 / 31.
+- D32_CFGLUT125 `optimized_relaxed`: 62 / 62.
+- D640_CFGLUT125 `optimized_relaxed`: 958 / 958.
+
+This is the accepted Option-A boundary: the zero-external-output-gap claim is
+limited to A32/B32; C32/D32/D640 are exact and releaseable with their measured
+row-transition bubbles disclosed. The official collection is
+`report/research_builds/CFGLUT125_MATRIX/wrapper_official_user_20260914T210835Z/`.
+`MANIFEST.json` binds all five runs to the commit, Vivado 2025.2 and the exact
+runner/testbench/rendered-config hashes. Independent post-collection checking
+passed all 16 `SHA256SUMS.txt` entries.
+
+The repaired staging state was already committed as `8253be2`; the evidence
+hardening followed as `1f68ccf`. The wrapper-simulation gate is therefore
+closed. Next gate is the risk-first C32_CFGLUT125 routed build, followed by
+D640, A32, D32 and a B32 rebuild for uniform provenance. Only the historical
+B32 125 MHz CFGLUT5 artifact is board-qualified at this point; do not infer
+board qualification for the four unbuilt profiles from simulator evidence.

@@ -1,0 +1,310 @@
+{
+  "schema": "wrapper-official-evidence/2",
+  "recorded_utc": "2026-09-14T21:08:35Z",
+  "executed_by": "user-executed Vivado Tcl qualification",
+  "git_commit": "1f68ccf3e2e20a7c228365ef8b03de72ff22f99f",
+  "complete_five_profile_matrix": true,
+  "option_a": {
+    "external_gapless_claim": [
+      "A32_CFGLUT125",
+      "B32_CFGLUT125"
+    ],
+    "measured_transition_bubbles": [
+      "C32_CFGLUT125",
+      "D32_CFGLUT125",
+      "D640_CFGLUT125"
+    ]
+  },
+  "runs": [
+    {
+      "release_id": "B32_CFGLUT125",
+      "variant": "optimized",
+      "result": "PASS",
+      "source_directory": "work/profile_wrapper_B32_CFGLUT125_optimized_1789419351456093_22792",
+      "source_bindings": {
+        "release_id": "B32_CFGLUT125",
+        "variant": "optimized",
+        "git_commit": "1f68ccf3e2e20a7c228365ef8b03de72ff22f99f",
+        "vivado": "2025.2",
+        "runner": "D:/MyProjects/Convlution_Accelerator/scripts/research_release/test_profile_wrappers.tcl",
+        "runner_sha256": "4d4b8b54b63482f1ed7cc0cf82ee7a4b4c756f65e5bcafb4775468a7076f3491",
+        "testbench": "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd",
+        "testbench_sha256": "d3c296947ff99189f6e05651814f61c996403266bb9a7ec169e1b2ca63e971be",
+        "rendered_config": "D:/MyProjects/Convlution_Accelerator/work/research_B32_CFGLUT125/src/config_pkg.vhd",
+        "rendered_config_sha256": "1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d"
+      },
+      "terminal_marker": "PROFILE_WRAPPER_PASS: B32_CFGLUT125 optimized",
+      "window_metrics": [
+        {
+          "seq": 1,
+          "prefetch": true,
+          "invalid_advances": 0
+        },
+        {
+          "seq": 2,
+          "prefetch": true,
+          "invalid_advances": 0
+        },
+        {
+          "seq": 3,
+          "prefetch": true,
+          "invalid_advances": 0
+        }
+      ],
+      "edge_metrics": [
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 1,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        }
+      ],
+      "files": {
+        "run_meta.txt": "a6d2394fc8272c71b693e0b110054d51c63b0f01f98173f28bb749df154a194f",
+        "run_result.txt": "dcd2ae55417eeba6df1a5c3978c5c48ac7389b8ce0734f761219fa82e525be56",
+        "simulate.log": "90b2bcde221dcb95b03b5ea37331b8aca98cdc33551ab6996d7fc0c44ca56139"
+      }
+    },
+    {
+      "release_id": "A32_CFGLUT125",
+      "variant": "optimized",
+      "result": "PASS",
+      "source_directory": "work/profile_wrapper_A32_CFGLUT125_optimized_1789419389964684_22792",
+      "source_bindings": {
+        "release_id": "A32_CFGLUT125",
+        "variant": "optimized",
+        "git_commit": "1f68ccf3e2e20a7c228365ef8b03de72ff22f99f",
+        "vivado": "2025.2",
+        "runner": "D:/MyProjects/Convlution_Accelerator/scripts/research_release/test_profile_wrappers.tcl",
+        "runner_sha256": "4d4b8b54b63482f1ed7cc0cf82ee7a4b4c756f65e5bcafb4775468a7076f3491",
+        "testbench": "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd",
+        "testbench_sha256": "d3c296947ff99189f6e05651814f61c996403266bb9a7ec169e1b2ca63e971be",
+        "rendered_config": "D:/MyProjects/Convlution_Accelerator/work/research_A32_CFGLUT125/src/config_pkg.vhd",
+        "rendered_config_sha256": "7434e32794e00ce54ddd9fde1ee94c0a863c629412fabd1146acff2883a96fe4"
+      },
+      "terminal_marker": "PROFILE_WRAPPER_PASS: A32_CFGLUT125 optimized",
+      "window_metrics": [
+        {
+          "seq": 1,
+          "prefetch": true,
+          "invalid_advances": 10
+        },
+        {
+          "seq": 2,
+          "prefetch": true,
+          "invalid_advances": 31
+        },
+        {
+          "seq": 3,
+          "prefetch": true,
+          "invalid_advances": 20
+        }
+      ],
+      "edge_metrics": [
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 1,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        }
+      ],
+      "files": {
+        "run_meta.txt": "8606d1eaa68727fbaa9a2d333d9cb6740098e5fb3f7d92f0567de723c423b112",
+        "run_result.txt": "133409f9ef52b4d43b378a950bde74c3d81f17d68a74eee4a008e0c6318ec705",
+        "simulate.log": "e1fa8ebe1ac96d937b4ffef7b58bbee57a15e22a820de1e4b6a7e4439bb86263"
+      }
+    },
+    {
+      "release_id": "C32_CFGLUT125",
+      "variant": "optimized_relaxed",
+      "result": "PASS",
+      "source_directory": "work/profile_wrapper_C32_CFGLUT125_optimized_relaxed_1789419416993218_22792",
+      "source_bindings": {
+        "release_id": "C32_CFGLUT125",
+        "variant": "optimized_relaxed",
+        "git_commit": "1f68ccf3e2e20a7c228365ef8b03de72ff22f99f",
+        "vivado": "2025.2",
+        "runner": "D:/MyProjects/Convlution_Accelerator/scripts/research_release/test_profile_wrappers.tcl",
+        "runner_sha256": "4d4b8b54b63482f1ed7cc0cf82ee7a4b4c756f65e5bcafb4775468a7076f3491",
+        "testbench": "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd",
+        "testbench_sha256": "d3c296947ff99189f6e05651814f61c996403266bb9a7ec169e1b2ca63e971be",
+        "rendered_config": "D:/MyProjects/Convlution_Accelerator/work/research_C32_CFGLUT125/src/config_pkg.vhd",
+        "rendered_config_sha256": "0c18193df15550bc3df4129d3783dc55c3a059c26da863bd675dcfb941f10a6c"
+      },
+      "terminal_marker": "PROFILE_WRAPPER_PASS: C32_CFGLUT125 optimized_relaxed",
+      "window_metrics": [
+        {
+          "seq": 1,
+          "prefetch": true,
+          "invalid_advances": 32
+        },
+        {
+          "seq": 2,
+          "prefetch": true,
+          "invalid_advances": 62
+        },
+        {
+          "seq": 3,
+          "prefetch": true,
+          "invalid_advances": 42
+        }
+      ],
+      "edge_metrics": [
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 1,
+          "gaps": 31
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        }
+      ],
+      "files": {
+        "run_meta.txt": "aa129bc2e71cd6ab67265368648542f795ee486fdf5b5cf5411f54848d4ad4be",
+        "run_result.txt": "0e5be0129799a055d1308090641a72f7cd8dd548e40aa1a57fdc56a7761effea",
+        "simulate.log": "f0b4598fb494a15b936ef704de416d0e5c0096e5d45181d5808e9a06eae5ce5a"
+      }
+    },
+    {
+      "release_id": "D32_CFGLUT125",
+      "variant": "optimized_relaxed",
+      "result": "PASS",
+      "source_directory": "work/profile_wrapper_D32_CFGLUT125_optimized_relaxed_1789419457165346_22792",
+      "source_bindings": {
+        "release_id": "D32_CFGLUT125",
+        "variant": "optimized_relaxed",
+        "git_commit": "1f68ccf3e2e20a7c228365ef8b03de72ff22f99f",
+        "vivado": "2025.2",
+        "runner": "D:/MyProjects/Convlution_Accelerator/scripts/research_release/test_profile_wrappers.tcl",
+        "runner_sha256": "4d4b8b54b63482f1ed7cc0cf82ee7a4b4c756f65e5bcafb4775468a7076f3491",
+        "testbench": "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd",
+        "testbench_sha256": "d3c296947ff99189f6e05651814f61c996403266bb9a7ec169e1b2ca63e971be",
+        "rendered_config": "D:/MyProjects/Convlution_Accelerator/work/research_D32_CFGLUT125/src/config_pkg.vhd",
+        "rendered_config_sha256": "78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92"
+      },
+      "terminal_marker": "PROFILE_WRAPPER_PASS: D32_CFGLUT125 optimized_relaxed",
+      "window_metrics": [
+        {
+          "seq": 1,
+          "prefetch": true,
+          "invalid_advances": 57
+        },
+        {
+          "seq": 2,
+          "prefetch": true,
+          "invalid_advances": 62
+        },
+        {
+          "seq": 3,
+          "prefetch": true,
+          "invalid_advances": 47
+        }
+      ],
+      "edge_metrics": [
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 1,
+          "gaps": 62
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        }
+      ],
+      "files": {
+        "run_meta.txt": "206477c0177287372aea0195a39e958107005d5448e29e001ea1db6364325579",
+        "run_result.txt": "d1bb2bcda6ea0dc2f774e67519739070f477828014267a458f3bf6617efea76f",
+        "simulate.log": "5043fe6cbea7e3fad7b1d307b39fe00cd0b244550c32baeef8af926487266c7f"
+      }
+    },
+    {
+      "release_id": "D640_CFGLUT125",
+      "variant": "optimized_relaxed",
+      "result": "PASS",
+      "source_directory": "work/profile_wrapper_D640_CFGLUT125_optimized_relaxed_1789419480048947_22792",
+      "source_bindings": {
+        "release_id": "D640_CFGLUT125",
+        "variant": "optimized_relaxed",
+        "git_commit": "1f68ccf3e2e20a7c228365ef8b03de72ff22f99f",
+        "vivado": "2025.2",
+        "runner": "D:/MyProjects/Convlution_Accelerator/scripts/research_release/test_profile_wrappers.tcl",
+        "runner_sha256": "4d4b8b54b63482f1ed7cc0cf82ee7a4b4c756f65e5bcafb4775468a7076f3491",
+        "testbench": "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd",
+        "testbench_sha256": "d3c296947ff99189f6e05651814f61c996403266bb9a7ec169e1b2ca63e971be",
+        "rendered_config": "D:/MyProjects/Convlution_Accelerator/work/research_D640_CFGLUT125/src/config_pkg.vhd",
+        "rendered_config_sha256": "5fd08524d48c3d0f5778bebd9f2646e6ce153235fab719b3f3b5b2f1c096d647"
+      },
+      "terminal_marker": "PROFILE_WRAPPER_PASS: D640_CFGLUT125 optimized_relaxed",
+      "window_metrics": [
+        {
+          "seq": 1,
+          "prefetch": true,
+          "invalid_advances": 639
+        },
+        {
+          "seq": 2,
+          "prefetch": true,
+          "invalid_advances": 958
+        },
+        {
+          "seq": 3,
+          "prefetch": true,
+          "invalid_advances": 639
+        }
+      ],
+      "edge_metrics": [
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 1,
+          "gaps": 958
+        },
+        {
+          "prefetch": true,
+          "ready_mode": 2,
+          "gaps": 0
+        }
+      ],
+      "files": {
+        "run_meta.txt": "91996451759c42460d0f57ff4e23328ad7e8ccf1807de57cc688b6e4215afce4",
+        "run_result.txt": "96cef0ef586a61a63a2d756bf18e9ec71aaef41755ad6d371f6f9c99b44a99c4",
+        "simulate.log": "4b7ba94e0ded6cb7d96d3cf6671d76610056673dfab15e36862d8cd587dc849a"
+      }
+    }
+  ]
+}

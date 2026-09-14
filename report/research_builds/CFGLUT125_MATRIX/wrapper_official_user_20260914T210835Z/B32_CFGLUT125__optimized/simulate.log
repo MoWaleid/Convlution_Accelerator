@@ -1,0 +1,60 @@
+Time resolution is 1 ps
+Note: --- WRAPPER A: reset / discovery / pre-START gating ---
+Time: 0 ps  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER A PASS ---
+Time: 440 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER B: complete parameter admission ---
+Time: 440 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER B PASS ---
+Time: 39552 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER C: full real-chain frame under backpressure ---
+Time: 39552 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: WINDOW_METRICS seq=1 prefetch=true invalid_advances=0 first_to_last=43152000 ps
+Time: 83332 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/dut/conv_top_inst/window_protocol_check  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd
+Note: EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=43576000 ps
+Time: 83820 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_first_output=660000 ps
+Time: 83820 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER C PASS ---
+Time: 83968 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER D: repeated START with NO RESET ---
+Time: 83968 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: WINDOW_METRICS seq=2 prefetch=true invalid_advances=0 first_to_last=32592000 ps
+Time: 117188 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/dut/conv_top_inst/window_protocol_check  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd
+Note: EDGE_METRICS prefetch=true ready_mode=1 gaps=0 first_to_last=32760000 ps
+Time: 117420 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_first_output=660000 ps
+Time: 117420 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_done=33472000 ps
+Time: 117472 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER D PASS: repeated full chain works WITHOUT RESET ---
+Time: 117568 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER E: malformed input framing -> FAULT ---
+Time: 117568 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER E PASS ---
+Time: 117864 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER F: ABORT while queued output is externally stalled ---
+Time: 117864 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER F PASS ---
+Time: 118800 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER G: RESET recovery after ABORT ---
+Time: 118800 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER G PASS ---
+Time: 118928 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER H: post-recovery full end-to-end frame ---
+Time: 118928 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: WINDOW_METRICS seq=3 prefetch=true invalid_advances=0 first_to_last=43112000 ps
+Time: 162668 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/dut/conv_top_inst/window_protocol_check  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sources_1/new/conv_top.vhd
+Note: EDGE_METRICS prefetch=true ready_mode=2 gaps=0 first_to_last=43560000 ps
+Time: 163180 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: EDGE_LATENCY start_to_first_output=660000 ps
+Time: 163180 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/output_monitor  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: --- WRAPPER H PASS ---
+Time: 163328 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: ============================================================
+Time: 163328 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note:  CONV_AXIS_WRAPPER COMPLETE M4 INTEGRATION REGRESSION PASS 
+Time: 163328 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+Note: ============================================================
+Time: 163328 ns  Iteration: 0  Process: /tb_conv_axis_wrapper/stim_proc  File: D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd
+$finish called at time : 163328 ns : File "D:/MyProjects/Convlution_Accelerator/Convlution_Accelerator.srcs/sim_1/imports/new/tb_conv_axis_wrapper.vhd" Line 2705
