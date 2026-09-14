@@ -26,7 +26,11 @@ Additional takeover hardening makes `deployable: false` an explicit runtime
 admission gate before firmware or hardware access, makes debug-run hashes
 fail closed, and prevents same-second evidence-directory collisions. The GLM
 evidence directory was renamed `wrapper_glm_provisional_20260914`; it is useful
-smoke evidence but is not official qualification.
+smoke evidence but is not official qualification. Its C32 and D640 preserved
+logs also came from equivalent earlier attempts rather than the `run_dir`
+attempts recorded in GLM's manifest (functional metrics match, but runtime
+footer/hash differs). The manifest retains both hashes and marks that mismatch
+explicitly.
 
 Locked release policy remains Option A: A32/B32 alone may claim zero external
 output bubbles. B32 records 0 internal advances / 0 external gaps; A32 records

@@ -1,0 +1,7 @@
+# Simulation transcripts are cryptographic evidence. Preserve their exact
+# bytes rather than applying platform newline conversion on add/checkout.
+report/research_builds/**/simulate.log binary
+report/research_builds/**/vivado_console.txt binary
+report/research_builds/**/run_meta.txt binary
+report/research_builds/**/run_result.txt binary
+report/research_builds/**/SHA256SUMS.txt binary

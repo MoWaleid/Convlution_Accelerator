@@ -4,7 +4,7 @@
   "recorded_utc": "2026-09-14T20:24:20Z",
   "executed_by": "GLM agent (batch xsim on the Windows workstation)",
   "runner": "scripts/research_release/test_profile_wrappers.tcl",
-  "note": "Provisional smoke evidence only. A32 and B32 simulations reached the wrapper completion marker and measured zero external gaps, but the Tcl runner exited 1 afterward because check_metrics read spec_k outside its procedure scope. identity_record fields also captured echoed Tcl source rather than runtime output. C32/D32/D640 exited 0. The fixed clean-commit runner must be executed by the user for official qualification.",
+  "note": "Provisional smoke evidence only. A32 and B32 simulations reached the wrapper completion marker and measured zero external gaps, but the Tcl runner exited 1 afterward because check_metrics read spec_k outside its procedure scope. identity_record fields also captured echoed Tcl source rather than runtime output. C32/D32/D640 exited 0. During Codex audit, the preserved C32 and D640 log copies were found to come from equivalent earlier attempts (same functional metrics, different runtime-memory/CPU footer), not the run_dir attempts whose hashes GLM recorded; both hashes are retained below. The fixed clean-commit runner must be executed by the user for official qualification.",
   "runs": [
     {
       "release_id": "B32_CFGLUT125",
@@ -75,7 +75,9 @@
       ],
       "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
       "rendered_config_sha256": "0c18193df15550bc3df4129d3783dc55c3a059c26da863bd675dcfb941f10a6c",
-      "log_sha256": "d19596725a3bb7685a39dc8fe320a0337e6b8c43ae7ac4a0d6e68cc91ea04134",
+      "log_sha256": "b545abf0ccfdfa3482a8c17829e66a0fb877f6ab8290380eca4fdd8a650c80c2",
+      "source_run_log_sha256_at_audit": "d19596725a3bb7685a39dc8fe320a0337e6b8c43ae7ac4a0d6e68cc91ea04134",
+      "preserved_log_matches_source_run": false,
       "result": "PASS"
     },
     {
@@ -123,7 +125,9 @@
       ],
       "git_commit": "6a2c5f646e29dc3e24ae28656d9bb9a12eef0d5d",
       "rendered_config_sha256": "5fd08524d48c3d0f5778bebd9f2646e6ce153235fab719b3f3b5b2f1c096d647",
-      "log_sha256": "7658c15a7f765e467666e489a3aa9d430b3c85c0fca217a93291d9e5830f813a",
+      "log_sha256": "acb6822f0c348fb7a57edfe9b24fc161e90b2e597c5e1fa710ade31f89b12bb8",
+      "source_run_log_sha256_at_audit": "7658c15a7f765e467666e489a3aa9d430b3c85c0fca217a93291d9e5830f813a",
+      "preserved_log_matches_source_run": false,
       "result": "PASS"
     }
   ]
