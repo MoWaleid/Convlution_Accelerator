@@ -1,8 +1,8 @@
 # B32_CFGLUT125 runtime qualification — 2026-09-14
 
-Status: runtime provisioning and initial anchor-exact board activation PASS;
-the full Gate 3.3 soak, extremes, switching, power-cycle, and fault/recovery
-sequence remains incomplete.
+Status: runtime provisioning, anchor-exact activation, numerical extremes, and
+the 100-frame soak PASS. Repeated baseline/research switching, power-cycle,
+and fault/recovery remain incomplete.
 
 ## Runtime provisioning
 
@@ -89,4 +89,23 @@ Observed terminal summary:
 ```text
 M8 EXTREMES 20180309T131821Z-extremes-B32_CFGLUT125: PASS
 (12 verified stimulus frames)
+```
+
+## 100-frame anchor-exact soak
+
+One activation was followed by 100 frames with no inter-frame reset. Every
+frame matched the frozen B32_CFGLUT125 output anchor.
+
+- Activation: 0.143 ms, anchor prefix `5821c8b19a88fd34`.
+- Progress checks: 25/100, 50/100, 75/100, and 100/100 bit-exact.
+- Hardware latency: median 0.125 ms, p95 0.128 ms.
+- Final cleanup STATUS: `0x00000181`.
+- Archived run record:
+  `/var/lib/conv-lab/results/20180309T132021Z-soak100-B32_CFGLUT125-library_alley_cat/record.json`.
+
+Observed terminal summary:
+
+```text
+M8 SOAK 20180309T132021Z-soak100-B32_CFGLUT125-library_alley_cat: PASS
+(100 frames, median 0.125 ms / p95 0.128)
 ```

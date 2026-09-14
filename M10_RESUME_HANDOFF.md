@@ -197,8 +197,9 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       runtime admission, parameter-only activation, and the first three run
       frames PASS. The 12-frame numerical extremes suite also passes,
       including live shifts 24–31 and canonical-parameter restoration.
-      The 100-frame soak, switching, power-cycle, and fault/recovery items
-      remain open. Evidence:
+      The 100-frame anchor-exact soak passes (median 0.125 ms, p95 0.128 ms,
+      all frames bit-exact). Repeated baseline/research switching,
+      power-cycle, and fault/recovery remain open. Evidence:
       `report/research_builds/B32_CFGLUT125/board_runtime_qualification_20260914.md`.
 - [ ] G3.4 Edge-free claim discipline (IP-09): simulation metrics + board
       throughput stay separate claims; K16 = 4 beats/position on 64-bit

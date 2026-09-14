@@ -7,9 +7,9 @@ talk to the user** (§15). Every claim below was verified first-hand; state as o
 **2026-09-13**, HEAD commit `9f6f68a` ("M6: qualify same-image full-PL reload");
 all M7 work (now **board-qualified**, §16) is uncommitted in the working tree.
 
-> **⚡ CURRENT STATE POINTER (2026-09-14, context-reset safe): read §17 first.**
-> The sections below are historical layers; §17 supersedes all status prose in
-> §3/§16/§16.6/§16.7 where they conflict (including this stale header line).
+> **CURRENT STATE POINTER (2026-09-14, context-reset safe): read §18 first.**
+> The sections below are historical layers; §18 supersedes all earlier status
+> prose where it conflicts, including §3, §16, §17, and the stale header line.
 > Authoritative companions: INTEGRATION_PLAN_M10_M12.md (+ Addendum A, ba1b3ef),
 > feedback.md (FP/IP/R14 review series), M9_CHECKLIST.md, CLEANUP_SCAN_20260914.md.
 
@@ -770,3 +770,259 @@ recoverable → Gate 1 research build contract → Gate 2 B32_CFGLUT125 first
 - Cleanup scan buffered: CLEANUP_SCAN_20260914.md (do not delete anything
   without re-running it; Temp holds the only legacy bundle sources —
   archive to profiles/history first).
+
+---
+
+## 18. CURRENT STATE — 2026-09-14 Gate 3 live board qualification
+
+This section is the authoritative resume point. Read it first, then read
+`M10_RESUME_HANDOFF.md`, `INTEGRATION_PLAN_M10_M12.md`, and the two current
+evidence files named below. Older sections remain historical evidence and
+must not be used to infer the current branch, clock, datapath, or next action.
+
+### 18.1 Human/AI working agreement
+
+- The user is the engineering collaborator and final operator, not a passive
+  copy/paste endpoint. Give a short explanation of what every command proves.
+- The AI directly edits repository files and runs local Windows commands and
+  tests. Do not generate prompts for another coding agent; the user explicitly
+  stopped using one.
+- The user runs only commands that require their environments: Vivado Tcl in
+  the GUI console, Ubuntu/PetaLinux commands in the VM, and PuTTY commands on
+  the ZedBoard. Give exact commands and wait for their output when evidence is
+  needed.
+- Put `sudo -v` in its own copy/paste block. Put later `sudo -n ...` commands
+  in separate blocks because a password prompt can interrupt subsequent pasted
+  commands.
+- Prefer one or two meaningful tasks per message. Deadline pressure is real,
+  but never claim PASS without evidence, never overwrite a recovery artifact,
+  and never guess a path, device, build identity, or live state that can be
+  inspected.
+- Tone: concise, technically direct, collaborative, and calm. Avoid excessive
+  headings and celebrations. The user appreciates plain-language reasoning
+  alongside exact engineering detail.
+- Before editing, inspect the working tree and applicable files. Preserve user
+  changes, use `apply_patch`, run proportional tests, and commit coherent
+  verified increments. Do not create another Vivado project casually; the
+  research-release flow intentionally creates isolated generated projects
+  under `work/` without replacing the user's main project.
+
+### 18.2 Repository truth
+
+- Workspace: `D:\MyProjects\Convlution_Accelerator`
+- Current branch: `integration/m10-cfglut5`
+- Baseline tag: `v1-m9-release`
+- Current work has completed the selective CFGLUT5 integration and the first
+  research build; do not wholesale-merge the teammate branch.
+- Last code/evidence commits before this handoff update:
+  - `3eb5074` — repair release catalog and declared-clock metadata.
+  - `8e91d24` — record live 125 MHz boot identity.
+  - `d6049b4` — fix release-to-parameter-bundle resolution and qualify the
+    initial live activation.
+  - `f262783` — extend and qualify numerical extremes, including shifts
+    24–31.
+- The first hardware release is `B32_CFGLUT125`: N=3, K=16, W=H=32,
+  CFGLUT5/Dadda exact datapath, edge-free internal position pipeline, 125 MHz.
+- BUILD_ID hex: `45463132354b31364e33573332523031`; ASCII:
+  `EF125K16N3W32R01`.
+- The release deliberately reuses the canonical `profiles/B32` parameter
+  bundle. Hardware release names and bundle directory names are orthogonal.
+  `software/m8_cli.py` must resolve `releases.<id>.bundle_dir`; never regress
+  to `profiles/<release-id>`.
+- Canonical B32 bundle SHA-256:
+  `952cb13ce0adad04c42704c1e85bd964538cf66f8455783b2123bbce9d160cec`.
+- Frozen output anchor SHA-256:
+  `5821c8b19a88fd34e3002dd7b0c7d60c7fcd79b8a61a326697d95b6e3ec3be94`.
+
+Key build evidence:
+
+- Routed bitstream SHA-256:
+  `133713c5eca1f8a41a7baa40719e1c101364f3a835111028db925a7d7a309858`.
+- FPGA-manager `.bit.bin` SHA-256:
+  `4e827310eb7f1e8c9278d0c9b36905eb4b7c766d9878a3a551e1909843d5b73b`.
+- XSA SHA-256:
+  `e90b84413bf35d8da2aa5b5a86b5ea41e2519360fd593b60c9f3a918544f648d`.
+- Vivado 2025.2 route: WNS `+0.157 ns`, WHS `+0.019 ns`; timing met,
+  DRC/route clean.
+- Evidence directory: `report/research_builds/B32_CFGLUT125/`.
+- Build/packaging source is the current mainline runtime plus canonical bundle;
+  never use the teammate branch's old permissive manager or legacy parameter
+  dialect.
+
+### 18.3 Deployed image and live board state
+
+The board is currently powered, at the Linux shell, and booted from the new
+B32_CFGLUT125 PetaLinux image.
+
+- WIC SHA-256:
+  `c99781f6e30a651c1fe878e9806f9e6b78a605eb46f0d6315516c0af6265e5f4`.
+- Board `/boot/BOOT.BIN` SHA-256:
+  `b91acd41a83eba8866c4385b5ff0d0ef9e38b1ad4b6c909d32c31d03783c04c4`.
+- FPGA Manager: `Xilinx Zynq FPGA Manager`, state `operating`.
+- Live discovery reads MAGIC `0x43564831`, ABI `0x00010000`, capabilities
+  `0x000001FF`, W/H/N/K `32/32/3/16`, TX/RX `1156/32768`, DMA length width
+  22, and the exact BUILD_ID above.
+- Live FCLK0 is nominal 125 MHz, independently derived from SLCR:
+  IO_PLL_CTRL `0x0001E000` gives FBDIV=30; FPGA0_CLK_CTRL `0x00200400`
+  gives divisors 4 and 2; `33.333333 MHz * 30 / 8 = 124.99999875 MHz`.
+  The kernel lacks debugfs, so do not retry debugfs clock commands.
+- Boot/clock evidence:
+  `report/research_builds/B32_CFGLUT125/board_boot_identity_20260914.md`.
+
+Runtime provisioning is complete:
+
+- Runtime transport archive SHA-256:
+  `6779f85967ebd428113eb6219a85561f4400b68bc45aa9f151d8d4f40f60a3b0`.
+- Forty-one `/home/petalinux` runtime files were verified byte-for-byte.
+- `/lib/firmware` was absent in this image and was created explicitly before
+  installing `m7_B32_CFGLUT125.bin`; the installed firmware hash is the
+  expected `4e827310...b5b73b` above.
+- Pre-runtime recovery archive:
+  `/home/petalinux/release_checkpoints/G3_pre_runtime_20180309T125402Z.tar.gz`,
+  SHA-256
+  `bbeb4fc3061856fec509f4228a5113646465d4505be17b3ada088aee73b035a3`.
+- The board RTC is unset; paths beginning `20180309` are not real execution
+  dates. Host evidence dates are authoritative.
+- Current board `m8_cli.py` SHA-256:
+  `798c26f7834d8cb4c5f4ac404b0b333aa77b4e1b7d02647d282068fa384bb1ce`.
+
+PetaLinux host state:
+
+- VM project: `/home/walid/projects/zedboard_linux`.
+- Current imported `system.xsa` matches the release XSA (`e90b844...`).
+- Ubuntu was upgraded to 24.04. PetaLinux 2025.2 is unsupported there but the
+  build completed after installing the official Jammy `libtinfo5` package and
+  temporarily setting `kernel.apparmor_restrict_unprivileged_userns=0`.
+  The restriction was restored to `1` after packaging.
+- Shared folders may require remounting after every VM restart:
+  `sudo mkdir -p /mnt/hgfs` then
+  `sudo vmhgfs-fuse .host:/ /mnt/hgfs -o subtype=vmhgfs-fuse,allow_other`.
+- Preserve the pre-XSA recovery checkpoint:
+  `/home/walid/projects/release_checkpoints/G3_pre_xsa_20260914T101106Z/petalinux_pre_xsa.tar.gz`,
+  SHA-256
+  `92f0f4ddf68718d125067622c0db098978fab7e968ab1846c4f1dd350279f4c5`.
+
+### 18.4 Gate status at handoff
+
+Gate 2 is complete. Gate 3.1 (PetaLinux/XSA/WIC/boot), Gate 3.2 (live 125 MHz
+clock), and these Gate 3.3 sub-gates are complete:
+
+1. Release/catalog/firmware/bundle admission and live identity validation.
+2. Parameter-only activation on the already-live research build.
+3. Anchor-exact activation plus three additional frames: PASS; median
+   `0.129 ms`, final cleanup STATUS `0x00000181`.
+4. Numerical extremes: PASS, 12 exact-reference frames. This includes
+   all-zero, all-255, signed-24 endpoints, both saturation rails, every live
+   shift 24–31, and canonical reinstall/anchor revalidation. Shift 24 proves
+   signed `+1/-1`; shifts 25–31 prove the corrected sign-extension result.
+5. One 100-frame anchor-exact soak under a single activation: PASS, all 100
+   frames bit-exact; median `0.125 ms`, p95 `0.128 ms`; cleanup STATUS
+   `0x00000181`.
+
+Board run records still on the rootfs:
+
+- `/var/lib/conv-lab/results/20180309T131241Z-B32_CFGLUT125-library_alley_cat/record.json`
+- `/var/lib/conv-lab/results/20180309T131821Z-extremes-B32_CFGLUT125/record.json`
+- `/var/lib/conv-lab/results/20180309T132021Z-soak100-B32_CFGLUT125-library_alley_cat/record.json`
+
+Full evidence narrative:
+`report/research_builds/B32_CFGLUT125/board_runtime_qualification_20260914.md`.
+
+### 18.5 Exact remaining order
+
+Do not mark `B32_CFGLUT125` QUALIFIED yet. Resume Gate 3.3 in this order:
+
+1. **Preserve the three board run records.** Package them with a manifest and
+   SHA-256 on the board, copy through `/boot`/the SD card, verify on Windows,
+   then add them under the research evidence directory. Never treat terminal
+   excerpts as a substitute for the schema-v3 records.
+2. **Inventory before switching.** Read-only verify that the board still has
+   the A32 MAC firmware, `hardware_A32.json`, A32 bundle, catalog entry, and
+   their expected hashes. Do not request an A32 switch until this inventory
+   passes; the newly built WIC was only explicitly provisioned with the
+   research firmware overlay.
+3. **Repeated full-PL reconfiguration against the MAC baseline.** Exercise
+   A32 MAC100 → B32_CFGLUT125 → A32 repeatedly (target at least 20 complete
+   cycles), with identity validation and anchor-exact activation after every
+   load. Use explicit profile requests unless the matrix builder has first
+   been reviewed to include the research release. The old matrix was designed
+   for the five legacy profiles and must not be assumed to cover this sixth
+   release.
+4. **Fault/recovery.** Reuse the proven lifecycle/fault harness only after
+   reviewing its target-profile assumptions. Inject bounded failures, verify
+   nonzero exit/FAILED record, DMA halt, ERROR/FAULT accounting, RESET recovery,
+   canonical parameter reinstall, and a final anchor-exact frame.
+5. **True power cycle.** Halt Linux, switch board power off, restart from the
+   research WIC, recheck BUILD_ID/FCLK, and run a fresh anchor-exact sample.
+6. **Close Gate 3.3.** Pull all records/logs, verify hashes, update the
+   qualification record tied to exact artifact hashes, and only then promote
+   the release from BUILT to QUALIFIED. Keep qualification evidence outside
+   immutable bundle manifests.
+7. **Close G3.4 claim discipline.** The internal engine accepts one output
+   position per cycle once filled, including edges. At K=16 on the 64-bit
+   AXI-Stream output, each position is 32 bytes = four beats; therefore never
+   claim one complete position per external bus cycle. Report positions,
+   channel-results, beats, frames/s, and clock basis explicitly.
+
+Then execute Gate 4 / M12:
+
+1. Build `B32_CFGLUT100` from the same source and directives with only the
+   controlled clock variable changed.
+2. Run a matched comparison: `B32_MAC100` versus `B32_CFGLUT100` versus
+   `B32_CFGLUT125`, using the identical B32 parameter bundle, image bytes,
+   preprocessing, software path, warmup, frame count, and measurement method.
+3. Preserve routed timing/utilization/power reports. Label Vivado power as a
+   vectorless estimate unless activity-driven evidence exists.
+4. Update the competition/research report with normalized throughput/FOM and
+   edge-free evidence; produce the research release tag and final archive.
+5. Re-run `CLEANUP_SCAN_20260914.md` before deleting anything. Preserve every
+   artifact referenced by a manifest, qualification record, recovery record,
+   report, or tag.
+
+### 18.6 Known traps — do not rediscover them
+
+- `B32_CFGLUT125` is a hardware release; its bundle directory is `B32`.
+- The first M8 run failed with `profiles/B32_CFGLUT125` not found. It stopped
+  before hardware mutation. The catalog-resolution fix is committed and live.
+- The original extremes harness tested shift 0 only. Commit `f262783` adds
+  the required live 24–31 sweep; do not replace the board file with an older
+  packaged copy.
+- System ILA was removed from the release build. Do not plan ILA capture as if
+  the old GP0 debug bitstream were still deployed.
+- The ZedBoard PS↔PL AXI-Lite address adapter must continue masking to the
+  64-KiB aperture; losing that addrfix recreates the historical GP0 hang.
+- DMA length width is 22 bits; AXI memory/stream data paths are 64 bits;
+  AXI-Lite is 32 bits. Do not confuse buffer allocation with transfer length.
+- Base64 pasted through chat/serial can lose `+`; use the documented plus-free
+  transport or, preferably, verified SD/FAT transfer for larger files.
+- Never extract a tar containing live directory entries as root over
+  `/home/petalinux`; it can clobber ownership. Stage as `petalinux`, back up
+  exact targets, install explicit files, and verify byte-for-byte.
+- PetaLinux packaging must use the selected verified release bitstream, never
+  an incidental generated `system.bit`.
+- `/bin/sh is not bash` and Ubuntu 24.04 warnings are expected host warnings;
+  actual missing libraries or BitBake user-namespace failures are blockers.
+- Windows sees only the FAT boot partition. Safely halt/eject before moving
+  the SD card. Identify the removable FAT volume instead of guessing a drive
+  letter.
+- The board RTC is stale. Never use its timestamps as chronological proof.
+- Preserve a dirty worktree unless inspected. Never use `git reset --hard` or
+  delete generated/recovery artifacts merely to make status look clean.
+
+### 18.7 First message for a new AI session
+
+The user should tell the new session:
+
+> Read `AI_HANDOFF.md` section 18 completely, then verify the current git
+> branch/status and read `M10_RESUME_HANDOFF.md`,
+> `INTEGRATION_PLAN_M10_M12.md`, and both B32_CFGLUT125 board evidence files.
+> Do not change anything until you can restate the exact live board state,
+> completed Gate 3 sub-gates, artifact hashes, and the next safe action. From
+> then on, edit and test repository files yourself; give me only Vivado Tcl,
+> Ubuntu/PetaLinux, or PuTTY commands that require my environment. Explain
+> briefly what each command proves, and keep sudo authentication in a separate
+> block.
+
+The best continuity check is not conversational memory; it is whether the new
+session independently reproduces §18.2–§18.5 from the repository and evidence
+without inventing state.
