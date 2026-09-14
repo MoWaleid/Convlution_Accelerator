@@ -14,7 +14,8 @@ set simsrc [file join $root Convlution_Accelerator.srcs sim_1 new]
 add_files -fileset sim_1 -norecurse [list \
     [file join $simsrc tb_cfglut5_exact.vhd] \
     [file join $simsrc tb_cfglut5_k16_smoke.vhd] \
-    [file join $simsrc tb_cfglut5_pipeline.vhd]]
+    [file join $simsrc tb_cfglut5_pipeline.vhd] \
+    [file join $simsrc tb_conv_channel_shifts.vhd]]
 add_files -fileset sim_1 -norecurse [file join $root Convlution_Accelerator.srcs sim_1 imports new tb_axi_lite_ctrl.vhd]
 set_property file_type {VHDL 2008} [get_files *.vhd]
 update_compile_order -fileset sim_1
@@ -26,6 +27,8 @@ set checks {
     {Exact CFGLUT5 K=16 channel/configuration smoke test passed}
     tb_cfglut5_pipeline
     {PIPELINE_125_PASS}
+    tb_conv_channel_shifts
+    {NUMERICAL_GAUNTLET_PASS}
     tb_axi_lite_ctrl
     {AXI_LITE_CTRL COMPLETE UNIT REGRESSION PASS}
 }
