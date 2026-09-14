@@ -252,11 +252,27 @@ def file_sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def parameter_identity(profile):
+def release_bundle_dir(profile, catalog):
+    """Resolve a release ID to its admitted parameter directory.
+
+    Hardware releases and parameter bundles are deliberately orthogonal. In
+    particular, B32_CFGLUT125 reuses the canonical B32 bundle, so callers must
+    never derive a bundle path directly from the release name.
+    """
+    release = m7.resolve_release(profile, catalog)
+    bundle_dir = release.get("bundle_dir", profile)
+    m7.require(type(bundle_dir) is str and bundle_dir not in ("", ".", "..")
+               and Path(bundle_dir).name == bundle_dir,
+               f"{profile}: invalid release bundle_dir")
+    return bundle_dir
+
+
+def parameter_identity(bundle_dir):
     """Content identity of the admitted parameter bundle (M8-07 partial):
     the channel config and every kernel mem file the manager will load."""
-    d = m7.BASE / profile
-    out = {"channel_config_sha256": file_sha256(d / "channel_config.json"),
+    d = m7.BASE / bundle_dir
+    out = {"bundle_dir": bundle_dir,
+           "channel_config_sha256": file_sha256(d / "channel_config.json"),
            "weights": {}}
     for f in sorted(d.glob("kernel_*.mem")):
         out["weights"][f.name] = file_sha256(f)
@@ -338,9 +354,10 @@ def cmd_run(args):
                "anchors": anchors, "handles": None, "digests": []}
 
         # --- admission BEFORE any hardware mutation (M8-02/M8-06) ---------
-        channels, pbundle = m7.load_params(args.profile, n, k,   # read-only files
+        bundle_dir = release_bundle_dir(args.profile, catalog_doc)
+        channels, pbundle = m7.load_params(bundle_dir, n, k,   # read-only files
                                            hw_bias_width=hw["bias_width"])
-        rec["parameters"] = parameter_identity(args.profile)
+        rec["parameters"] = parameter_identity(bundle_dir)
         rec["parameters"]["bundle_sha256"] = pbundle
         t0 = time.perf_counter()
         if args.image:
@@ -491,9 +508,10 @@ def cmd_soak(args):
         ctx = {"phys": int((info / "phys_addr").read_text(), 0),
                "buffer_size": int((info / "size").read_text(), 0),
                "anchors": anchors, "handles": None, "digests": []}
-        channels, pbundle = m7.load_params(args.profile, n, k,
+        bundle_dir = release_bundle_dir(args.profile, catalog_doc)
+        channels, pbundle = m7.load_params(bundle_dir, n, k,
                                            hw_bias_width=hw["bias_width"])
-        rec["parameters"] = {**parameter_identity(args.profile),
+        rec["parameters"] = {**parameter_identity(bundle_dir),
                              "bundle_sha256": pbundle}
         storage_admission(root, args.frames * 4096 + 1048576)
 
@@ -609,9 +627,10 @@ def cmd_extremes(args):
         ctx = {"phys": int((info / "phys_addr").read_text(), 0),
                "buffer_size": int((info / "size").read_text(), 0),
                "anchors": anchors, "handles": None, "digests": []}
-        channels, pbundle = m7.load_params(args.profile, n, k,
+        bundle_dir = release_bundle_dir(args.profile, catalog_doc)
+        channels, pbundle = m7.load_params(bundle_dir, n, k,
                                            hw_bias_width=hw["bias_width"])
-        rec["parameters"] = {**parameter_identity(args.profile),
+        rec["parameters"] = {**parameter_identity(bundle_dir),
                              "bundle_sha256": pbundle}
         storage_admission(root, 8 * (hw["expected_output_bytes"] + 4096)
                           + 1048576)

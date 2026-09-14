@@ -5,7 +5,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
+import m8_cli
 from conv_lab.dma import layout, transfer_length, validate_layout
 from conv_lab.errors import AdmissionError
 from conv_lab.profiles import load_profiles, profile_layout, validate_discovery
@@ -132,6 +134,22 @@ class M7Profiles(unittest.TestCase):
                 path.write_text(json.dumps(data),encoding="utf-8")
                 with self.assertRaises(AdmissionError):
                     load_profiles(path)
+
+    def test_m8_release_resolves_shared_parameter_bundle(self):
+        catalog = json.loads(CATALOG.read_bytes())
+        self.assertEqual(m8_cli.release_bundle_dir("B32", catalog), "B32")
+        self.assertEqual(m8_cli.release_bundle_dir("B32_CFGLUT125", catalog),
+                         "B32")
+        with mock.patch.object(m8_cli.m7, "BASE", ROOT / "profiles"):
+            identity = m8_cli.parameter_identity("B32")
+        self.assertEqual(identity["bundle_dir"], "B32")
+        self.assertEqual(set(identity["weights"]),
+                         {f"kernel_ch{i}.mem" for i in range(16)})
+
+        escaped = json.loads(json.dumps(catalog))
+        escaped["releases"]["B32_CFGLUT125"]["bundle_dir"] = "../B32"
+        with self.assertRaises(RuntimeError):
+            m8_cli.release_bundle_dir("B32_CFGLUT125", escaped)
 
     def test_b32_rejects_legacy_a32_id_in_otherwise_correct_discovery(self):
         p = self.profiles["B32"]

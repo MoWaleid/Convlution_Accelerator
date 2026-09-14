@@ -176,9 +176,10 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       `bootgen -image <bif> -arch zynq -process_bitstream bin`
       (BIF = plain .bit path, no destination_device attr) and record its
       sha256 as `firmware_bin_sha256`.
-- [ ] G2.7 Board push of the new firmware + updated
-      hardware_B32_CFGLUT125.json + profiles (plus-free base64 chunk
-      protocol, per-chunk md5 — see AI_HANDOFF §9/§17.5).
+- [x] G2.7 Board push of the new firmware + updated
+      `hardware_B32_CFGLUT125.json`, profiles, and runtime. Actual transfer
+      used the SD FAT boot partition; 41 home files matched byte-for-byte and
+      firmware SHA-256 was `4e827310...b5b73b`.
 
 ### Gate 3 — board qualification at 125 MHz (needs VM + board)
 - [x] G3.1 VM: import the XSA into the PetaLinux project, rebuild
@@ -192,7 +193,10 @@ RTL+BD+testbenches+scripts in `fce2771`, release plumbing
       identity validation → anchor-exact activation (`5821c8b1…`) →
       ≥100-frame soak → extremes (shift 24–31 now live and must PASS) →
       repeated reconfigurations vs the MAC baseline → power cycle →
-      fault/recovery. Then catalog the release BUILT→QUALIFIED.
+      fault/recovery. Then catalog the release BUILT→QUALIFIED. Identity,
+      runtime admission, parameter-only activation, and the first three run
+      frames PASS; remaining items are still open. Evidence:
+      `report/research_builds/B32_CFGLUT125/board_runtime_qualification_20260914.md`.
 - [ ] G3.4 Edge-free claim discipline (IP-09): simulation metrics + board
       throughput stay separate claims; K16 = 4 beats/position on 64-bit
       AXIS — no "one position/cycle at the interface" language.
