@@ -1357,3 +1357,170 @@ the required 640×480 static-image plus 4 MiB DMA board gates remain open.
 Next routed build is A32_CFGLUT125, then D32 and the uniform-provenance B32
 rebuild. Firmware generation, final-manifest hash binding, catalog cutover and
 board qualification follow only after the five routed builds are frozen.
+
+## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
+
+This section supersedes every older "next action", pending-build count and
+agent-ownership sentence above. Historical sections remain evidence, but
+execute from this section and observed repository state only.
+
+### 19.1 Collaboration contract
+
+- Repository: `D:\MyProjects\Convlution_Accelerator`.
+- Branch: `integration/m10-cfglut5`.
+- Last checkpoint before this handoff edit: `58fca2c1eae6fbb6ddde13d1b9c9b803089afaa3`.
+- The coding agent inspects, edits, tests and commits repository files.
+- The user alone runs supplied Vivado Tcl, Ubuntu/PetaLinux and ZedBoard-shell
+  commands. Give one exact block, explain briefly what it proves, then consume
+  its output. Never claim a user command ran without its output.
+- Put `sudo -v` in a separate block before board commands needing sudo.
+- Work in small verified checkpoints; update this file after each accepted
+  routed build or board stage. Do not delegate, speculate, or celebrate.
+
+Start every resumed session with:
+
+```powershell
+Set-Location -LiteralPath 'D:\MyProjects\Convlution_Accelerator'
+git branch --show-current
+git rev-parse HEAD
+git status --short
+git log -6 --oneline
+Get-Content -LiteralPath 'AI_HANDOFF.md' -Tail 300
+```
+
+Stop if the branch differs, tracked changes are unexplained, or `58fca2c` is
+not an ancestor. Never reset, clean, delete, overwrite or discard unexpected
+state. Preserve and explain it.
+
+### 19.2 Locked final product
+
+Exactly five active releases, all exact generated CFGLUT5 bitheap,
+edge-free/prefetch, nominal 125 MHz FCLK0:
+
+| Release | Shape | Build ID | Wrapper/claim |
+|---|---|---|---|
+| A32_CFGLUT125 | N3 K8 32x32 | `EF125K08N3W32R01` | optimized; zero external gaps, internal bubbles recorded |
+| B32_CFGLUT125 | N3 K16 32x32 | `EF125K16N3W32R01` | optimized; zero external gaps and frame-D internal invalid advances |
+| C32_CFGLUT125 | N5 K8 32x32 | `EF125K08N5W32R01` | optimized_relaxed; exact with measured bubbles |
+| D32_CFGLUT125 | N3 K4 32x32 | `EF125K04N3W32R01` | optimized_relaxed; exact with measured bubbles |
+| D640_CFGLUT125 | N3 K4 640x480 | `EF125N3K04VGA-R1` | optimized_relaxed; exact with measured bubbles |
+
+Option A is final. Advertise zero **external output gaps** only for A32/B32.
+Never call A32 internally bubble-free. Frame-D `invalid_advances/gaps`:
+B32 `0/0`, A32 `31/0`, C32 `62/31`, D32 `62/62`, D640 `958/958`.
+All MAC/100 MHz artifacts including B32_CFGLUT100 are historical report
+evidence only; exclude them from the active catalog/library/image/demo.
+
+### 19.3 Accepted evidence/current state
+
+1. Official five-profile Vivado 2025.2 A-H wrapper matrix PASS from clean
+   `1f68ccf`; evidence is
+   `report/research_builds/CFGLUT125_MATRIX/wrapper_official_user_20260914T210835Z/`.
+   All 16 checksums verified; evidence commit `9c725cc`.
+2. C32 BUILT / board NOT_RUN: 125 MHz, WNS `+0.003`, WHS `+0.037`, clean route,
+   zero DRC errors. Source `9c725cc`; BIT SHA
+   `8108a82fcbb7cec73aca919e58ef1c6725561444bfd6ee5887e8aa51315d866f`;
+   XSA SHA `eb777ad376eb81687a834a7beb66de2f4085e0757522df53480d7b0dd6b43538`.
+   Reports `report/research_builds/C32_CFGLUT125/`; commit `180c2fa`.
+3. D640 BUILT / board NOT_RUN: 125 MHz, WNS `+0.001`, WHS `+0.022`, clean route,
+   zero DRC errors. Source `180c2fa`; BIT SHA
+   `6e95188e197f402bf9029295b3d4584111aa7b5afbb06802045596f49f41cca3`;
+   XSA SHA `371a420baf8b20d1ad2cb0ad072bde8f101a232df0dc691e72f79b37742c9457`.
+   Reports `report/research_builds/D640_CFGLUT125/`; commit `58fca2c`.
+4. B32 has older routed/board-qualified 125 MHz evidence. Preserve it, but
+   rebuild B32 last for uniform generalized-source provenance.
+
+C32/D640 BITs are ignored under `bitstreams/` with hashes in tracked records;
+their XSAs/reports are tracked. New `.bit.bin` and board qualification are open.
+
+### 19.4 Immediate action — A32
+
+Observed: `work/research_A32_CFGLUT125/` contains only `src/config_pkg.vhd`,
+SHA `7434e32794e00ce54ddd9fde1ee94c0a863c629412fabd1146acff2883a96fe4`.
+After confirming clean state, give the user:
+
+```tcl
+if {[llength [get_projects -quiet]]} { close_project }
+cd {D:/MyProjects/Convlution_Accelerator}
+set research_release_id A32_CFGLUT125
+set build_rc [catch { source {scripts/research_release/research_build.tcl} } build_msg build_opts]
+puts "BUILD RESULT: $build_rc"
+puts "BUILD MESSAGE: $build_msg"
+if {$build_rc} { puts [dict get $build_opts -errorinfo] }
+```
+
+Accept only `RESEARCH_BUILD_OK: A32_CFGLUT125` with nonnegative WNS/WHS and
+`BUILD RESULT: 0`. On failure inspect the preserved run; never rerun blindly.
+
+### 19.5 Mandatory post-build acceptance
+
+Before requesting the next build:
+
+1. Record clean Git HEAD/status.
+2. Require `results.txt`: exact identity/shape, 125 MHz, WNS/WHS >=0,
+   `BOARD_VALIDATION=NOT_RUN`.
+3. Require BIT/XSA/routed DCP/reports; timing met with zero setup/hold failures,
+   routing errors=0, DRC Error rows=0, methodology checks=0. Preserve warnings.
+4. Run `python -B scripts/research_release/research_release.py manifest <ID>`;
+   verify identity, clean source commit, timing and artifact hashes.
+5. Refuse existing destinations. Copy (never move) BIT/XSA to lowercase final
+   names in `bitstreams/`; copy manifest plus check_timing/drc/methodology/
+   power/results/route/timing/tool/utilization into
+   `report/research_builds/<ID>/`. SHA-verify every copy.
+6. Add `BUILD_NOTES.md` like C32/D640. Say BUILT, never QUALIFIED; record source,
+   timing, gates, utilization, hashes and open board work.
+7. Stage XSA/notes/manifest/reports. Use
+   `git add -f report/research_builds/<ID>/*.rpt` because reports are ignored.
+   Keep the large BIT ignored; preserve Vivado report whitespace exactly.
+8. Commit, require clean state, verify next render, update this handoff.
+
+Final names: A32 `a32_cfglut125_125mhz.bit/.xsa`; D32
+`d32_cfglut125_125mhz.bit/.xsa`; B32
+`b32_cfglut125_125mhz.bit/.xsa` only after preserving old artifacts.
+
+### 19.6 Remaining order and B32 trap
+
+After A32 build D32, then B32. D32 is pristine with one render, SHA
+`78c6169625362bff679ba29ba7f392dcd4d62a4bf85a8df78613953b3edb0d92`.
+
+B32 is **not pristine**: `work/research_B32_CFGLUT125/` has the older full build
+(787 files). Do not delete it or weaken the guard. After A32/D32 commits:
+
+1. Verify tracked B32 build/board evidence and hashes.
+2. Hash/archive the entire old work directory to a unique recovery path;
+   verify, then move it to unique `work/archive/` storage.
+3. Preserve old final B32 BIT/BIN/XSA under dated/history names before replacement.
+4. Run `research_release.py prepare B32_CFGLUT125`; require render SHA
+   `1e24e3a823d1a940378f19d708cbabdecce93e982a9a91c639c46ccce07e3f0d`
+   and only `src/config_pkg.vhd`.
+5. Build/accept normally. Old qualification is history; new B32 needs fresh binding.
+
+### 19.7 After five routed builds
+
+1. Generate exact FPGA-manager `.bit.bin` files using Bootgen Zynq
+   `-process_bitstream bin`; verify hashes. Never substitute `system.bit`.
+2. Bind canonical BIT/BIN filenames/hashes in manifests. Set
+   `release_status: built-unqualified` and `deployable:true` only after complete
+   file/hash/identity admission. Deployable means controlled test-loadable,
+   not qualified; qualification remains external evidence.
+3. Cut active catalog/runtime to exactly five; reject placeholders, missing
+   firmware, 100 MHz and MAC entries.
+4. Stage runtime on proven 125 MHz PetaLinux with recovery.
+5. Per release: identity/FCLK, parameter admission, golden anchor, extremes/
+   fault recovery, >=100 no-reset frames. D640 also proves actual 640x480,
+   byte counts, approved four-guard 4 MiB layout and intact guards.
+6. Run directed five-profile switching, repeated A32/B32, bounded recovery,
+   then real power-off/on cold boot.
+7. Pull/hash original records; only then mark QUALIFIED and update report/demo.
+
+### 19.8 Prohibited shortcuts
+
+- No RTL/numerical/ABI/DMA-width redesign during reproduction unless an actual
+  failed gate requires a scoped user-approved fix.
+- No 100 MHz/MAC artifact in the active final project; no claim inflation.
+- No overwrite, reset-hard, git-clean, broad deletion, or non-pristine reuse.
+- No guessed or cross-artifact hashes; no deployable flag before full admission;
+  no QUALIFIED label before board evidence.
+- No PL programming with live DMA/MMIO handles: quiesce, close, program, reopen,
+  verify identity, then admit parameters.
+- Simulation, timing closure and XSA creation do not prove board behavior.
