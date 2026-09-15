@@ -24,3 +24,25 @@ fpga_manager fpga0: writing m7_B32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
   [B32_CFGLUT125] frame 3 OK 0.124 ms
   cleanup: final STATUS 0x00000181
 M7_SWITCH B32_CFGLUT125: PASS (3 frames, reload=yes)
+
+## C32_CFGLUT125 switch — first N=5 silicon proof on the exact CFGLUT5 datapath
+$ sudo -n python3 /home/petalinux/m7_switch.py --profile C32_CFGLUT125 3
+  admitted C32_CFGLUT125 parameter bundle c9ba0dba0ae7d704
+fpga_manager fpga0: writing m7_C32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32_CFGLUT125 (EF125K08N5W32R01)
+  [C32_CFGLUT125] activation OK 0.142 ms sha=b6ab2d53dd9517f3
+  [C32_CFGLUT125] frame 2 OK 0.145 ms
+  [C32_CFGLUT125] frame 3 OK 0.125 ms
+  cleanup: final STATUS 0x00000181
+M7_SWITCH C32_CFGLUT125: PASS (3 frames, reload=yes)
+
+## D32_CFGLUT125 switch
+$ sudo -n python3 /home/petalinux/m7_switch.py --profile D32_CFGLUT125 3
+  admitted D32_CFGLUT125 parameter bundle d735ca24a505b7f0
+fpga_manager fpga0: writing m7_D32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32_CFGLUT125 (EF125K04N3W32R01)
+  [D32_CFGLUT125] activation OK 0.145 ms sha=6cb736f6a80132d8
+  [D32_CFGLUT125] frame 2 OK 0.148 ms
+  [D32_CFGLUT125] frame 3 OK 0.125 ms
+  cleanup: final STATUS 0x00000181
+M7_SWITCH D32_CFGLUT125: PASS (3 frames, reload=yes)
