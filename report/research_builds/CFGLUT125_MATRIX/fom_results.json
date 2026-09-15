@@ -1,0 +1,145 @@
+{
+  "design_throughput_positions_per_cycle": 1.0,
+  "rows": [
+    {
+      "release": "D32_CFGLUT125",
+      "shape": "N3K4W32H32-CVH1",
+      "wns": 0.093,
+      "whs": 0.014,
+      "top": {
+        "LUT": 7273,
+        "FF": 8308,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 2883,
+        "FF": 2062,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.768,
+      "power_core": 0.015,
+      "fom_top": 7.468781985058851e-05,
+      "fom_core": 0.023124060585038735,
+      "eff_rate": 0.9395,
+      "fom_top_eff": 7.01657057580724e-05,
+      "invalid": 62,
+      "gaps": 62
+    },
+    {
+      "release": "D640_CFGLUT125",
+      "shape": "N3K4W640H480-CVH1",
+      "wns": 0.001,
+      "whs": 0.022,
+      "top": {
+        "LUT": 7679,
+        "FF": 8940,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 3281,
+        "FF": 2694,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.769,
+      "power_core": 0.017,
+      "fom_top": 7.084736494915887e-05,
+      "fom_core": 0.017928536852107498,
+      "eff_rate": 0.9969,
+      "fom_top_eff": 7.062642817955831e-05,
+      "invalid": 958,
+      "gaps": 958
+    },
+    {
+      "release": "A32_CFGLUT125",
+      "shape": "N3K8W32H32-CVH1",
+      "wns": 0.197,
+      "whs": 0.037,
+      "top": {
+        "LUT": 9145,
+        "FF": 9758,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 4746,
+        "FF": 3512,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.785,
+      "power_core": 0.028,
+      "fom_top": 5.931435570522544e-05,
+      "fom_core": 0.007525133947384263,
+      "eff_rate": 1.0,
+      "fom_top_eff": 5.931435570522544e-05,
+      "invalid": 31,
+      "gaps": 0
+    },
+    {
+      "release": "B32_CFGLUT125",
+      "shape": "N3K16W32H32-CVH1",
+      "wns": 0.09,
+      "whs": 0.053,
+      "top": {
+        "LUT": 12670,
+        "FF": 12686,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 8274,
+        "FF": 6440,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.806,
+      "power_core": 0.049,
+      "fom_top": 4.269158489093581e-05,
+      "fom_core": 0.0024665413663652555,
+      "eff_rate": 1.0,
+      "fom_top_eff": 4.269158489093581e-05,
+      "invalid": 0,
+      "gaps": 0
+    },
+    {
+      "release": "C32_CFGLUT125",
+      "shape": "N5K8W32H32-CVH1",
+      "wns": 0.003,
+      "whs": 0.037,
+      "top": {
+        "LUT": 14162,
+        "FF": 13934,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 9764,
+        "FF": 7688,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.823,
+      "power_core": 0.065,
+      "fom_top": 3.793018615452621e-05,
+      "fom_core": 0.0015756468030126368,
+      "eff_rate": 0.9849,
+      "fom_top_eff": 3.735604759457001e-05,
+      "invalid": 62,
+      "gaps": 31
+    }
+  ]
+}
