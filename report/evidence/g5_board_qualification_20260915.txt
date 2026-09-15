@@ -104,3 +104,11 @@ M8 SOAK 20180309T195025Z-soak100-B32_CFGLUT125-library_alley_cat: PASS (100 fram
 M8 SOAK 20180309T195028Z-soak100-C32_CFGLUT125-library_alley_cat: PASS (100 frames, median 0.124 ms / p95 0.132)
   [D32] activation OK 0.141 ms sha=6cb736f6a80132d8; 100/100 bit-exact; cleanup 0x00000181
 M8 SOAK 20180309T195031Z-soak100-D32_CFGLUT125-library_alley_cat: PASS (100 frames, median 0.125 ms / p95 0.130)
+
+## 100-frame no-reset soak — D640 (VGA, 4 MiB four-guard layout)
+$ sudo -n python3 /home/petalinux/m8_cli.py soak --profile D640_CFGLUT125 --frames 100
+  [D640] activation OK 2.608 ms sha=e323defbf8ad2616; 100/100 bit-exact; cleanup 0x00000181
+M8 SOAK 20180309T195217Z-soak100-D640_CFGLUT125-library_alley_cat: PASS (100 frames, median 3.731 ms / p95 3.749)
+
+# Session totals to this point: 5 singles x3 frames + 5 extremes x12 + 5 soaks x100
+# = 575 new board frames, 0 mismatches; full-PL reloads observed for every release.
