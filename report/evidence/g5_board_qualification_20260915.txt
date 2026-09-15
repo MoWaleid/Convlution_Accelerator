@@ -112,3 +112,15 @@ M8 SOAK 20180309T195217Z-soak100-D640_CFGLUT125-library_alley_cat: PASS (100 fra
 
 # Session totals to this point: 5 singles x3 frames + 5 extremes x12 + 5 soaks x100
 # = 575 new board frames, 0 mismatches; full-PL reloads observed for every release.
+
+## Directed five-profile switching matrix (full transcript pasted by user; file
+# preserved verbatim in the session record)
+$ sudo -n python3 /home/petalinux/m7_switch.py --matrix
+PHASE MATRIX: starting from D640_CFGLUT125, 58 switches
+  [20 consecutive A32->B32->A32 cycles, then all remaining ordered pairs;
+   every switch: bundle admission + full-PL reload + anchor-exact activation]
+  ... 10/58 switches, 10 reloads ... 20/58 ... 30/58 ... 40/58 ... 50/58 ...
+  C32/D32/D640 transitions observed (D640 activations 2.568-2.587 ms, anchor e323defb...)
+SUMMARY: 58 switches, 58 full-PL reloads, 20 ordered pairs covered, 58.5 s
+handles closed
+M7 SWITCH MATRIX: PASS
