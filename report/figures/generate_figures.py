@@ -6,17 +6,18 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
 STAGES = [
-    ("S1 MULTIPLY", "9x uint8 x int8\n-> 9x signed 17-bit\n(use_dsp = no: LUTs)"),
-    ("S2 ADD-TREE L1", "9 products -> 3\npartial sums\nsigned 19-bit"),
-    ("S3 ADD-TREE L2 + BIAS", "3 partials -> 1 sum\n+ 24-bit bias\nsigned 25-bit"),
-    ("S4 POST-PROCESS", "round-half-up\nsaturate int16\nReLU (per-channel)"),
+    ("BH  KCM + DADDA", "CFGLUT5 digit lookups (6 primitives/tap)\ncolumn-aware Dadda heap\n18 rows -> 2 x 21-bit (N=3)"),
+    ("S2  TWO-ROW REG", "register the two exact\npartial-sum rows (valid-aligned)"),
+    ("S3  SUM + BIAS", "sole carry-propagate sum\n+ signed-24 bias\n25-bit accumulator"),
+    ("S4  SHIFT", "arithmetic shift 0..31\n+ discarded half-bit register (exact)"),
+    ("S5  POST-PROCESS", "round-half-up\nsaturate int16\nReLU (per-channel)"),
 ]
 
-fig, ax = plt.subplots(figsize=(12.5, 3.2), dpi=200)
+fig, ax = plt.subplots(figsize=(15.5, 3.4), dpi=200)
 ax.axis("off")
-bw, bh, gap = 2.6, 1.7, 0.55
+bw, bh, gap = 2.75, 1.7, 0.45
 x0, y0 = 0.4, 0.8
-ax.annotate("from window generator:\n3x3 window (shared, 8 channels)", xy=(x0, y0 + bh / 2),
+ax.annotate("from edge-free window generator:\nN x N window (shared, K channels)", xy=(x0, y0 + bh / 2),
             xytext=(x0 - 0.05, y0 + bh + 0.45), fontsize=9, ha="left", color="#444444")
 for i, (title, body) in enumerate(STAGES):
     x = x0 + i * (bw + gap)
