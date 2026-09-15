@@ -1,0 +1,15 @@
+# G5 five-release board qualification — 2026-09-15 (§19.7 step 5)
+# Board: ZedBoard, PetaLinux image b91acd41 (125 MHz boot), runtime per §18.20 staging.
+# Live PL before first switch: OLD B32 bitstream (same BUILD_ID as rebuild).
+# All commands run by the user via serial; outputs verbatim.
+
+## A32_CFGLUT125 first switch — full-PL reload, anchor-exact
+$ sudo -n python3 /home/petalinux/m7_switch.py --profile A32_CFGLUT125 3
+  admitted A32_CFGLUT125 parameter bundle 367fb1f5a45a3271
+fpga_manager fpga0: writing m7_A32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32_CFGLUT125 (EF125K08N3W32R01)
+  [A32_CFGLUT125] activation OK 0.145 ms sha=cb3975593073652b
+  [A32_CFGLUT125] frame 2 OK 0.146 ms
+  [A32_CFGLUT125] frame 3 OK 0.126 ms
+  cleanup: final STATUS 0x00000181
+M7_SWITCH A32_CFGLUT125: PASS (3 frames, reload=yes)
