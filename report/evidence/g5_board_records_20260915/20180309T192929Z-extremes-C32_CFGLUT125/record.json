@@ -1,0 +1,175 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20180309T192929Z-extremes-C32_CFGLUT125",
+  "outcome": "PASS",
+  "started_utc": "2018-03-09T19:29:29Z",
+  "command": "/home/petalinux/m8_cli.py extremes --profile C32_CFGLUT125",
+  "profile": {
+    "name": "C32_CFGLUT125",
+    "release_id": "C32_CFGLUT125",
+    "shape_id": null,
+    "build_id_ascii": "EF125K08N5W32R01",
+    "build_id_hex": "45463132354b30384e35573332523031",
+    "N": 5,
+    "K": 8,
+    "W": 32,
+    "H": 32,
+    "tx_bytes": 1296,
+    "rx_bytes": 16384
+  },
+  "image_tag": "extremes",
+  "input": {},
+  "parameters": {
+    "bundle_dir": "C32",
+    "channel_config_sha256": "eeeab5812a6a54be1dd172af5247fa1231b8eb982656569150ea0ab858a4f565",
+    "weights": {
+      "kernel_ch0.mem": "9a5621879ccbd73f92261d1a0563f10afcace8bd8438117ff3e7d693bd754731",
+      "kernel_ch1.mem": "bfe57355daa8736afbb5bb454cfc235e055c779f095a0ba3af8ed5b308639a99",
+      "kernel_ch2.mem": "769fb9e21cb3c0011b71dc69b518b9413af04b4edad5d85d60df459f7594b5cf",
+      "kernel_ch3.mem": "ef2da04fac16e7c2af24c04f16b5c3c400f8bd0e7dfe3c92489e77ace1318b7e",
+      "kernel_ch4.mem": "498303536494153b008264426c6b8103f91e9e7aa51216743d419e4e1d80b670",
+      "kernel_ch5.mem": "118c983f8a6bd71746738c6305724fee3a5e1529f65be92a0f77eacc59539b85",
+      "kernel_ch6.mem": "2e6444b151f58c1e50c53b3e68b4c7f149b8ddc52f0646d7bd4869e6635c3ee4",
+      "kernel_ch7.mem": "fe8125010d07aa42760ffb173bcb17a3e3c0004dac8be825471bd52f486acd0f"
+    },
+    "bundle_sha256": "c9ba0dba0ae7d704fff3160d9cbfa38d069bc81102f4fa03feef8b08bc59d3bb"
+  },
+  "switch": {
+    "reloaded": true,
+    "wall_s": 1.9482206250031595
+  },
+  "verification": {},
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "stimulus": "all_zero",
+      "sha256": "b3d10f122d94323dcbe73f62fba181320e3daf4de44530ae5ab87d2211036c4b",
+      "mismatches": 0,
+      "hw_ms": 0.14574100350728258,
+      "wall_ms": 15.865304998442298
+    },
+    {
+      "stimulus": "all_255",
+      "sha256": "c3ff8ac1b4cb664575a333193b61b573207ed3f8ff7e421699e4dd2cb6fa243f",
+      "mismatches": 0,
+      "hw_ms": 0.1275569993595127,
+      "wall_ms": 15.973335997841787
+    },
+    {
+      "stimulus": "saturation_params",
+      "sha256": "65d443eeece26e59870186161dc4ce5e28b5d7fe8a0c2e27cfe82d07011b41c8",
+      "mismatches": 0,
+      "hw_ms": 0.12560000322991982,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_24",
+      "sha256": "71ebbfed538cc5d15d3e59e4d27a12bac417fa17e34868e91d3b7fff933bad12",
+      "mismatches": 0,
+      "hw_ms": 0.12790699838660657,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_25",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.12643100126297213,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_26",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.12689800132648088,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_27",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.12631399658857845,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_28",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.12598200191860087,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_29",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.12620300185517408,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_30",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.12720700033241883,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "shift_31",
+      "sha256": "4fe7b59af6de3b665b67788cc2f99892ab827efae3a467342b3bb4e3bc8e5bfe",
+      "mismatches": 0,
+      "hw_ms": 0.1272609988518525,
+      "wall_ms": 0.0
+    },
+    {
+      "stimulus": "reinstall_activation",
+      "sha256": "b6ab2d53dd9517f3892865b386c6206adf24c4137ca8cc259ef3c3ed938d018c",
+      "mismatches": 0,
+      "hw_ms": 0.1298219976888504,
+      "wall_ms": 0.0
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; declared fabric clock 125 MHz",
+    "total_wall_s": 13.964194015999965
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "f52302ab953d5cbeae072cf73596a1dd",
+    "m7_switch_md5": "ad661d23301bde92d15b8929a61ff05c"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 125000000,
+    "fclk0_source": "release manifest; not a live measurement"
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "extremes": {
+    "stimuli": [
+      "all_zero",
+      "all_255",
+      "saturation_params",
+      "shift_24",
+      "shift_25",
+      "shift_26",
+      "shift_27",
+      "shift_28",
+      "shift_29",
+      "shift_30",
+      "shift_31",
+      "reinstall_activation"
+    ]
+  },
+  "counters_final": {
+    "input_accept": 1296,
+    "input_consumed": 1296,
+    "core_accept": 1024,
+    "output_accept": 16384,
+    "status": 413,
+    "error_flags": 0
+  }
+}

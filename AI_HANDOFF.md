@@ -1571,6 +1571,54 @@ report/demo updates). Fault-injection note: the M5-era harness is
 A32/M4-identity-bound; a G5 fault round needs the scoped harness review
 §18.5.4 required before reuse.
 
+### 18.22 G5 QUALIFIED — all five releases; §19.7 evidence chain closed (2026-09-15)
+
+Steps 6-7 completed after §18.21:
+
+- **Switching matrix**: 58 switches, 58 full-PL reloads, 20/20 ordered
+  pairs, 58.5 s, all anchor-exact (includes 20 provably consecutive
+  A32-B32-A32 cycles; the ORDER-derived bridge worked as designed).
+- **Cold boot**: true power cycle; 68 runtime files + 5 firmware images
+  persisted cmp-identical; SLCR re-verified 124.99999875 MHz; fresh A32
+  anchor PASS. Harness correction recorded: the assistant's first FCLK
+  probe used wrong SLCR addresses (0xF8000100/0xF8000140 are the ARM CPU
+  clocks — values showed a healthy 650 MHz CPU boot); the documented
+  addresses (0xF8000108/0xF800010C/0xF8000170) matched the accepted
+  derivation exactly.
+- **Bounded recovery**: `software/g5_fault_check.py` (commit `1bffc31`,
+  identity-gated, register-only) — ABORT-from-IDLE latched FAULT with
+  ABORTED alone; ABORT-after-START race took the FAULT path; both
+  recoveries clean; anchor-exact m8_cli proof frames PASS (records
+  `20180309T230706Z`/`20180309T232234Z`). Silicon lesson: PARAM_COMPLETE
+  is retained across RESET (0x181) — the first harness revision's
+  equality check was wrong and was fixed to bits-set semantics after the
+  board demonstrated the real behavior. Transport lesson re-confirmed: a
+  93-line single serial paste corrupted and was rejected by the per-chunk
+  md5 gate before decode; the 4x24-line chunk protocol delivered
+  byte-exact.
+- **Records pulled and preserved**: board archive `06b4cb7f…3a96a`
+  (126,537 B — extremes/soak records carry record.json evidence; raw
+  stimulus frames are anchor-verified and not persisted in those modes)
+  -> `report/evidence/g5_board_records_20260915/` (87 files, SHA256SUMS
+  `17b4dcc1…`). Record analysis: 13 G5 records — 5 extremes x12 stimulus
+  frames, 5 soaks x100 frames, 2 fault-proof runs — every one PASS with
+  zero mismatches; the 4 older B32 gate-3.3 records ride along (3 PASS +
+  the documented pre-fix FAILED run of §18.6). Note: extremes/soak
+  records show `reload=True` — each run re-verified a full-PL reload.
+
+**QUALIFICATION RECORD:
+`report/research_builds/CFGLUT125_MATRIX/G5_QUALIFICATION_RECORD_20260915.md`
+— A32/B32/C32/D32/D640 `_CFGLUT125` are QUALIFIED.** Session totals: 575
+scripted frames + 2 fault-proof frames, zero mismatches; the runtime
+manifests intentionally remain `built-unqualified`/`deployable: true`
+(qualification is external evidence). Board-clock run-ids are 2018-stamped
+identifiers, not chronology.
+
+Remaining (non-blocking, user's call): competition/research report + demo
+update from this evidence; optional recorded legacy-file cleanup on the
+board (pre-change state in `/home/petalinux/release_checkpoints/
+G5_pre_runtime.tar.gz`, SHA-256 `63c955e2…f0602`).
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1738,13 +1786,12 @@ recorded in `report/research_builds/B32_CFGLUT125/REBUILD_ARCHIVE_20260915.md`:
    not qualified; qualification remains external evidence.
 3. DONE (§18.19) — active catalog/runtime cut to exactly five; placeholders,
    missing firmware, 100 MHz and MAC entries are no longer admissible names.
-4. Stage runtime on proven 125 MHz PetaLinux with recovery.
-5. Per release: identity/FCLK, parameter admission, golden anchor, extremes/
-   fault recovery, >=100 no-reset frames. D640 also proves actual 640x480,
-   byte counts, approved four-guard 4 MiB layout and intact guards.
-6. Run directed five-profile switching, repeated A32/B32, bounded recovery,
-   then real power-off/on cold boot.
-7. Pull/hash original records; only then mark QUALIFIED and update report/demo.
+4. DONE (§18.20) — runtime staged on the proven 125 MHz image with recovery.
+5. DONE (§18.21) — per-release gates closed for all five releases.
+6. DONE (§18.22) — matrix, cold boot, bounded recovery all PASS.
+7. DONE (§18.22) — records pulled/hashed/preserved; all five releases
+   QUALIFIED (record: CFGLUT125_MATRIX/G5_QUALIFICATION_RECORD_20260915.md).
+   Report/demo updates remain as user-called packaging work.
 
 ### 19.8 Prohibited shortcuts
 

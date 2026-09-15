@@ -1,0 +1,793 @@
+{
+  "schema": "m8-run-record/3",
+  "run_id": "20180309T195217Z-soak100-D640_CFGLUT125-library_alley_cat",
+  "outcome": "PASS",
+  "started_utc": "2018-03-09T19:52:17Z",
+  "command": "/home/petalinux/m8_cli.py soak --profile D640_CFGLUT125 --frames 100",
+  "profile": {
+    "name": "D640_CFGLUT125",
+    "release_id": "D640_CFGLUT125",
+    "shape_id": "N3K4W640H480-CVH1",
+    "build_id_ascii": "EF125N3K04VGA-R1",
+    "build_id_hex": "45463132354e334b30345647412d5231",
+    "N": 3,
+    "K": 4,
+    "W": 640,
+    "H": 480,
+    "tx_bytes": 309444,
+    "rx_bytes": 2457600
+  },
+  "image_tag": "library_alley_cat",
+  "input": {
+    "source_path": "library:alley_cat_s_000013",
+    "padded_tx_sha256": "1adc0e35c1942c67bd6a9509aa811026af44fca3fdd2f5432afbedff2d542b4c"
+  },
+  "parameters": {
+    "bundle_dir": "D640",
+    "channel_config_sha256": "96cff789191b926becda965c444231f3a5731dd2cb9176791e3594cdb4073cda",
+    "weights": {
+      "kernel_ch0.mem": "a9480618be6d6041cba865624e571baad2f1209c154ed865aafc571738c4b29f",
+      "kernel_ch1.mem": "69c5594cf186ce567b991c220254fff861c11ef61ac3aa9ac8e4628f15a709a0",
+      "kernel_ch2.mem": "a671d5a394f26786ead97fef96af593b7977aa2beda0dc31d824473541f9434d",
+      "kernel_ch3.mem": "cd31aee3e4078f64c3f6268099160b2f3910d7fcef857838ce60fa6550783ea9"
+    },
+    "bundle_sha256": "d735ca24a505b7f00e7d71ed283e3d3cb0f5ac76903f55c658bc1078e2a706d8"
+  },
+  "switch": {
+    "reloaded": true,
+    "wall_s": 0.4460636589974456
+  },
+  "verification": {
+    "mode": "anchor_sha256",
+    "anchor": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e"
+  },
+  "cleanup": {
+    "ok": true
+  },
+  "frames": [
+    {
+      "index": 1,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.730362997885095,
+      "wall_ms": 155.6010479980614
+    },
+    {
+      "index": 2,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7375700012489688,
+      "wall_ms": 177.80259800201748
+    },
+    {
+      "index": 3,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.739094998309156,
+      "wall_ms": 177.47605700060376
+    },
+    {
+      "index": 4,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.73081900033867,
+      "wall_ms": 177.81313399973442
+    },
+    {
+      "index": 5,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.730092998011969,
+      "wall_ms": 178.0915460003598
+    },
+    {
+      "index": 6,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7505420004890766,
+      "wall_ms": 177.74341699987417
+    },
+    {
+      "index": 7,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7322099997254554,
+      "wall_ms": 178.08150299970293
+    },
+    {
+      "index": 8,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7318340000638273,
+      "wall_ms": 178.55459199927282
+    },
+    {
+      "index": 9,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7237110009300523,
+      "wall_ms": 177.98589700032608
+    },
+    {
+      "index": 10,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7196179982856847,
+      "wall_ms": 178.3425729990995
+    },
+    {
+      "index": 11,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7188250025792513,
+      "wall_ms": 178.1605739997758
+    },
+    {
+      "index": 12,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7479570019058883,
+      "wall_ms": 178.13123199812253
+    },
+    {
+      "index": 13,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.728111001692014,
+      "wall_ms": 178.35166900113109
+    },
+    {
+      "index": 14,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.725360002135858,
+      "wall_ms": 177.80542300170055
+    },
+    {
+      "index": 15,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.727267001522705,
+      "wall_ms": 178.1793859991012
+    },
+    {
+      "index": 16,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7073540006531402,
+      "wall_ms": 178.37376100214897
+    },
+    {
+      "index": 17,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 2.6281659993401263,
+      "wall_ms": 177.41264700089232
+    },
+    {
+      "index": 18,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7324309996620286,
+      "wall_ms": 177.8443770017475
+    },
+    {
+      "index": 19,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7323500000638887,
+      "wall_ms": 178.70483200022136
+    },
+    {
+      "index": 20,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7258829979691654,
+      "wall_ms": 177.7614780003205
+    },
+    {
+      "index": 21,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7174149983911775,
+      "wall_ms": 178.5946909985796
+    },
+    {
+      "index": 22,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7259199998516124,
+      "wall_ms": 177.52001999906497
+    },
+    {
+      "index": 23,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.744541001651669,
+      "wall_ms": 177.81422899861354
+    },
+    {
+      "index": 24,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7265600003593136,
+      "wall_ms": 178.23753999982728
+    },
+    {
+      "index": 25,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7265169994498137,
+      "wall_ms": 177.5830100013991
+    },
+    {
+      "index": 26,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.724628000782104,
+      "wall_ms": 177.59819200000493
+    },
+    {
+      "index": 27,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 2.569186999608064,
+      "wall_ms": 177.19626599864569
+    },
+    {
+      "index": 28,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7340679991757497,
+      "wall_ms": 178.53670900149154
+    },
+    {
+      "index": 29,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7218960023892578,
+      "wall_ms": 179.0215100008936
+    },
+    {
+      "index": 30,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.740615000424441,
+      "wall_ms": 177.4864079998224
+    },
+    {
+      "index": 31,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.724782000062987,
+      "wall_ms": 178.4206730008009
+    },
+    {
+      "index": 32,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.8149410029291175,
+      "wall_ms": 178.34968700117315
+    },
+    {
+      "index": 33,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 2.5628059993323404,
+      "wall_ms": 176.83698600012576
+    },
+    {
+      "index": 34,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7363260016718414,
+      "wall_ms": 178.8593729979766
+    },
+    {
+      "index": 35,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7444740009959787,
+      "wall_ms": 180.21993399815983
+    },
+    {
+      "index": 36,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7405910006782506,
+      "wall_ms": 177.31924499821616
+    },
+    {
+      "index": 37,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.734442998393206,
+      "wall_ms": 178.01945400060504
+    },
+    {
+      "index": 38,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.709772001457168,
+      "wall_ms": 177.4346720012545
+    },
+    {
+      "index": 39,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7473040028999094,
+      "wall_ms": 177.523262998875
+    },
+    {
+      "index": 40,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7309409999579657,
+      "wall_ms": 178.0518910018145
+    },
+    {
+      "index": 41,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.733932000614004,
+      "wall_ms": 178.4575829988171
+    },
+    {
+      "index": 42,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7267629995767493,
+      "wall_ms": 177.92530600127066
+    },
+    {
+      "index": 43,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.82611099848873,
+      "wall_ms": 178.06111499885446
+    },
+    {
+      "index": 44,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 2.566110997577198,
+      "wall_ms": 176.89854900163482
+    },
+    {
+      "index": 45,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7457720027305186,
+      "wall_ms": 178.3934289996978
+    },
+    {
+      "index": 46,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7355880012910347,
+      "wall_ms": 178.1661550012359
+    },
+    {
+      "index": 47,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7307630009308923,
+      "wall_ms": 177.92498599737883
+    },
+    {
+      "index": 48,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 2.700159999221796,
+      "wall_ms": 291.6381189970707
+    },
+    {
+      "index": 49,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7353660009102896,
+      "wall_ms": 178.48357000184478
+    },
+    {
+      "index": 50,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7117719984962605,
+      "wall_ms": 178.57187800109386
+    },
+    {
+      "index": 51,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.729255000507692,
+      "wall_ms": 177.47395200058236
+    },
+    {
+      "index": 52,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.74012300017057,
+      "wall_ms": 178.6307209986262
+    },
+    {
+      "index": 53,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.732763001607964,
+      "wall_ms": 178.01571800009697
+    },
+    {
+      "index": 54,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7377849985205103,
+      "wall_ms": 178.06769399976474
+    },
+    {
+      "index": 55,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.732917000888847,
+      "wall_ms": 177.3923830005515
+    },
+    {
+      "index": 56,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.728978001163341,
+      "wall_ms": 177.2017430012056
+    },
+    {
+      "index": 57,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.809581001405604,
+      "wall_ms": 178.77677700016648
+    },
+    {
+      "index": 58,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7352249964897055,
+      "wall_ms": 178.3952199984924
+    },
+    {
+      "index": 59,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.731501998117892,
+      "wall_ms": 177.98632700214512
+    },
+    {
+      "index": 60,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7300670010154136,
+      "wall_ms": 177.47836399939843
+    },
+    {
+      "index": 61,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.724337999301497,
+      "wall_ms": 178.5214050032664
+    },
+    {
+      "index": 62,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7395699982880615,
+      "wall_ms": 177.85047500001383
+    },
+    {
+      "index": 63,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7303879980754573,
+      "wall_ms": 178.0138040012389
+    },
+    {
+      "index": 64,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7269780004862696,
+      "wall_ms": 177.88183499942534
+    },
+    {
+      "index": 65,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.724602996953763,
+      "wall_ms": 177.96392799937166
+    },
+    {
+      "index": 66,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.713951002282556,
+      "wall_ms": 178.28273399936734
+    },
+    {
+      "index": 67,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 2.5693540010252036,
+      "wall_ms": 177.13835299946368
+    },
+    {
+      "index": 68,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7323270007618703,
+      "wall_ms": 177.852974000416
+    },
+    {
+      "index": 69,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7254580020089634,
+      "wall_ms": 178.15847599922563
+    },
+    {
+      "index": 70,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7267629995767493,
+      "wall_ms": 178.16852499890956
+    },
+    {
+      "index": 71,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7116120001883246,
+      "wall_ms": 178.3017119996657
+    },
+    {
+      "index": 72,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.730024996912107,
+      "wall_ms": 178.12242600120953
+    },
+    {
+      "index": 73,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7411999983305577,
+      "wall_ms": 177.77640799977235
+    },
+    {
+      "index": 74,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7337049980123993,
+      "wall_ms": 177.27804999958607
+    },
+    {
+      "index": 75,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.71873299809522,
+      "wall_ms": 178.14461099987966
+    },
+    {
+      "index": 76,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.708325999468798,
+      "wall_ms": 177.8960139999981
+    },
+    {
+      "index": 77,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.743242999917129,
+      "wall_ms": 178.67108500286122
+    },
+    {
+      "index": 78,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7431079981615767,
+      "wall_ms": 177.98512700028368
+    },
+    {
+      "index": 79,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7359569978434592,
+      "wall_ms": 178.14464200273505
+    },
+    {
+      "index": 80,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7327019999793265,
+      "wall_ms": 178.1969370022125
+    },
+    {
+      "index": 81,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.723563000676222,
+      "wall_ms": 178.9465799993195
+    },
+    {
+      "index": 82,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7210709997452796,
+      "wall_ms": 177.60089399962453
+    },
+    {
+      "index": 83,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7485350003407802,
+      "wall_ms": 178.55540399978054
+    },
+    {
+      "index": 84,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7436800012073945,
+      "wall_ms": 177.78496199753135
+    },
+    {
+      "index": 85,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7334219996409956,
+      "wall_ms": 177.58825900091324
+    },
+    {
+      "index": 86,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.736497998033883,
+      "wall_ms": 177.73380399739835
+    },
+    {
+      "index": 87,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.707556999870576,
+      "wall_ms": 178.88271599804284
+    },
+    {
+      "index": 88,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.723649999301415,
+      "wall_ms": 177.66888800179004
+    },
+    {
+      "index": 89,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.737219001777703,
+      "wall_ms": 178.91747799876612
+    },
+    {
+      "index": 90,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.798646001087036,
+      "wall_ms": 178.20580400075414
+    },
+    {
+      "index": 91,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.73352000315208,
+      "wall_ms": 178.1055829997058
+    },
+    {
+      "index": 92,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.725207003299147,
+      "wall_ms": 177.76810600116733
+    },
+    {
+      "index": 93,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.713163998327218,
+      "wall_ms": 177.88463500255602
+    },
+    {
+      "index": 94,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7492489973374177,
+      "wall_ms": 177.42279500089353
+    },
+    {
+      "index": 95,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7380680005298927,
+      "wall_ms": 177.5418540019018
+    },
+    {
+      "index": 96,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7332430001697503,
+      "wall_ms": 177.58480799966492
+    },
+    {
+      "index": 97,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.721932000189554,
+      "wall_ms": 177.7717670011043
+    },
+    {
+      "index": 98,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.724486003193306,
+      "wall_ms": 178.57095499857678
+    },
+    {
+      "index": 99,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7327690006350167,
+      "wall_ms": 177.21746000097482
+    },
+    {
+      "index": 100,
+      "sha256": "e323defbf8ad26163fc370bae428cee5a1fe53cc650d746fce43bf2719193c7e",
+      "mismatches": null,
+      "hw_ms": 3.7432919998536818,
+      "wall_ms": 178.5127580005792
+    }
+  ],
+  "timings": {
+    "scope": "hw_ms = host-clock interval from MM2S length release to completion-poll success (includes polling); wall_ms = whole run_frame call; neither is a hardware cycle count; declared fabric clock 125 MHz",
+    "preprocess_s": 0.644177297999704,
+    "hw_ms": {
+      "median": 3.7308800001483178,
+      "min": 2.5628059993323404,
+      "max": 3.82611099848873,
+      "p95": 3.7492489973374177
+    },
+    "wall_ms": {
+      "median": 178.01476100066793,
+      "min": 155.6010479980614,
+      "max": 291.6381189970707,
+      "p95": 178.88271599804284
+    },
+    "total_wall_s": 19.01086400799977
+  },
+  "previews": [],
+  "versions": {
+    "m8_cli_md5": "f52302ab953d5cbeae072cf73596a1dd",
+    "m7_switch_md5": "ad661d23301bde92d15b8929a61ff05c"
+  },
+  "environment": {
+    "kernel": "6.12.40-xilinx-g31626ef92ff1",
+    "machine": "armv7l",
+    "python": "3.12.11",
+    "cpu_governor": null,
+    "bogomips": 324.99,
+    "fclk0_hz": 125000000,
+    "fclk0_source": "release manifest; not a live measurement"
+  },
+  "archive_root": "/var/lib/conv-lab/results",
+  "failure": null,
+  "soak": {
+    "frames": 100
+  },
+  "counters_final": {
+    "input_accept": 309444,
+    "input_consumed": 309444,
+    "core_accept": 307200,
+    "output_accept": 2457600,
+    "status": 413,
+    "error_flags": 0
+  }
+}
