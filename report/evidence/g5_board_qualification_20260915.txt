@@ -13,3 +13,14 @@ fpga_manager fpga0: writing m7_A32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
   [A32_CFGLUT125] frame 3 OK 0.126 ms
   cleanup: final STATUS 0x00000181
 M7_SWITCH A32_CFGLUT125: PASS (3 frames, reload=yes)
+
+## B32_CFGLUT125 switch — full-PL reload proves the REBUILD firmware on silicon
+$ sudo -n python3 /home/petalinux/m7_switch.py --profile B32_CFGLUT125 3
+  admitted B32_CFGLUT125 parameter bundle 952cb13ce0adad04
+fpga_manager fpga0: writing m7_B32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32_CFGLUT125 (EF125K16N3W32R01)
+  [B32_CFGLUT125] activation OK 0.141 ms sha=5821c8b19a88fd34
+  [B32_CFGLUT125] frame 2 OK 0.144 ms
+  [B32_CFGLUT125] frame 3 OK 0.124 ms
+  cleanup: final STATUS 0x00000181
+M7_SWITCH B32_CFGLUT125: PASS (3 frames, reload=yes)
