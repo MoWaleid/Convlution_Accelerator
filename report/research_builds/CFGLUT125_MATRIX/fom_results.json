@@ -1,35 +1,6 @@
 {
-  "throughput_definition": "4/K output positions per cycle (64-bit output bus, 4 int16/beat), derated by disclosed row-transition gaps; compute core produces 1 position/cycle once filled",
+  "throughput_definition": "valid output values per clock cycle. Accelerator core: K outputs/cycle (one per channel, pipeline filled). Full system: 4 outputs/cycle - the 64-bit DMA output bus carries 4 int16 per beat - derated by disclosed row-transition gaps.",
   "rows": [
-    {
-      "release": "D32_CFGLUT125",
-      "shape": "N3K4W32H32-CVH1",
-      "wns": 0.093,
-      "whs": 0.014,
-      "top": {
-        "LUT": 7273,
-        "FF": 8308,
-        "RAMB36": 2,
-        "RAMB18": 2,
-        "DSP": 0
-      },
-      "core": {
-        "LUT": 2883,
-        "FF": 2062,
-        "RAMB36": 0,
-        "RAMB18": 0,
-        "DSP": 0
-      },
-      "power_total": 1.768,
-      "power_core": 0.015,
-      "throughput_design_positions_per_cycle": 1.0,
-      "fom_top": 7.468781985058851e-05,
-      "fom_core": 0.023124060585038735,
-      "eff_rate": 0.9395,
-      "fom_top_eff": 7.01657057580724e-05,
-      "invalid": 62,
-      "gaps": 62
-    },
     {
       "release": "D640_CFGLUT125",
       "shape": "N3K4W640H480-CVH1",
@@ -51,13 +22,44 @@
       },
       "power_total": 1.769,
       "power_core": 0.017,
-      "throughput_design_positions_per_cycle": 1.0,
-      "fom_top": 7.084736494915887e-05,
-      "fom_core": 0.017928536852107498,
-      "eff_rate": 0.9969,
-      "fom_top_eff": 7.062642817955831e-05,
+      "throughput_core_outputs_per_cycle": 4.0,
+      "throughput_system_outputs_per_cycle": 3.9875260416666665,
+      "fom_top": 0.00028250571271823323,
+      "fom_core": 0.07171414740842999,
+      "eff_rate": 3.9875,
+      "fom_top_eff": 0.00028250571271823323,
       "invalid": 958,
       "gaps": 958
+    },
+    {
+      "release": "D32_CFGLUT125",
+      "shape": "N3K4W32H32-CVH1",
+      "wns": 0.093,
+      "whs": 0.014,
+      "top": {
+        "LUT": 7273,
+        "FF": 8308,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 2883,
+        "FF": 2062,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.768,
+      "power_core": 0.015,
+      "throughput_core_outputs_per_cycle": 4.0,
+      "throughput_system_outputs_per_cycle": 3.7578125,
+      "fom_top": 0.0002806628230322896,
+      "fom_core": 0.09249624234015494,
+      "eff_rate": 3.7578,
+      "fom_top_eff": 0.0002806628230322896,
+      "invalid": 62,
+      "gaps": 62
     },
     {
       "release": "A32_CFGLUT125",
@@ -80,12 +82,43 @@
       },
       "power_total": 1.785,
       "power_core": 0.028,
-      "throughput_design_positions_per_cycle": 0.5,
-      "fom_top": 2.965717785261272e-05,
-      "fom_core": 0.0037625669736921314,
-      "eff_rate": 0.5,
-      "fom_top_eff": 2.965717785261272e-05,
+      "throughput_core_outputs_per_cycle": 8.0,
+      "throughput_system_outputs_per_cycle": 4.0,
+      "fom_top": 0.00023725742282090177,
+      "fom_core": 0.0602010715790741,
+      "eff_rate": 4.0,
+      "fom_top_eff": 0.00023725742282090177,
       "invalid": 31,
+      "gaps": 0
+    },
+    {
+      "release": "B32_CFGLUT125",
+      "shape": "N3K16W32H32-CVH1",
+      "wns": 0.09,
+      "whs": 0.053,
+      "top": {
+        "LUT": 12670,
+        "FF": 12686,
+        "RAMB36": 2,
+        "RAMB18": 2,
+        "DSP": 0
+      },
+      "core": {
+        "LUT": 8274,
+        "FF": 6440,
+        "RAMB36": 0,
+        "RAMB18": 0,
+        "DSP": 0
+      },
+      "power_total": 1.806,
+      "power_core": 0.049,
+      "throughput_core_outputs_per_cycle": 16.0,
+      "throughput_system_outputs_per_cycle": 4.0,
+      "fom_top": 0.00017076633956374324,
+      "fom_core": 0.03946466186184409,
+      "eff_rate": 4.0,
+      "fom_top_eff": 0.00017076633956374324,
+      "invalid": 0,
       "gaps": 0
     },
     {
@@ -109,42 +142,14 @@
       },
       "power_total": 1.823,
       "power_core": 0.065,
-      "throughput_design_positions_per_cycle": 0.5,
-      "fom_top": 1.8965093077263106e-05,
-      "fom_core": 0.0007878234015063184,
-      "eff_rate": 0.4924,
-      "fom_top_eff": 1.8678023797285004e-05,
+      "throughput_core_outputs_per_cycle": 8.0,
+      "throughput_system_outputs_per_cycle": 3.939453125,
+      "fom_top": 0.00014942419037828003,
+      "fom_core": 0.012605174424101095,
+      "eff_rate": 3.9395,
+      "fom_top_eff": 0.00014942419037828003,
       "invalid": 62,
       "gaps": 31
-    },
-    {
-      "release": "B32_CFGLUT125",
-      "shape": "N3K16W32H32-CVH1",
-      "wns": 0.09,
-      "whs": 0.053,
-      "top": {
-        "LUT": 12670,
-        "FF": 12686,
-        "RAMB36": 2,
-        "RAMB18": 2,
-        "DSP": 0
-      },
-      "core": {
-        "LUT": 8274,
-        "FF": 6440,
-        "RAMB36": 0,
-        "RAMB18": 0,
-        "DSP": 0
-      },
-      "power_total": 1.806,
-      "power_core": 0.049,
-      "throughput_design_positions_per_cycle": 0.25,
-      "fom_top": 1.0672896222733952e-05,
-      "fom_core": 0.0006166353415913139,
-      "eff_rate": 0.25,
-      "fom_top_eff": 1.0672896222733952e-05,
-      "invalid": 0,
-      "gaps": 0
     }
   ]
 }

@@ -132,14 +132,16 @@ qualified on silicon across all 32 shift values [S26], [S33]. The predecessor
 MAC datapath (§8.4) restricted shifts to 0–23 for exactly this reason; the
 CFGLUT5 architecture removed that restriction by construction.
 
-**Throughput discipline:** the compute core produces one output position (all K
-channel results) per clock once the pipeline is filled. The output serializer
-packs 4 int16 values per 64-bit AXI-Stream beat
-(`axi_stream_output_serializer.vhd` [S10]), so the **sustained external rate is
-4/K output positions per cycle**: 1.0 for K=4, 0.5 for K=8, 0.25 for K=16 —
-derated by the disclosed edge bubbles below. Channel-result rate is K per cycle
-while data is available. All measured frame times are host-clock wall-clock
-intervals including DMA and polling overhead, reported separately (§9).
+**Throughput definition** (used consistently for every FOM in this report):
+throughput is the number of **valid output values (pixels) per clock cycle**.
+The accelerator core produces **one valid result per channel per cycle** once
+the pipeline is filled — K outputs per clock cycle (8 at K=8, 16 at K=16,
+4 at K=4). The full system is bounded by its output side: the AXI DMA output
+interface is a 64-bit bus carrying 4 int16 values per beat
+(`axi_stream_output_serializer.vhd` [S10]), so the **full-system throughput is
+4 valid outputs per cycle** regardless of K, derated by the disclosed edge
+bubbles of §3.4. All measured frame times are host-clock wall-clock intervals
+including DMA and polling overhead, reported separately (§9).
 
 ### 3.4 Edge-free window generation
 
@@ -149,13 +151,13 @@ pipeline supplied across row transitions**. The five releases expose measured,
 disclosed behavior at the frame edges (wrapper-sim record, frame D =
 continuously-supplied stress case [S28]):
 
-| Release | Frame-D invalid core advances | External output gaps | Sustained external rate (effective) |
-|---|---:|---:|---:|
-| B32_CFGLUT125 (3×16) | **0** | **0** | 0.250 positions/cycle (bus ceiling) |
-| A32_CFGLUT125 (3×8) | 31 | **0** | 0.500 (bus ceiling) |
-| C32_CFGLUT125 (5×8) | 62 | 31 | 0.492 |
-| D32_CFGLUT125 (3×4) | 62 | 62 | 0.940 |
-| D640_CFGLUT125 (3×4, 640×480) | 958 | 958 | 0.997 (of 1.000) |
+| Release | Frame-D invalid core advances | External output gaps | Core rate (design) | Full-system sustained rate |
+|---|---:|---:|---:|---:|
+| B32_CFGLUT125 (3×16) | **0** | **0** | 16 outputs/cycle | 4.000 outputs/cycle (bus ceiling) |
+| A32_CFGLUT125 (3×8) | 31 | **0** | 8 outputs/cycle | 4.000 outputs/cycle (bus ceiling) |
+| C32_CFGLUT125 (5×8) | 62 | 31 | 8 outputs/cycle | 3.940 outputs/cycle |
+| D32_CFGLUT125 (3×4) | 62 | 62 | 4 outputs/cycle | 3.758 outputs/cycle |
+| D640_CFGLUT125 (3×4, 640×480) | 958 | 958 | 4 outputs/cycle | 3.988 outputs/cycle |
 
 At K≥8 the output prefetch slack hides the residual transition bubbles entirely
 from the external stream (A32: zero external gaps; B32: zero even internally);
@@ -372,11 +374,13 @@ die center-left by construction.*
 ### 9.1 Competition results tables — one per release, ranked by FOM
 
 The competition's Table 1 is given per release, ordered by full-system FOM
-(§11 defines the FOM scopes; [S29] is the reproducible generator). The
+(§11 defines the two scopes: accelerator core at the design rate of K valid
+outputs/cycle, full system at the 64-bit-bus limit of 4 valid outputs/cycle
+derated by disclosed gaps; [S29] is the reproducible generator). The
 "Specification" column is the competition requirement [S12]; the "Team Result"
 column is this release.
 
-#### Rank 1 — D32_CFGLUT125 (N=3, K=4, 32×32)
+#### Rank 1 — D640_CFGLUT125 (N=3, K=4, 640×480)
 
 | Parameter | Specification | Team Result | Units | Comments |
 |---|---|---|---|---|
@@ -387,14 +391,14 @@ column is this release.
 | Multipliers / MACs | — | 36 exact LUT multipliers (4 ch × 9 taps), **0 DSP** | — | 12 CFGLUT5 primitives per multiplier |
 | Pipeline stages | — | 5 named stages (BH, S2–S5); Dadda tree adds 1 registered internal boundary at N=3 | — | §3.3 |
 | Latency | — | 0.125 ms measured frame median (host-clock, 100-frame soak); 1,024-beat streaming floor ≈ 8.19 µs (derived) | — | [S26], [S27] |
-| Throughput | — | 1.0 positions/cycle interface ceiling; **0.940 sustained** (disclosed edge bubbles); core computes 1 position/cycle filled | positions/cycle | §3.4, [S28] |
+| Throughput | — | core: **4 valid outputs/cycle** (design rate); full system: **3.758 valid outputs/cycle** sustained — bus limit 4/beat derated ~6% by disclosed edge bubbles | outputs/cycle | §3.3–3.4, [S28] |
 | FPGA utilization | — | full system 7,273 LUT (13.7%), 8,308 FF, 3 BRAM, **0 DSP**; core 2,883 LUT, 2,062 FF, 0 BRAM, 0 DSP | — | [S32] |
 | Maximum frequency | — | 125 MHz met, WNS +0.093 ns (Fmax ≈ 126.5 MHz derived) | MHz | [S32] |
 | Power estimate | — | 1.768 W full system (core block 0.015 W), Vivado vectorless | W | [S32] |
 | Verification status | golden-model comparison | bit-exact: 115 frames this release (singles + 60-frame shared extremes + 100-frame soak), zero mismatches; exact to all 32 shifts | — | [S26], [S27] |
-| FOM | — | full system **7.47×10⁻⁵** · core **2.31×10⁻²** | — | §11, [S29] |
+| FOM | — | accelerator core **9.25×10⁻²** · full system **2.81×10⁻⁴** | — | §11, [S29] |
 
-#### Rank 2 — D640_CFGLUT125 (N=3, K=4, 640×480)
+#### Rank 2 — D32_CFGLUT125 (N=3, K=4, 32×32)
 
 | Parameter | Specification | Team Result | Units | Comments |
 |---|---|---|---|---|
@@ -405,12 +409,12 @@ column is this release.
 | Multipliers / MACs | — | 36 exact LUT multipliers (4 ch × 9 taps), **0 DSP** | — | §3.1 |
 | Pipeline stages | — | 5 named stages (BH, S2–S5) | — | §3.3 |
 | Latency | — | 3.731 ms measured frame median (host-clock, 100-frame soak); 307,200-beat streaming floor ≈ 2.458 ms (derived) | — | [S26], [S27] |
-| Throughput | — | 1.000 positions/cycle interface ceiling; **0.997 sustained** | positions/cycle | §3.4 |
+| Throughput | — | core: **4 valid outputs/cycle** (design rate, pipeline filled); full system: **3.988 valid outputs/cycle** sustained — the 64-bit output bus carries 4 int16/beat, derated ~0.3% by disclosed edge bubbles | outputs/cycle | §3.3–3.4, [S28] |
 | FPGA utilization | — | full system 7,679 LUT (14.4%), 8,940 FF, 3 BRAM, **0 DSP**; core 3,281 LUT, 2,694 FF | — | [S32] |
 | Maximum frequency | — | 125 MHz met, WNS +0.001 ns | MHz | [S32] |
 | Power estimate | — | 1.769 W full system (core block 0.017 W), Vivado vectorless | W | [S32] |
 | Verification status | golden-model comparison | bit-exact: 115 frames this release incl. actual 640×480 frames and the recorded LANCZOS input preprocessing (hash-anchored) | — | [S26], [S27] |
-| FOM | — | full system **7.09×10⁻⁵** · core **1.79×10⁻²** | — | §11, [S29] |
+| FOM | — | accelerator core **7.17×10⁻²** · full system **2.83×10⁻⁴** | — | §11, [S29] |
 
 #### Rank 3 — A32_CFGLUT125 (N=3, K=8, 32×32)
 
@@ -423,12 +427,12 @@ column is this release.
 | Multipliers / MACs | — | 72 exact LUT multipliers (8 ch × 9 taps), **0 DSP** | — | §3.1 |
 | Pipeline stages | — | 5 named stages (BH, S2–S5) | — | §3.3 |
 | Latency | — | 0.126 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived) | — | [S26], [S27] |
-| Throughput | — | 0.5 positions/cycle interface ceiling; **0.500 sustained — zero external output gaps** (internal transition bubbles hidden by prefetch) | positions/cycle | §3.4, [S28] |
+| Throughput | — | core: **8 valid outputs/cycle** (design rate); full system: **4.000 valid outputs/cycle** sustained — bus-limited (4 int16/beat), zero external output gaps (internal transition bubbles hidden by prefetch) | outputs/cycle | §3.3–3.4, [S28] |
 | FPGA utilization | — | full system 9,145 LUT (17.2%), 9,758 FF, 3 BRAM, **0 DSP**; core 4,746 LUT, 3,512 FF | — | [S32] |
 | Maximum frequency | — | 125 MHz met, WNS +0.197 ns (Fmax ≈ 126.7 MHz derived) | MHz | [S32] |
 | Power estimate | — | 1.785 W full system (core block 0.028 W), Vivado vectorless | W | [S32] |
 | Verification status | golden-model comparison | bit-exact: 115 frames this release, zero mismatches | — | [S26], [S27] |
-| FOM | — | full system **2.97×10⁻⁵** · core **3.76×10⁻³** | — | §11, [S29] |
+| FOM | — | accelerator core **6.02×10⁻²** · full system **2.37×10⁻⁴** | — | §11, [S29] |
 
 #### Rank 4 — C32_CFGLUT125 (N=5, K=8, 32×32)
 
@@ -441,12 +445,12 @@ column is this release.
 | Multipliers / MACs | — | 200 exact LUT multipliers (8 ch × 25 taps), **0 DSP** | — | 50-row Dadda heap per channel |
 | Pipeline stages | — | 5 named stages (BH, S2–S5); Dadda tree adds a second registered boundary | — | §3.3 |
 | Latency | — | 0.124 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived) | — | [S26], [S27] |
-| Throughput | — | 0.5 positions/cycle interface ceiling; **0.492 sustained** (disclosed edge bubbles) | positions/cycle | §3.4 |
+| Throughput | — | core: **8 valid outputs/cycle** (design rate); full system: **3.940 valid outputs/cycle** sustained — bus-limited, derated ~1.5% by disclosed edge bubbles | outputs/cycle | §3.3–3.4 |
 | FPGA utilization | — | full system 14,162 LUT (26.6%), 13,934 FF, 3 BRAM, **0 DSP**; core 9,764 LUT, 7,688 FF | — | [S32] |
 | Maximum frequency | — | 125 MHz met, WNS +0.003 ns | MHz | [S32] |
 | Power estimate | — | 1.823 W full system (core block 0.065 W), Vivado vectorless | W | [S32] |
 | Verification status | golden-model comparison | bit-exact: 115 frames this release, zero mismatches | — | [S26], [S27] |
-| FOM | — | full system **1.90×10⁻⁵** · core **7.88×10⁻⁴** | — | §11, [S29] |
+| FOM | — | accelerator core **1.26×10⁻²** · full system **1.49×10⁻⁴** | — | §11, [S29] |
 
 #### Rank 5 — B32_CFGLUT125 (N=3, K=16, 32×32)
 
@@ -459,19 +463,21 @@ column is this release.
 | Multipliers / MACs | — | 144 exact LUT multipliers (16 ch × 9 taps), **0 DSP** | — | §3.1 |
 | Pipeline stages | — | 5 named stages (BH, S2–S5) | — | §3.3 |
 | Latency | — | 0.123 ms measured frame median (host-clock, 100-frame soak); 4,096-beat streaming floor ≈ 32.77 µs (derived) | — | [S26], [S27] |
-| Throughput | — | 0.25 positions/cycle interface ceiling; **0.250 sustained — zero gaps, zero internal invalid advances** | positions/cycle | §3.4, [S28] |
+| Throughput | — | core: **16 valid outputs/cycle** (design rate); full system: **4.000 valid outputs/cycle** sustained — bus-limited, **zero gaps, zero internal invalid advances** | outputs/cycle | §3.3–3.4, [S28] |
 | FPGA utilization | — | full system 12,670 LUT (23.8%), 12,686 FF, 3 BRAM, **0 DSP**; core 8,274 LUT, 6,440 FF | — | [S32] |
 | Maximum frequency | — | 125 MHz met, WNS +0.090 ns | MHz | [S32] |
 | Power estimate | — | 1.806 W full system (core block 0.049 W), Vivado vectorless | W | [S32] |
 | Verification status | golden-model comparison | bit-exact: 115 frames this release, zero mismatches; release first board-qualified in the predecessor campaign and re-qualified on the rebuild | — | [S25], [S26] |
-| FOM | — | full system **1.07×10⁻⁵** · core **6.17×10⁻⁴** | — | §11, [S29] |
+| FOM | — | accelerator core **3.95×10⁻²** · full system **1.71×10⁻⁴** | — | §11, [S29] |
 
 **Cross-release observation:** the FOM ranking is set by the K·N² LUT cost of
-the exact-compressor datapath — the leanest release (D32) leads at
-7.47×10⁻⁵ full-system, and every release keeps the DSP term at zero and BRAM
-at the DMA's 3 blocks. The K=16 release trades FOM for channel parallelism
-(16 results/cycle compute rate) and is the release where edge-free operation
-is proven with zero internal invalid advances.
+the exact-compressor datapath, while the full-system ranking additionally
+rewards clean external streaming — D640 edges ahead of D32 because its
+edge bubbles are proportionally smaller (0.31% vs 6.15% of output beats).
+Every release keeps the DSP term at zero and BRAM at the DMA's 3 blocks. The
+K=16 release trades FOM for channel parallelism (16 valid outputs/cycle core
+rate) and is the release where edge-free operation is proven with zero
+internal invalid advances.
 
 ## 10. Runtime reconfiguration and multi-release operation
 
@@ -520,43 +526,53 @@ D640 frames are validated per frame against their frozen golden-output SHA-256.
   counters do not exactly match the compiled frame quotas at TLAST.
 
 **Figure of Merit** (competition formula [S12]):
-FOM = Throughput / (Power × (LUTs + 50·DSPs + 100·BRAMs)). Throughput is the
-**sustained external output rate in positions per cycle**: the 4-int16-per-beat
-serializer bounds each release at 4/K positions/cycle, derated by the disclosed
-edge bubbles (§3.4) — the compute core itself produces 1 position/cycle filled.
+FOM = Throughput / (Power × (LUTs + 50·DSPs + 100·BRAMs)), with throughput in
+**valid output values per clock cycle**, reported at two scopes:
+
+- **Accelerator FOM** — the contest deliverable hierarchy. Throughput is the
+  design rate of the exact datapath: **one valid result per channel per cycle,
+  K outputs/cycle** (16/8/4), demonstrated with zero invalid core advances at
+  B32 and zero external gaps at A32/B32. Resources and power are the
+  accelerator core's own (conv_axis_wrapper hierarchy).
+- **Full-system FOM** — the delivered system as shipped in the bitstream.
+  Throughput is limited by the 64-bit AXI DMA output bus, which carries
+  **4 int16 values per beat = 4 valid outputs/cycle** regardless of K, derated
+  by the disclosed row-transition gaps; resources and power are the full
+  routed system's.
+
 Power is the Vivado **vectorless** routed estimate (no activity factors
-measured); BRAM counts RAMB36-equivalents (3). Both scopes are stated: the
-accelerator core (the contest deliverable hierarchy) and the full routed
-system. Reproducible generator: `scripts/packaging/fom_table.py` [S29].
+measured); BRAM counts RAMB36-equivalents (3). Reproducible generator:
+`scripts/packaging/fom_table.py` [S29].
 
-| Rank | Release | Throughput (pos/cycle) | Power (W) | LUTs | DSP | BRAM | FOM (full system) | FOM (core) |
-|---|---|---|---:|---:|---:|---:|---:|---:|
-| 1 | D32_CFGLUT125 | 0.940 | 1.768 | 7,273 | 0 | 3 | **7.47×10⁻⁵** | **2.31×10⁻²** |
-| 2 | D640_CFGLUT125 | 0.997 | 1.769 | 7,679 | 0 | 3 | **7.09×10⁻⁵** | **1.79×10⁻²** |
-| 3 | A32_CFGLUT125 | 0.500 | 1.785 | 9,145 | 0 | 3 | **2.97×10⁻⁵** | **3.76×10⁻³** |
-| 4 | C32_CFGLUT125 | 0.492 | 1.823 | 14,162 | 0 | 3 | **1.90×10⁻⁵** | **7.88×10⁻⁴** |
-| 5 | B32_CFGLUT125 | 0.250 | 1.806 | 12,670 | 0 | 3 | **1.07×10⁻⁵** | **6.17×10⁻⁴** |
+| Rank | Release | Core throughput | System throughput | Power core / sys (W) | LUTs core / sys | DSP | BRAM | FOM (accelerator) | FOM (full system) |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | D640_CFGLUT125 | 4/cycle | 3.988/cycle | 0.017 / 1.769 | 3,281 / 7,679 | 0 | 3 | **7.17×10⁻²** | **2.83×10⁻⁴** |
+| 2 | D32_CFGLUT125 | 4/cycle | 3.758/cycle | 0.015 / 1.768 | 2,883 / 7,273 | 0 | 3 | **9.25×10⁻²** | **2.81×10⁻⁴** |
+| 3 | A32_CFGLUT125 | 8/cycle | 4.000/cycle | 0.028 / 1.785 | 4,746 / 9,145 | 0 | 3 | **6.02×10⁻²** | **2.37×10⁻⁴** |
+| 4 | B32_CFGLUT125 | 16/cycle | 4.000/cycle | 0.049 / 1.806 | 8,274 / 12,670 | 0 | 3 | **3.95×10⁻²** | **1.71×10⁻⁴** |
+| 5 | C32_CFGLUT125 | 8/cycle | 3.940/cycle | 0.065 / 1.823 | 9,764 / 14,162 | 0 | 3 | **1.26×10⁻²** | **1.49×10⁻⁴** |
 
-The core-scope FOM is 260–300× higher than full-system because 88% of
-full-system power (≈1.56 W [S32]) is the ARM processing system and the
-remaining LUTs are DMA/SmartConnect plumbing; both scopes are stated rather
-than the flattering one alone. Historical comparison, clearly labeled: the
-predecessor MAC datapath at 100 MHz reported a full-system FOM of ≈2.2×10⁻⁵
-at the K=8 shape [S24-era report] — the CFGLUT5 release of the same shape
-(A32) improves this to 2.97×10⁻⁵ (+35%) while raising the clock 25% and
-removing the shift restriction, at comparable LUT cost (9,145 vs 12,362
-full-system LUTs — the compressor is *smaller* than the MAC array it
-replaced).
+The two scopes answer different questions: the accelerator FOM isolates the
+contest deliverable (the exact compressor core is remarkably cheap — D32
+delivers 4 valid outputs/cycle from 2,883 LUTs at 0.015 W), while the
+full-system FOM prices in the DMA bus width and 88% of the power being the
+ARM processing system (≈1.56 W [S32]). Historical comparison, clearly
+labeled and recomputed on the same outputs-per-cycle basis: the predecessor
+MAC datapath at 100 MHz (K=8 shape) scored ≈1.79×10⁻⁴ full-system and
+≈5.58×10⁻² core; the CFGLUT5 A32 release improves the same shape to
+2.37×10⁻⁴ (+33% full-system) and 6.02×10⁻² (+8% core) while running 25%
+faster, using 26% fewer system LUTs (9,145 vs 12,362 — the compressor is
+*smaller* than the MAC array it replaced), and removing the predecessor's
+shift 24–31 restriction by construction.
 
 ## 12. Assumptions
 
-1. FOM throughput is the sustained external output rate in positions per
-   cycle: the serializer's 4-int16-per-beat ceiling (4/K) derated by the
-   disclosed edge bubbles. The compute core's 1-position/cycle filled rate and
-   the K channel-results/cycle rate are stated separately (§3.3); per-position
-   framing is used consistently across all releases and both scopes [S29].
-   BRAM counted in RAMB36-equivalents (3 per release [S32]). None of the FOM
-   inputs is assumed.
+1. FOM throughput is in **valid output values per clock cycle** at two
+   scopes: the accelerator core at its design rate (K outputs/cycle, one per
+   channel, pipeline filled) and the full system at its 64-bit output-bus
+   limit (4 int16 per beat = 4 outputs/cycle) derated by the disclosed
+   edge bubbles. BRAM counted in RAMB36-equivalents (3 per release [S32]).
+   None of the FOM inputs is assumed.
 2. Power is the Vivado vectorless routed estimate at 125 MHz [S32]; no on-board
    rail measurement is claimed.
 3. Board latency figures are host-clock wall-clock intervals including DMA setup

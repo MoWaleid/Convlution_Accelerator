@@ -27,12 +27,16 @@ RELEASES = ["A32_CFGLUT125", "B32_CFGLUT125", "C32_CFGLUT125",
 BUBBLES = {"A32_CFGLUT125": (31, 0), "B32_CFGLUT125": (0, 0),
            "C32_CFGLUT125": (62, 31), "D32_CFGLUT125": (62, 62),
            "D640_CFGLUT125": (958, 958)}
-# External output-interface ceiling (G3.4 discipline): the serializer packs
-# 4 int16 values per 64-bit beat, so K channel-results per position bound the
-# sustained rate at 4/K output positions per cycle (K4: 1.0, K8: 0.5,
-# K16: 0.25). The compute core produces 1 position/cycle once filled; the
-# bus cannot drain it faster than 4/K.
-INTERFACE_CEILING = lambda k: 4.0 / k
+# Throughput definition (user-confirmed): the number of valid output
+# VALUES (pixels) per clock cycle.
+#  - Accelerator core: the pipeline produces one result per channel per
+#    cycle once filled -> K valid outputs/cycle (8 at K=8, 16 at K=16,
+#    4 at K=4).
+#  - Full system: the AXI DMA output side is a 64-bit bus = 4 int16 values
+#    per beat -> 4 valid outputs/cycle regardless of K, derated by the
+#    disclosed row-transition gaps over output beats.
+CORE_THROUGHPUT = lambda k: float(k)
+BUS_THROUGHPUT = 4.0
 
 
 def build_manifest_path(release):
@@ -107,26 +111,28 @@ def main():
         shape_m = re.match(r"N(\d+)K(\d+)W(\d+)H(\d+)", res["shape_id"])
         n, k, w, h = (int(g) for g in shape_m.groups())
         beats = w * h * k * 2 // 8
-        # Effective external output rate: interface ceiling derated by the
+        # Full-system sustained rate: 64-bit output bus limit derated by the
         # disclosed row-transition gaps over output beats (§18.10 record).
-        eff = INTERFACE_CEILING(k) * (1.0 - gaps / beats)
+        eff = BUS_THROUGHPUT * (1.0 - gaps / beats)
         rows.append({
             "release": release, "shape": res["shape_id"],
             "wns": float(res["WNS"]), "whs": float(res["WHS"]),
             "top": top, "core": core,
             "power_total": power_total, "power_core": power_core,
-            "throughput_design_positions_per_cycle": INTERFACE_CEILING(k),
-            "fom_top": fom(INTERFACE_CEILING(k), power_total, top),
-            "fom_core": fom(INTERFACE_CEILING(k), power_core, core),
+            "throughput_core_outputs_per_cycle": CORE_THROUGHPUT(k),
+            "throughput_system_outputs_per_cycle": eff,
+            "fom_top": fom(eff, power_total, top),
+            "fom_core": fom(CORE_THROUGHPUT(k), power_core, core),
             "eff_rate": round(eff, 4),
             "fom_top_eff": fom(eff, power_total, top),
             "invalid": invalid, "gaps": gaps,
         })
     rows.sort(key=lambda r: -r["fom_top"])
-    out = {"throughput_definition": "4/K output positions per cycle "
-           "(64-bit output bus, 4 int16/beat), derated by disclosed "
-           "row-transition gaps; compute core produces 1 position/cycle "
-           "once filled",
+    out = {"throughput_definition": "valid output values per clock cycle. "
+           "Accelerator core: K outputs/cycle (one per channel, pipeline "
+           "filled). Full system: 4 outputs/cycle - the 64-bit DMA output "
+           "bus carries 4 int16 per beat - derated by disclosed "
+           "row-transition gaps.",
            "rows": rows}
     dest = ROOT / "report/research_builds/CFGLUT125_MATRIX/fom_results.json"
     dest.write_text(json.dumps(out, indent=2) + "\n")
