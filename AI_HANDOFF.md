@@ -1493,6 +1493,53 @@ Next: §19.7 step 4 — stage the runtime on the proven 125 MHz PetaLinux image
 admitted manifests, anchors, bundles, m7_switch/m8_cli/conv_lab runtime),
 then step 5 per-release board qualification.
 
+### 18.20 G5 runtime staged on the board — §19.7 step 4 done (2026-09-15)
+
+Transport archive `g5_runtime_20260915T024500Z.tar.gz` (2,036,229 B, SHA-256
+`9d92785537f858e5807e39711dc2711496fbf1588838324b028ac7b9683587b3`; 68 files,
+host-side extraction re-hash verified) moved to the board via the SD FAT
+sneakernet; board-side whole-archive hash matched exactly. Board
+verification and install, all machine-checked via the user's serial session:
+
+- Staged extraction: 68/68 files OK against `SHA256SUMS.txt`.
+- Recovery checkpoints on board:
+  `/home/petalinux/release_checkpoints/G5_pre_runtime.tar.gz`
+  (SHA-256 `63c955e29dc38ca84bd678942652d3b20abb590e011172d48088200a145f0602`,
+  prior home runtime) and `G5_pre_firmware.tar.gz` (prior `/lib/firmware`).
+- Firmware: five `m7_<ID>_CFGLUT125.bin` installed to `/lib/firmware`,
+  5/5 `cmp`-identical to the staged copies, hashes equal to the five
+  manifest bindings (A32 `880505fe…`, B32 `757595d5…`, C32 `f046eec5…`,
+  D32 `5f83266d…`, D640 `20289d5e…`).
+- Home runtime: `m7_switch.py`, `m8_cli.py`, `m4_filebackend.py`, eight
+  `conv_lab/` modules, cut catalog, anchors, five admitted manifests and all
+  five canonical bundles installed `cmp`-identical (BUNDLES OK=45 BAD=0).
+  Board finding: the image had never provisioned `profiles/C32|D32|D640/`
+  directories (only A32/B32 existed); created during install. Nine stale
+  M2-era `conv_lab` modules remain on the board, unreferenced by the active
+  runtime path; left in place.
+- Sanity: `py_compile` clean; `m7_switch.ORDER` is the five releases; the
+  strict loader admits exactly the five names; and all five releases
+  ADMITTED through the real `load_params` path with correct bundle dirs
+  (A32/B32/C32/D32/D640) and channel counts (8/16/8/4/4), bundle hashes
+  matching the catalog bindings.
+
+Note: no test images ship in the archive — the canonical activation image
+(alley_cat_s_000013, canonical grayscale `a240bb76…`) is already on the
+board from M7/M8 provisioning; D640 performs the exact recorded LANCZOS
+640x480 resize at activation (no 480p image files exist). D32/D640 demo
+filters decoded and confirmed from the installed bundles: ch0 identity,
+ch1 Sobel-X, ch2 Sobel-Y, ch3 4x binomial blur; D640 bundle byte-identical
+to D32.
+
+Next: §19.7 step 5 — per-release board qualification (identity/FCLK,
+parameter admission, golden anchor, extremes/fault recovery, >=100 no-reset
+frames; D640 additionally proves actual 640x480 byte counts, the approved
+four-guard 4 MiB layout and intact guards). Live PL at staging time holds
+the OLD B32 bitstream (same BUILD_ID as the rebuild) — A32 must be switched
+first so every subsequent release proves a true full-PL reload with the new
+firmware; a B32-first switch would take the parameter-only path on the
+old bitstream.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1589,24 +1636,17 @@ C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — §19.7 step 4 board install (user relay)
+### 19.4 Immediate action — §19.7 step 5 board qualification (user relay)
 
-The runtime transport archive is built and verified:
-`C:\VMShare\g5_runtime_20260915T024500Z.tar.gz` (2,036,229 B, SHA-256
-`9d92785537f858e5807e39711dc2711496fbf1588838324b028ac7b9683587b3`;
-68 payload files + `SHA256SUMS.txt` inside
-`g5_runtime_20260915T024500Z/`, extraction re-hash verified). Contents,
-mirroring board destinations: `home/petalinux/{m7_switch,m8_cli,
-m4_filebackend}.py`, `home/petalinux/conv_lab/{__init__,errors,strict,
-types,preprocessing,_decoder_worker,profiles,dma}.py`,
-`home/petalinux/profiles/{m7_profiles.json,anchors_m7.json,
-hardware_<ID>_CFGLUT125.json x5, A32..D640 bundle dirs}`,
-`lib/firmware/m7_<ID>_CFGLUT125.bin x5` (from the five canonical
-`.bit.bin` images). Transfer is sneakernet via the SD FAT partition
-(2 MB archive). Board flow: verify archive hash + member hashes,
-recovery checkpoint of the current runtime, install explicit files
-(petalinux for /home/petalinux, sudo only for /lib/firmware), verify
-byte-for-byte, sanity-import the cut catalog, then step 5 qualification.
+Step 4 is complete (§18.20): the cut five-release runtime is installed and
+admission-verified on the board. Qualification order: **A32_CFGLUT125 first**
+(the live PL holds the OLD B32 bitstream with the same BUILD_ID, so B32-first
+would wrongly take the parameter-only path on the old bitstream; A32 forces a
+true full-PL reload), then B32/C32/D32/D640 — per release: identity, anchor
+activation, frames, then extremes and >=100-frame soak. Give the user
+`sudo -v` then `sudo -n python3 /home/petalinux/m7_switch.py --profile
+<REL> <frames>` blocks, consume output, preserve transcripts under
+`report/evidence/`.
 
 ### 19.5 Mandatory post-build acceptance
 
