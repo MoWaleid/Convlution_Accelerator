@@ -124,3 +124,32 @@ PHASE MATRIX: starting from D640_CFGLUT125, 58 switches
 SUMMARY: 58 switches, 58 full-PL reloads, 20 ordered pairs covered, 58.5 s
 handles closed
 M7 SWITCH MATRIX: PASS
+
+## True power-cycle cold boot (§19.7 step 6)
+$ sudo halt; power off; power on; boot to Linux shell
+Post-boot persistence (cmp of installed files vs staged tree):
+  FIRMWARE PERSISTED INTACT (5/5 m7_*_CFGLUT125.bin)
+  All 68 archived runtime files verified clean; 10 "DRIFT" lines are files
+  outside the archive (9 stale M2-era conv_lab modules + legacy
+  profiles/hardware_A32.json) — compared against a tree that does not
+  contain them; not drift of archived content.
+  m7_switch.ORDER = [A32_CFGLUT125, B32_CFGLUT125, C32_CFGLUT125,
+                     D32_CFGLUT125, D640_CFGLUT125]
+Live FCLK re-derivation from SLCR (note: first probe used wrong addresses
+0xF8000100/0xF8000140 — those correctly returned the ARM CPU clocks
+0x00027000 (ARM PLL FBDIV=39 -> 650 MHz CPU) and 0x00100801; corrected
+addresses per board_boot_identity_20260914.md):
+$ sudo -n devmem 0xF8000108 ; sudo -n devmem 0xF800010C ; sudo -n devmem 0xF8000170
+0x0001E000   (IO_PLL_CTRL: FBDIV=30 -> 1000 MHz)
+0x0000003F   (PLL_STATUS: all PLLs locked)
+0x00200400   (FPGA0_CLK_CTRL: divisors 4x2 -> 124.99999875 MHz)
+Fresh anchor sample on cold boot:
+$ sudo -n python3 /home/petalinux/m7_switch.py --profile A32_CFGLUT125 3
+  admitted A32_CFGLUT125 parameter bundle 367fb1f5a45a3271
+fpga_manager fpga0: writing m7_A32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32_CFGLUT125 (EF125K08N3W32R01)
+  [A32_CFGLUT125] activation OK 0.145 ms sha=cb3975593073652b
+  [A32_CFGLUT125] frame 2 OK 0.149 ms
+  [A32_CFGLUT125] frame 3 OK 0.125 ms
+  cleanup: final STATUS 0x00000181
+M7_SWITCH A32_CFGLUT125: PASS (3 frames, reload=yes)
