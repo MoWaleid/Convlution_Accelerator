@@ -27,7 +27,12 @@ RELEASES = ["A32_CFGLUT125", "B32_CFGLUT125", "C32_CFGLUT125",
 BUBBLES = {"A32_CFGLUT125": (31, 0), "B32_CFGLUT125": (0, 0),
            "C32_CFGLUT125": (62, 31), "D32_CFGLUT125": (62, 62),
            "D640_CFGLUT125": (958, 958)}
-DESIGN_THROUGHPUT = 1.0  # output positions per cycle, pipeline filled
+# External output-interface ceiling (G3.4 discipline): the serializer packs
+# 4 int16 values per 64-bit beat, so K channel-results per position bound the
+# sustained rate at 4/K output positions per cycle (K4: 1.0, K8: 0.5,
+# K16: 0.25). The compute core produces 1 position/cycle once filled; the
+# bus cannot drain it faster than 4/K.
+INTERFACE_CEILING = lambda k: 4.0 / k
 
 
 def build_manifest_path(release):
@@ -102,22 +107,26 @@ def main():
         shape_m = re.match(r"N(\d+)K(\d+)W(\d+)H(\d+)", res["shape_id"])
         n, k, w, h = (int(g) for g in shape_m.groups())
         beats = w * h * k * 2 // 8
-        # Effective external output rate: disclosed row-transition gaps over
-        # output beats (§18.10 / wrapper-sim record).
-        eff = DESIGN_THROUGHPUT * (1.0 - gaps / beats)
+        # Effective external output rate: interface ceiling derated by the
+        # disclosed row-transition gaps over output beats (§18.10 record).
+        eff = INTERFACE_CEILING(k) * (1.0 - gaps / beats)
         rows.append({
             "release": release, "shape": res["shape_id"],
             "wns": float(res["WNS"]), "whs": float(res["WHS"]),
             "top": top, "core": core,
             "power_total": power_total, "power_core": power_core,
-            "fom_top": fom(DESIGN_THROUGHPUT, power_total, top),
-            "fom_core": fom(DESIGN_THROUGHPUT, power_core, core),
+            "throughput_design_positions_per_cycle": INTERFACE_CEILING(k),
+            "fom_top": fom(INTERFACE_CEILING(k), power_total, top),
+            "fom_core": fom(INTERFACE_CEILING(k), power_core, core),
             "eff_rate": round(eff, 4),
             "fom_top_eff": fom(eff, power_total, top),
             "invalid": invalid, "gaps": gaps,
         })
     rows.sort(key=lambda r: -r["fom_top"])
-    out = {"design_throughput_positions_per_cycle": DESIGN_THROUGHPUT,
+    out = {"throughput_definition": "4/K output positions per cycle "
+           "(64-bit output bus, 4 int16/beat), derated by disclosed "
+           "row-transition gaps; compute core produces 1 position/cycle "
+           "once filled",
            "rows": rows}
     dest = ROOT / "report/research_builds/CFGLUT125_MATRIX/fom_results.json"
     dest.write_text(json.dumps(out, indent=2) + "\n")
