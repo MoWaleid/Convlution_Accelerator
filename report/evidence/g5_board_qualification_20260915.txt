@@ -57,3 +57,30 @@ fpga_manager fpga0: writing m7_D640_CFGLUT125.bin to Xilinx Zynq FPGA Manager
   [D640_CFGLUT125] frame 3 OK 3.740 ms
   cleanup: final STATUS 0x00000181
 M7_SWITCH D640_CFGLUT125: PASS (3 frames, reload=yes)
+
+## Numerical extremes — A32/B32/C32/D32 (12 exact-reference frames each)
+$ sudo -n python3 /home/petalinux/m8_cli.py extremes --profile A32_CFGLUT125 && ... B32_CFGLUT125 && ... C32_CFGLUT125 && ... D32_CFGLUT125
+  admitted A32_CFGLUT125 parameter bundle 367fb1f5a45a3271
+fpga_manager fpga0: writing m7_A32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> A32_CFGLUT125 (EF125K08N3W32R01)
+  [A32_CFGLUT125] activation OK 0.146 ms sha=cb3975593073652b
+  cleanup: final STATUS 0x00000181
+M8 EXTREMES 20180309T192906Z-extremes-A32_CFGLUT125: PASS (12 verified stimulus frames) -> /var/lib/conv-lab/results/20180309T192906Z-extremes-A32_CFGLUT125
+  admitted B32_CFGLUT125 parameter bundle 952cb13ce0adad04
+fpga_manager fpga0: writing m7_B32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> B32_CFGLUT125 (EF125K16N3W32R01)
+  [B32_CFGLUT125] activation OK 0.145 ms sha=5821c8b19a88fd34
+  cleanup: final STATUS 0x00000181
+M8 EXTREMES 20180309T192914Z-extremes-B32_CFGLUT125: PASS (12 verified stimulus frames) -> /var/lib/conv-lab/results/20180309T192914Z-extremes-B32_CFGLUT125
+  admitted C32_CFGLUT125 parameter bundle c9ba0dba0ae7d704
+fpga_manager fpga0: writing m7_C32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> C32_CFGLUT125 (EF125K08N5W32R01)
+  [C32_CFGLUT125] activation OK 0.143 ms sha=b6ab2d53dd9517f3
+  cleanup: final STATUS 0x00000181
+M8 EXTREMES 20180309T192929Z-extremes-C32_CFGLUT125: PASS (12 verified stimulus frames) -> /var/lib/conv-lab/results/20180309T192929Z-extremes-C32_CFGLUT125
+  admitted D32_CFGLUT125 parameter bundle d735ca24a505b7f0
+fpga_manager fpga0: writing m7_D32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D32_CFGLUT125 (EF125K04N3W32R01)
+  [D32_CFGLUT125] activation OK 0.141 ms sha=6cb736f6a80132d8
+  cleanup: final STATUS 0x00000181
+M8 EXTREMES 20180309T192944Z-extremes-D32_CFGLUT125: PASS (12 verified stimulus frames) -> /var/lib/conv-lab/results/20180309T192944Z-extremes-D32_CFGLUT125
