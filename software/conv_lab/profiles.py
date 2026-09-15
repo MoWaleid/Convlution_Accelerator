@@ -27,17 +27,15 @@ def load_profiles(path):
     require(type(data["schema_version"]) is int and data["schema_version"] == 2,
             "profile schema")
     entries = data["profiles"]
-    # Explicit staging set (GLM-F1): the five frozen legacy releases, the two
-    # preserved B32 research releases, and the four candidate CFGLUT125
-    # releases awaiting their first routed build. At the final catalog cutover
-    # this exact set changes to the five production names only; the loader
-    # never accepts arbitrary names.
+    # Explicit active set (§19.7 step 3 catalog cutover): exactly the five
+    # production CFGLUT125 releases. The legacy MAC/100 MHz entries and the
+    # B32_CFGLUT100 controlled-clock comparison build are historical report
+    # evidence only and are no longer admissible names.
     require(type(entries) is dict and
-            set(entries) == {"A32", "B32", "C32", "D32", "D640",
-                             "B32_CFGLUT125", "B32_CFGLUT100",
-                             "A32_CFGLUT125", "C32_CFGLUT125",
-                             "D32_CFGLUT125", "D640_CFGLUT125"},
-            "explicit eleven-release staging catalog required")
+            set(entries) == {"A32_CFGLUT125", "B32_CFGLUT125",
+                             "C32_CFGLUT125", "D32_CFGLUT125",
+                             "D640_CFGLUT125"},
+            "explicit five-release active catalog required")
     result = {}
     ids = set()
     for name, entry in entries.items():
@@ -69,8 +67,14 @@ def load_profiles(path):
                 "release/profile build ID mismatch")
         if "bundle_dir" in release:
             string(release["bundle_dir"])
-            require(release["bundle_dir"] in entries,
-                    "release bundle_dir must name a profile")
+            # Bundle directories are physical names under profiles/ and are
+            # orthogonal to release names (e.g. B32_CFGLUT125 -> "B32");
+            # require a simple safe component. Bundle content is bound to
+            # the catalog by bundle_sha256 at runtime admission.
+            require(release["bundle_dir"] not in ("", ".", "..")
+                    and Path(release["bundle_dir"]).name
+                    == release["bundle_dir"],
+                    "release bundle_dir must be a simple directory name")
     return result
 
 

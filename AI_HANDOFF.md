@@ -1465,6 +1465,34 @@ Next: §19.7 step 3 — cut the active catalog/runtime to exactly the five
 releases (reject placeholders, missing firmware, 100 MHz and MAC entries),
 then step 4 runtime staging on the proven 125 MHz PetaLinux image.
 
+### 18.19 Active catalog cut to the five releases — §19.7 step 3 done (2026-09-15)
+
+The active catalog (`profiles/m7_profiles.json`), strict loader
+(`conv_lab/profiles.py`), switch manager (`m7_switch.py` FW_NAME/ORDER and
+ORDER-derived matrix anchors), `m8_cli.py` D_PROFILES, and the host
+tests/mocks now recognize exactly A32/B32/C32/D32/D640 `_CFGLUT125`.
+Legacy MAC-era names and B32_CFGLUT100 are no longer admissible anywhere in
+the active path; their evidence stays under git history,
+`bitstreams/history/`, `profiles/history/` and `report/research_builds/`.
+Bundle directories keep their canonical short names (A32…D640) — bundle_dir
+is now validated as a safe directory name, with content bound by
+`bundle_sha256` at admission. Record with the full change list and
+verification matrix:
+`report/research_builds/CFGLUT125_MATRIX/catalog_cutover_20260915.md`.
+
+Verification on the cut tree: loader tests 12/12; candidate-undeployable
+mocks (profile+soak, zero mutation); B32_CFGLUT125 3-frame mock twice
+(reload + same-build); matrix-seq from all five starts (20/20 pairs);
+D640 canonical input hash; full M8 mock suite; importer suite 15/15; five
+SPEC crosschecks; F3 negative crosschecks; static parse of all touched
+files. Note: the same-build/full-reload mock coverage now runs against the
+real canonical firmware artifacts and admitted manifests.
+
+Next: §19.7 step 4 — stage the runtime on the proven 125 MHz PetaLinux image
+(user relay: transport archive of the five firmware images, cut catalog,
+admitted manifests, anchors, bundles, m7_switch/m8_cli/conv_lab runtime),
+then step 5 per-release board qualification.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1561,14 +1589,16 @@ C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — §19.7 step 3 catalog cutover
+### 19.4 Immediate action — §19.7 step 4 runtime staging (user relay)
 
-§19.7 steps 1-2 are done (§18.18): five firmware images generated and hashed,
-all five runtime manifests admitted as `built-unqualified` / `deployable:true`
-with canonical BIT/BIN hash bindings. Next: step 3 — cut the active
-catalog/runtime to exactly the five releases, rejecting placeholders, missing
-firmware, 100 MHz and MAC entries (loader + catalog + ORDER + tests), then
-step 4 runtime staging on the proven 125 MHz PetaLinux image (user relay).
+§19.7 steps 1-3 are done (§18.18, §18.19): five firmware images generated
+and hashed, all five runtime manifests admitted (`built-unqualified` /
+`deployable:true`), and the active catalog/runtime cut to exactly the five
+releases. Next: build the runtime transport archive (five firmware images,
+cut catalog, five admitted manifests, anchors, canonical bundles,
+m7_switch/m8_cli/conv_lab runtime files) with SHA256 manifest, hand the
+user the staged board/VM relay commands (recovery checkpoint first,
+`sudo -v` in its own block), then step 5 per-release board qualification.
 
 ### 19.5 Mandatory post-build acceptance
 
@@ -1627,8 +1657,8 @@ recorded in `report/research_builds/B32_CFGLUT125/REBUILD_ARCHIVE_20260915.md`:
    `release_status: built-unqualified` and `deployable:true` only after complete
    file/hash/identity admission. Deployable means controlled test-loadable,
    not qualified; qualification remains external evidence.
-3. Cut active catalog/runtime to exactly five; reject placeholders, missing
-   firmware, 100 MHz and MAC entries.
+3. DONE (§18.19) — active catalog/runtime cut to exactly five; placeholders,
+   missing firmware, 100 MHz and MAC entries are no longer admissible names.
 4. Stage runtime on proven 125 MHz PetaLinux with recovery.
 5. Per release: identity/FCLK, parameter admission, golden anchor, extremes/
    fault recovery, >=100 no-reset frames. D640 also proves actual 640x480,

@@ -11,6 +11,7 @@ import m7_switch as m7
 import m8_cli
 from conv_lab.dma import layout, transfer_length, validate_layout
 from conv_lab.errors import AdmissionError
+from conv_lab import profiles as m7_profiles
 from conv_lab.profiles import load_profiles, profile_layout, validate_discovery
 from conv_lab.types import Allocation, Layout
 
@@ -20,34 +21,37 @@ CATALOG = ROOT / "profiles/m7_profiles.json"
 # C32/D32/D640 identities are the reconciled frozen IDs matching the built
 # artifacts' manifests (feedback finding 4, fix PHASE 2.1); the former
 # 4d37... placeholders never shipped in any bitstream.
+# Active five-release catalog (§19.7 step 3 cutover). The legacy MAC/100 MHz
+# geometries live only in git history and the locally-constructed legacy
+# profiles in the render test below.
 CASES = {
-    "A32": (32,32,3,8,1156,5440,16384,21888,"4d344e334b385733322d323630393131"),
-    "B32": (32,32,3,16,1156,5440,32768,38272,"424e334b31365733322d323630393132"),
-    "C32": (32,32,5,8,1296,5568,16384,22016,"434e354b30385733322d323630393132"),
-    "D32": (32,32,3,4,1156,5440,8192,13696,"444e334b30345733322d323630393132"),
-    "D640": (640,480,3,4,309444,313728,2457600,2771392,"443634304e334b30342d323630393132"),
-    "B32_CFGLUT125": (32,32,3,16,1156,5440,32768,38272,
-                       "45463132354b31364e33573332523031"),
-    "B32_CFGLUT100": (32,32,3,16,1156,5440,32768,38272,
-                       "45463130304b31364e33573332523031"),
     "A32_CFGLUT125": (32,32,3,8,1156,5440,16384,21888,
-                       "45463132354b30384e33573332523031"),
+                      "45463132354b30384e33573332523031"),
+    "B32_CFGLUT125": (32,32,3,16,1156,5440,32768,38272,
+                      "45463132354b31364e33573332523031"),
     "C32_CFGLUT125": (32,32,5,8,1296,5568,16384,22016,
-                       "45463132354b30384e35573332523031"),
+                      "45463132354b30384e35573332523031"),
     "D32_CFGLUT125": (32,32,3,4,1156,5440,8192,13696,
-                       "45463132354b30344e33573332523031"),
+                      "45463132354b30344e33573332523031"),
     "D640_CFGLUT125": (640,480,3,4,309444,313728,2457600,2771392,
-                        "45463132354e334b30345647412d5231"),
+                       "45463132354e334b30345647412d5231"),
 }
-# Release-to-parameter-bundle aliases (GLM-F1: every staged release must
-# resolve its catalog-bound bundle directory; candidates share the frozen
-# legacy bundles because bundle bytes and hardware release names are
-# orthogonal).
+# Release-to-parameter-bundle aliases (GLM-F1: every active release must
+# resolve its catalog-bound bundle directory; bundle bytes and hardware
+# release names are orthogonal).
 BUNDLE_ALIASES = {
-    "A32": "A32", "B32": "B32", "C32": "C32", "D32": "D32", "D640": "D640",
-    "B32_CFGLUT125": "B32", "B32_CFGLUT100": "B32",
-    "A32_CFGLUT125": "A32", "C32_CFGLUT125": "C32",
-    "D32_CFGLUT125": "D32", "D640_CFGLUT125": "D640",
+    "A32_CFGLUT125": "A32", "B32_CFGLUT125": "B32",
+    "C32_CFGLUT125": "C32", "D32_CFGLUT125": "D32",
+    "D640_CFGLUT125": "D640",
+}
+# Frozen legacy MAC-era identities, retained here for the historical
+# generator test only (no longer in the active catalog).
+LEGACY_CASES = {
+    "A32": (32,32,3,8,"4d344e334b385733322d323630393131"),
+    "B32": (32,32,3,16,"424e334b31365733322d323630393132"),
+    "C32": (32,32,5,8,"434e354b30385733322d323630393132"),
+    "D32": (32,32,3,4,"444e334b30345733322d323630393132"),
+    "D640": (640,480,3,4,"443634304e334b30342d323630393132"),
 }
 
 
@@ -74,7 +78,7 @@ class M7Profiles(unittest.TestCase):
                 self.assertEqual(result.rx_bytes,2*w*h*k)
 
     def test_old_d640_fixed_offset_overlaps_and_is_rejected(self):
-        p = self.profiles["D640"]
+        p = self.profiles["D640_CFGLUT125"]
         old = Layout(4096,309444,65536,2457600,(
             ("tx_pre",4032,4096),("tx",4096,313540),("tx_post",313540,313604),
             ("rx_pre",65472,65536),("rx",65536,2523136),("rx_post",2523136,2523200)))
@@ -84,7 +88,7 @@ class M7Profiles(unittest.TestCase):
             profile_layout(p,self.allocation,old)
 
     def test_reject_bounds_alignment_aperture_and_dma_width(self):
-        p = self.profiles["D640"]
+        p = self.profiles["D640_CFGLUT125"]
         for allocation in (
             dataclasses.replace(self.allocation,size=2771391),
             dataclasses.replace(self.allocation,base=self.allocation.base+1),
@@ -103,7 +107,7 @@ class M7Profiles(unittest.TestCase):
             layout(1024,1024,3,4,Allocation(0,16000000,0,16000000))
 
     def test_reject_margins_allocation_as_rx_and_changed_guards(self):
-        p = self.profiles["B32"]
+        p = self.profiles["B32_CFGLUT125"]
         correct = profile_layout(p,self.allocation)
         for bad in (
             dataclasses.replace(correct,rx_bytes=correct.rx_bytes+64),
@@ -121,15 +125,16 @@ class M7Profiles(unittest.TestCase):
         current = json.loads((ROOT/"software/hardware.json").read_bytes())
         old_id = old["accelerator"]["build_id_hex"]
         self.assertEqual(len(old_id),32)
-        self.assertEqual(int(old_id,16),int(self.profiles["A32"].build_id,16))
-        self.assertEqual(old_id,self.profiles["A32"].build_id)
-        self.assertEqual(old,current)  # historical layouts and artifact references unchanged
+        # The legacy A32 identity left the active catalog at the §19.7 cutover;
+        # the historical manifest bytes must remain exactly unchanged.
+        self.assertEqual(old,current)
 
     def test_invalid_catalog_ids(self):
         original = json.loads(CATALOG.read_bytes())
-        for bad in ("0"*32,"a"*30,"A"*32,original["profiles"]["A32"]["build_id"]):
+        for bad in ("0"*32,"a"*30,"A"*32,
+                    original["profiles"]["A32_CFGLUT125"]["build_id"]):
             data = json.loads(json.dumps(original))
-            data["profiles"]["B32"]["build_id"] = bad
+            data["profiles"]["B32_CFGLUT125"]["build_id"] = bad
             with tempfile.TemporaryDirectory() as temp:
                 path = Path(temp)/"catalog.json"
                 path.write_text(json.dumps(data),encoding="utf-8")
@@ -144,7 +149,7 @@ class M7Profiles(unittest.TestCase):
         mutations.append(missing)
         mismatched = json.loads(json.dumps(original))
         mismatched["releases"]["B32_CFGLUT125"]["build_id_hex"] = \
-            original["profiles"]["B32"]["build_id"]
+            original["profiles"]["A32_CFGLUT125"]["build_id"]
         mutations.append(mismatched)
         bad_hash = json.loads(json.dumps(original))
         bad_hash["releases"]["B32_CFGLUT125"]["bundle_sha256"] = "A" * 64
@@ -165,7 +170,8 @@ class M7Profiles(unittest.TestCase):
                 self.assertEqual(m7.release_bundle_dir(release, catalog),
                                  bundle)
         with mock.patch.object(m8_cli.m7, "BASE", ROOT / "profiles"):
-            identity = m8_cli.parameter_identity("B32")
+            identity = m8_cli.parameter_identity(
+                m8_cli.release_bundle_dir("B32_CFGLUT125", catalog))
         self.assertEqual(identity["bundle_dir"], "B32")
         self.assertEqual(set(identity["weights"]),
                          {f"kernel_ch{i}.mem" for i in range(16)})
@@ -201,14 +207,14 @@ class M7Profiles(unittest.TestCase):
             if "X_INTERFACE_PARAMETER" in line))
 
     def test_b32_rejects_legacy_a32_id_in_otherwise_correct_discovery(self):
-        p = self.profiles["B32"]
+        p = self.profiles["B32_CFGLUT125"]
         r = {0x4100:0x43564831,0x4104:0x10000,0x4108:0x1ff,
              0x4120:32,0x4124:32,0x4128:3,0x412c:16,
              0x4130:0x10180808,0x4134:0x1915,0x4138:1156,0x413c:32768,0x4160:22}
         identity = int(p.build_id,16)
         r.update({0x4150+4*i:(identity>>(32*i))&0xffffffff for i in range(4)})
         self.assertEqual(validate_discovery(p,r),p)
-        identity = int(self.profiles["A32"].build_id,16)
+        identity = int(self.profiles["A32_CFGLUT125"].build_id,16)
         r.update({0x4150+4*i:(identity>>(32*i))&0xffffffff for i in range(4)})
         with self.assertRaises(AdmissionError):
             validate_discovery(p,r)
@@ -218,11 +224,13 @@ class M7Profiles(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         template = (ROOT/"Convlution_Accelerator.srcs/sources_1/new/config_pkg.vhd").read_text()
-        # prepare_profile.py is the legacy five-profile build generator.
-        # The research release has its own isolated generator and must not be
-        # projected through this path.
-        for name in ("A32", "B32", "C32", "D32", "D640"):
-            p = self.profiles[name]
+        # prepare_profile.py is the legacy five-profile build generator, now
+        # historical (the research release has its own isolated generator and
+        # must not be projected through this path). The legacy identities left
+        # the active catalog at the §19.7 cutover, so they are reconstructed
+        # locally from their frozen record.
+        for name,(w,h,n,k,identity) in LEGACY_CASES.items():
+            p = m7_profiles.Profile(name,W=w,H=h,N=n,K=k,build_id=identity)
             rendered = module.render_config(template,p)
             self.assertIn(f'CFG_PROFILE : string := "{name}"',rendered)
             self.assertIn(f'x"{p.build_id}"',rendered)
@@ -230,5 +238,9 @@ class M7Profiles(unittest.TestCase):
                               ("CFG_UNPADDED_WIDTH",p.W),("CFG_UNPADDED_HEIGHT",p.H)):
                 self.assertRegex(rendered,rf"{key}\s*: integer := {value};")
         # Rendering an already-rendered isolated snapshot must be idempotent.
-        d640 = module.render_config(template,self.profiles["D640"])
-        self.assertEqual(d640,module.render_config(d640,self.profiles["D640"]))
+        d640 = module.render_config(template, m7_profiles.Profile(
+            "D640", W=640, H=480, N=3, K=4,
+            build_id=LEGACY_CASES["D640"][4]))
+        self.assertEqual(d640,module.render_config(d640,m7_profiles.Profile(
+            "D640", W=640, H=480, N=3, K=4,
+            build_id=LEGACY_CASES["D640"][4])))

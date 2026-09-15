@@ -9,7 +9,7 @@ the activation PNG.
 
 Usage (from the repo root, venv python):
     python verification/m7_profiles/mock_switch_test.py --matrix-seq
-    python verification/m7_profiles/mock_switch_test.py --profile B32 3
+    python verification/m7_profiles/mock_switch_test.py --profile B32_CFGLUT125 3
 Run --profile twice in a row to also exercise the same-build (no reload) path.
 """
 import json
@@ -51,25 +51,22 @@ import m7_switch as M  # noqa: E402
 
 
 def _ensure_stage_releases():
-    """Gate-1 D2 fixture: the stage catalog gains the releases section the
-    manager now requires (same binding computation as the repo catalog)."""
+    """Sync the stage with the authoritative five-release repo catalog
+    (§19.7 step 3 cutover): catalog, the five admitted runtime manifests,
+    the shared canonical parameter bundles and the anchors file. Idempotent;
+    keeps the mock hermetic against catalog evolution."""
     M.BASE = STAGE
     cat_p = STAGE / "m7_profiles.json"
+    cat_p.write_text((REPO / "profiles/m7_profiles.json").read_text())
+    (STAGE / "anchors_m7.json").write_text(
+        (REPO / "profiles/anchors_m7.json").read_text())
     cat = json.loads(cat_p.read_text())
-    if "releases" in cat:
-        return
-    cat["releases"] = {}
-    for name, prof in cat["profiles"].items():
-        _chans, sha = M.load_params(name, prof["N"], prof["K"])
-        cat["releases"][name] = {
-            "shape_id": f"N{prof['N']}K{prof['K']}W{prof['W']}H{prof['H']}-CVH1",
-            "bundle_sha256": sha,
-            "manifest": f"hardware_{name}.json",
-            "build_id_hex": json.loads(
-                (STAGE / f"hardware_{name}.json").read_text()
-            )["accelerator"]["build_id_hex"],
-        }
-    cat_p.write_text(json.dumps(cat, indent=2))
+    for name in cat["profiles"]:
+        shutil.copyfile(REPO / f"software/hardware_{name}.json",
+                        STAGE / f"hardware_{name}.json")
+    for bundle_dir in {rel["bundle_dir"] for rel in cat["releases"].values()}:
+        src = REPO / "profiles" / bundle_dir
+        shutil.copytree(src, STAGE / bundle_dir, dirs_exist_ok=True)
 
 
 _ensure_stage_releases()
@@ -154,19 +151,14 @@ def complete_frame():
 M.BASE = STAGE
 M.LOCK_FILE = STAGE.parent / "mock.lock"
 M.FW_DIR = REPO / "bitstreams"
+# §19.7 cutover: the five active releases resolve to the generated
+# FPGA-manager firmware images whose hashes match the admitted manifests.
 M.FW_NAME = {
-    "B32": "bn3k16_len22_2026-09-12.bit.bin",
-    "C32": "cn5k08_len22_2026-09-12.bit.bin",
-    "D32": "dn3k04_len22_2026-09-12.bit.bin",
-    "D640": "dn3k04_w640480_2026-09-12.bit.bin",
-    # GLM-F6 staging: candidate firmware names resolve, but no firmware file
-    # exists until the routed builds fill the candidate manifests.
-    "A32_CFGLUT125": "m7_A32_CFGLUT125.bin",
-    "B32_CFGLUT125": "m7_B32_CFGLUT125.bin",
-    "C32_CFGLUT125": "m7_C32_CFGLUT125.bin",
-    "D32_CFGLUT125": "m7_D32_CFGLUT125.bin",
-    "D640_CFGLUT125": "m7_D640_CFGLUT125.bin",
-    "B32_CFGLUT100": "m7_B32_CFGLUT100.bin",
+    "A32_CFGLUT125": "a32_cfglut125_125mhz.bit.bin",
+    "B32_CFGLUT125": "b32_cfglut125_125mhz.bit.bin",
+    "C32_CFGLUT125": "c32_cfglut125_125mhz.bit.bin",
+    "D32_CFGLUT125": "d32_cfglut125_125mhz.bit.bin",
+    "D640_CFGLUT125": "d640_cfglut125_125mhz.bit.bin",
 }
 
 
@@ -343,7 +335,9 @@ M.program_params_accel = fake_program_params
 def run(argv):
     profile = argv[1]
     hw = json.loads((STAGE / f"hardware_{profile}.json").read_text())["accelerator"]
-    chans, _bundle = M.load_params(profile, hw["kernel_n"], hw["channels_k"])
+    catalog = json.loads((STAGE / "m7_profiles.json").read_text())
+    chans, _bundle = M.load_params(M.release_bundle_dir(profile, catalog),
+                                   hw["kernel_n"], hw["channels_k"])
     CURRENT.update(n=hw["kernel_n"], k=hw["channels_k"], w=hw["image_w"],
                    h=hw["image_h"], channels=chans)
     sys.argv = ["m7_switch.py"] + argv
@@ -368,7 +362,7 @@ if __name__ == "__main__":
     else:
         if args and args[0] == "--same-build":
             frames = args[2] if len(args) > 2 else "3"
-            program_profile("A32")
+            program_profile("A32_CFGLUT125")
             run(["--profile", args[1], frames])
             run(["--profile", args[1], frames])   # live build already matches
         elif args == ["--d640-input-hash"]:
@@ -408,7 +402,7 @@ if __name__ == "__main__":
                 cand_doc["deployable"] = False
                 (STAGE / f"hardware_{cand}.json").write_text(
                     json.dumps(cand_doc, indent=2))
-            program_profile("A32")   # board starts with the A32 build live
+            program_profile("A32_CFGLUT125")   # board starts with the A32 build live
             before_acc = bytes(acc_regs.mem)
             before_dma = bytes(dma_regs.mem)
             program_calls = []
@@ -448,5 +442,5 @@ if __name__ == "__main__":
             print(f"MOCK OK: candidate {release} rejected before hardware "
                   f"mutation ({mode}; GLM-F7 admission verified)")
         else:
-            program_profile("A32")   # board starts with the A32 build live
+            program_profile("A32_CFGLUT125")   # board starts with the A32 build live
             run(args)

@@ -10,9 +10,9 @@ programs the PL itself. All m7 entry points are referenced through the module
 
 Board usage (archive default /var/lib/conv-lab/results; M8_ARCHIVE_ROOT env
 override exists for host mock tests only):
-  sudo python3 /home/petalinux/m8_cli.py run --profile A32 [--frames 3]
+  sudo python3 /home/petalinux/m8_cli.py run --profile A32_CFGLUT125 [--frames 3]
        [--image PATH] [--previews] [--reference]
-  sudo python3 /home/petalinux/m8_cli.py benchmark --profile A32
+  sudo python3 /home/petalinux/m8_cli.py benchmark --profile A32_CFGLUT125
        [--frames 200] [--warmup 10]
   sudo python3 /home/petalinux/m8_cli.py list
   sudo python3 /home/petalinux/m8_cli.py record <run-id>
@@ -44,7 +44,7 @@ MAX_PIXELS = 2097152
 DISPOSABLE_BUDGET = 268435456        # 256 MiB run-payload budget
 HEADROOM_REQUIRED = 536870912        # 512 MiB free after the reservation
 
-D_PROFILES = ("D32", "D640")   # channels 1,2 are Sobel X/Y by construction
+D_PROFILES = ("D32_CFGLUT125", "D640_CFGLUT125")   # channels 1,2 are Sobel X/Y by construction
 DEFAULT_RESULTS = Path("/var/lib/conv-lab/results")
 FALLBACK_RESULTS = Path("/home/petalinux/runs")
 def file_md5(path):

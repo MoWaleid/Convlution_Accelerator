@@ -36,15 +36,13 @@ except ImportError:  # mock hosts only; the board is Linux
 LOCK_FILE = (Path("/run/lock/m7_switch.lock") if Path("/run/lock").is_dir()
              else Path("/tmp/m7_switch.lock"))
 _lock_fd = None
-FW_NAME = {"A32": "m7_A32.bin", "B32": "m7_B32.bin", "C32": "m7_C32.bin",
-           "D32": "m7_D32.bin", "D640": "m7_D640.bin",
-           "A32_CFGLUT125": "m7_A32_CFGLUT125.bin",
+FW_NAME = {"A32_CFGLUT125": "m7_A32_CFGLUT125.bin",
            "B32_CFGLUT125": "m7_B32_CFGLUT125.bin",
            "C32_CFGLUT125": "m7_C32_CFGLUT125.bin",
            "D32_CFGLUT125": "m7_D32_CFGLUT125.bin",
-           "D640_CFGLUT125": "m7_D640_CFGLUT125.bin",
-           "B32_CFGLUT100": "m7_B32_CFGLUT100.bin"}
-ORDER = ["A32", "B32", "C32", "D32", "D640"]
+           "D640_CFGLUT125": "m7_D640_CFGLUT125.bin"}
+ORDER = ["A32_CFGLUT125", "B32_CFGLUT125", "C32_CFGLUT125",
+         "D32_CFGLUT125", "D640_CFGLUT125"]
 
 # ─── FPGA Manager sysfs ──────────────────────────────────────────────────────
 FPGA_FLAGS = Path("/sys/class/fpga_manager/fpga0/flags")
@@ -632,29 +630,31 @@ def make_expected(padded, n, w, h, channels):
 # ─── Matrix construction (with termination guarantee) ─────────────────────────
 
 def build_matrix_sequence(start_profile):
-    """Build a switch sequence: establish A32, then 20 consecutive
+    """Build a switch sequence: establish A32_CFGLUT125, then 20 consecutive
     A32→B32→A32 cycles, then every other ordered pair. Greedy walk with
-    bridge jumps; returns list of profile names. The initial bridge makes the
-    twenty cycles provably consecutive regardless of the live start profile."""
+    bridge jumps; returns list of release names. The initial bridge makes the
+    twenty cycles provably consecutive regardless of the live start release."""
     sequence = []
     current = start_profile
     covered = set()
+    anchor_a = ORDER[0]   # A32_CFGLUT125
+    anchor_b = ORDER[1]   # B32_CFGLUT125
 
     # Establish A32 before the counted block (E2: without this, a non-A32
     # start yields only 19 consecutive full cycles).
-    if current != "A32":
-        sequence.append("A32")
-        covered.add((current, "A32"))
-        current = "A32"
+    if current != anchor_a:
+        sequence.append(anchor_a)
+        covered.add((current, anchor_a))
+        current = anchor_a
 
     # 20 consecutive A32→B32→A32 cycles
     for _ in range(20):
-        sequence.append("B32")
-        covered.add((current, "B32"))
-        current = "B32"
-        sequence.append("A32")
-        covered.add((current, "A32"))
-        current = "A32"
+        sequence.append(anchor_b)
+        covered.add((current, anchor_b))
+        current = anchor_b
+        sequence.append(anchor_a)
+        covered.add((current, anchor_a))
+        current = anchor_a
 
     # Remaining ordered pairs
     all_ordered = [(a, b) for a in ORDER for b in ORDER if a != b]
