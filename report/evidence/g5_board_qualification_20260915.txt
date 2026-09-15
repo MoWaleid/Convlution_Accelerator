@@ -46,3 +46,14 @@ fpga_manager fpga0: writing m7_D32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
   [D32_CFGLUT125] frame 3 OK 0.125 ms
   cleanup: final STATUS 0x00000181
 M7_SWITCH D32_CFGLUT125: PASS (3 frames, reload=yes)
+
+## D640_CFGLUT125 switch — 640x480 path, on-board LANCZOS resize, 4 MiB layout
+$ sudo -n python3 /home/petalinux/m7_switch.py --profile D640_CFGLUT125 3
+  admitted D640_CFGLUT125 parameter bundle d735ca24a505b7f0
+fpga_manager fpga0: writing m7_D640_CFGLUT125.bin to Xilinx Zynq FPGA Manager
+  reprogrammed fabric -> D640_CFGLUT125 (EF125N3K04VGA-R1)
+  [D640_CFGLUT125] activation OK 2.709 ms sha=e323defbf8ad2616
+  [D640_CFGLUT125] frame 2 OK 2.577 ms
+  [D640_CFGLUT125] frame 3 OK 3.740 ms
+  cleanup: final STATUS 0x00000181
+M7_SWITCH D640_CFGLUT125: PASS (3 frames, reload=yes)
