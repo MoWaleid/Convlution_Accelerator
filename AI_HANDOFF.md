@@ -1540,6 +1540,37 @@ first so every subsequent release proves a true full-PL reload with the new
 firmware; a B32-first switch would take the parameter-only path on the
 old bitstream.
 
+### 18.21 G5 per-release board gates closed — §19.7 step 5 core done (2026-09-15)
+
+All five releases passed every per-release gate on real silicon
+(transcript: `report/evidence/g5_board_qualification_20260915.txt`;
+board run records under `/var/lib/conv-lab/results/`, retrieval pending):
+
+- Singles (full-PL reload each, `reload=yes` in all five): A32 anchor
+  `cb397559…` 0.126–0.146 ms; B32 `5821c8b1…`; C32 `b6ab2d53…` (first
+  N=5 silicon proof of the exact CFGLUT5 datapath); D32 `6cb736f6…`;
+  D640 `e323defb…` 2.6–3.7 ms with the on-board exact LANCZOS 640x480
+  resize and the 4 MiB four-guard layout. All cleanups `0x00000181`.
+- The A32-first ordering proved the B32 rebuild's firmware on hardware
+  (B32 switch reloaded `m7_B32_CFGLUT125.bin`, hash `757595d5…`, rather
+  than riding the old boot bitstream's identical BUILD_ID).
+- Extremes: 12 exact-reference frames per release x5 = 60 verified frames
+  (all-zero, all-255, both saturation rails, signed-24 endpoints, live
+  shift 24-31 sweep, reinstall + anchor revalidation). D640's three VGA
+  exact-reference computations took minutes each as documented.
+- Soaks: 100 consecutive no-reset frames per release x5 = 500 frames, all
+  bit-exact. Medians: A32 0.126 / B32 0.123 / C32 0.124 / D32 0.125 ms
+  (p95 0.127-0.132); D640 3.731 ms / p95 3.749 — matching the historical
+  M7-era medians.
+- Session total to this point: 575 new board frames, 0 mismatches.
+
+Remaining §19.7: step 6 (directed five-profile switching matrix, repeated
+A32/B32, bounded recovery/fault injection, true power-off/on cold boot),
+then step 7 (pull/hash original records, then QUALIFIED decisions and
+report/demo updates). Fault-injection note: the M5-era harness is
+A32/M4-identity-bound; a G5 fault round needs the scoped harness review
+§18.5.4 required before reuse.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
