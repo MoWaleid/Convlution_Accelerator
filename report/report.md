@@ -12,21 +12,34 @@ Target platform: Digilent ZedBoard (Xilinx Zynq-7020 XC7Z020CLG484-1) · Toolcha
 
 ## 1. Introduction
 
-This report presents a fixed-point NxN convolution accelerator for the first
-convolutional layer (Conv1) of a grayscale CNN, implemented on a Xilinx Zynq-7020
-SoC. The design streams a 32×32 8-bit grayscale image over AXI4-Stream through an
-AXI DMA, computes a stride-1, same-mode (zero-padded) 3×3 convolution against K
-programmable channels (K=8 in the baseline profile A32; five compiled profiles up
-to K=16 and 640×480 — §10.1), and streams signed 16-bit feature maps back to DDR
-memory. All arithmetic is bit-exact against an arbitrary-precision Python golden
-model, and the complete hardware-software system has been qualified on physical
-silicon with more than 870 transcript-recorded bit-exact inference frames across
-five compiled hardware profiles [S5]–[S8], [S16]–[S18].
+This report presents a fixed-point NxN convolution accelerator family for the
+first convolutional layer (Conv1) of a grayscale CNN, implemented on a Xilinx
+Zynq-7020 SoC and **qualified on physical silicon as five compiled hardware
+releases**: N=3 with 4, 8 or 16 channels at 32×32, N=5 with 8 channels at
+32×32, and N=3 with 4 channels at 640×480 [S25]. The compute datapath is an
+**exact CFGLUT5 Dadda-compressor architecture**: every 8×8 tap product is
+produced by runtime-configurable LUT multipliers and reduced by a generated,
+column-aware Dadda bit heap with an exact sum, so the result is bit-identical
+to an arbitrary-precision golden model for every input, coefficient set, shift
+and rounding case [S10], [S33]. Images stream over AXI4-Stream through an AXI
+DMA at a 125 MHz fabric clock; results stream back as signed 16-bit feature
+maps.
 
-The work was performed against the competition specification [S12]: minimum 32×32
-grayscale input, unsigned fixed-point pixels, programmable 8-bit signed kernels,
-stride 1, ≥16-bit signed outputs, golden-model verification, and reporting of
-utilization, timing, latency, throughput, power, and Figure of Merit.
+The complete hardware-software system — five releases, runtime full-FPGA
+reconfiguration between them, and the embedded Linux operation stack — has been
+qualified on the ZedBoard: **577 new bit-exact frames in the final
+qualification campaign with zero mismatches** (per-release anchor activations,
+60 exact-reference extreme frames, five 100-frame soaks), a 58-switch
+five-profile matrix covering all 20 ordered release pairs, a true power-cycle
+cold boot, and hardware fault-injection with clean recovery [S26]. Together
+with the predecessor datapath's 1,966 recorded frames (§8.4), the platform
+total is **2,543 transcript-recorded bit-exact frames across 50+ runs**.
+
+The work was performed against the competition specification [S12]: minimum
+32×32 grayscale input, unsigned fixed-point pixels, programmable 8-bit signed
+kernels, stride 1, ≥16-bit signed outputs, golden-model verification, and
+reporting of utilization, timing, latency, throughput, power, and Figure of
+Merit. §9 gives the required results table for every release, ranked by FOM.
 
 ## 2. System architecture
 
@@ -40,11 +53,13 @@ The block design (`accelerator_dma`) instantiates:
   as AXI4-Lite slave + one 64-bit AXI4-Stream slave (pixels in) + one 64-bit
   AXI4-Stream master (results out).
 - **Two AXI SmartConnects** (control and HP0), **proc_sys_reset**, and a single
-  100 MHz clock domain derived from FCLK_CLK0 [S10].
+  125 MHz clock domain derived from FCLK_CLK0 (SLCR-derived: IO PLL FBDIV=30,
+  FPGA0 divisors 4×2 → 124.99999875 MHz, verified on hardware after a cold
+  boot) [S26].
 
 Address map (from the scripted BD, reproducible via `scripts/create_accelerator_dma_bd.tcl`
-and frozen in `software/hardware.json` [S9]): DMA `0x40400000`/64 KiB, accelerator
-`0x43C00000`/64 KiB, HP0 → DDR `0x00000000`/512 MB.
+and frozen in the per-release manifests [S9][S32]): DMA `0x40400000`/64 KiB,
+accelerator `0x43C00000`/64 KiB, HP0 → DDR `0x00000000`/512 MB.
 
 ![Figure 1 — Vivado block-design schematic: PS7, AXI DMA, the accelerator (module reference), two SmartConnects, and the reset infrastructure](figures/fig1_blockdesign.png)
 
@@ -52,49 +67,106 @@ and frozen in `software/hardware.json` [S9]): DMA `0x40400000`/64 KiB, accelerat
 
 **Data flow:** PS writes channel parameters and the CVH1 control ABI over AXI4-Lite;
 PS arms the DMA S2MM (receive) channel; PS writes TX length to trigger; pixels stream
-DMA → accelerator → sliding-window generator → 8 parallel convolution channels →
-output packer → DMA → DDR; PS polls CVH1 status for frame completion and verifies
+DMA → accelerator → edge-free window generator → K parallel exact-convolution
+channels → output packer → DMA → DDR; PS polls CVH1 status for frame completion and verifies
 the received buffer.
 
-## 3. Convolution datapath and pipeline
+## 3. Convolution datapath: the exact CFGLUT5 compressor
 
-The compute core (`conv_channel.vhd` [S10]) is a 4-stage pipeline computing one
-output feature-map pixel per clock once the pipeline is filled:
+### 3.1 Why LUT-based exact multiplication
+
+The competition requires programmable 8-bit signed kernel coefficients. The
+design computes each tap product **exactly** by *configuration-as-constant
+multiplication*: the 8-bit signed weight is stored as the Boolean configuration
+of six Xilinx **CFGLUT5** primitives per radix-16 digit, and the 4-bit pixel
+digit addresses that configuration, reading the pre-computed multiplication
+table directly out of the LUT. One CFGLUT5, with its I4 input held high,
+presents two independent four-input functions in the lower and upper halves of
+its 32-bit configuration shift register, so a single primitive returns two bits
+of the signed 12-bit digit×weight product [S10: `cfglut5_kcm.vhd`]. Six
+primitives per digit bank therefore produce the full 12-bit signed product of
+one 4-bit pixel digit by the 8-bit weight; the two digit banks (low and high
+nibble) together form the exact 8×8 product with one 4-bit shift-and-add.
+Coefficients are reprogrammed at runtime through the CFGLUT5 configuration
+chain (six configuration bits per clock, 32 clocks per bank), which is what
+makes every kernel in this report programmable without any DSP48 or fabric
+multiplier.
+
+### 3.2 Generated Dadda bit-heap compressor
+
+The N² per-channel digit products (2·N² signed rows) enter a **generated,
+column-aware Dadda compressor** (`scripts/generate_cfglut_bitheap.py` →
+`cfglut5_bitheap_3x3.vhd` / `cfglut5_bitheap_5x5.vhd` [S10], [S33]):
+
+| Entity | Taps / signed rows | Sum width | Dadda targets | Registered boundaries |
+|---|---:|---:|---|---|
+| `cfglut5_bitheap_3x3` | 9 / 18 | 21 bit | 13, 9, 6, 4, 3, 2 | after level 3 (of 6) |
+| `cfglut5_bitheap_5x5` | 25 / 50 | 22 bit | 42, 28, 19, 13, 9, 6, 4, 3, 2 | after levels 3 and 6 (of 9) |
+
+The generator emits 183 full + 13 half compressors for N=3 (LUT6_2 primitives,
+two outputs each), compresses **only occupied columns** — avoiding the
+sign-extension waste of a uniform-width carry-save array — and produces two
+exact partial-sum rows. Both generated entities are deterministic artifacts:
+the N=3 output is byte-identical to its original reviewed version
+(`ad49b540…27aa7`, [S33]).
+
+### 3.3 Channel pipeline
+
+Each channel (`conv_channel.vhd` [S10]) instantiates one KCM per tap plus the
+generated bit heap, then completes the accumulation and post-processing:
 
 | Stage | Function | Width |
 |---|---|---|
-| S1 MULTIPLY | 9 unsigned(8)×signed(8) products per channel | 17-bit signed products |
-| S2 ADD-TREE L1 | 9 products → 3 partial sums | 19-bit |
-| S3 ADD-TREE L2 + BIAS | 3 partials → 1 sum + bias | 25-bit accumulator |
-| S4 POST-PROCESS | round-half-up, saturate to int16, per-channel ReLU | 16-bit output |
+| BH | CFGLUT digit-lookup product generation + Dadda compression (one registered boundary for N=3, two for N=5) | signed rows → 21/22-bit pair |
+| S2 | two-row register (valid-aligned) | 2 × 21/22 bit |
+| S3 | sole carry-propagate sum + signed-24 bias | 25-bit accumulator |
+| S4 | arithmetic shift + **discarded half-bit register** | exact shift 0..31 |
+| S5 | round-half-up increment, saturate to int16, optional ReLU | 16-bit output |
 
-![Figure 2 — four-stage convolution pipeline](figures/fig2_pipeline.png)
+**Exactness at every shift:** S4 registers the bit that the barrel shift is
+about to discard, and S5's round-half-up increment consumes it together with
+the remaining low bits — the "discarded-bit alternative" of the CVH1 contract.
+This makes shifts 24–31 exact, including the signed boundary cases at shift 24
+(+1/−1) that a conventional truncated accumulator mis-rounds; the datapath was
+qualified on silicon across all 32 shift values [S26], [S33]. The predecessor
+MAC datapath (§8.4) restricted shifts to 0–23 for exactly this reason; the
+CFGLUT5 architecture removed that restriction by construction.
 
-*Figure 2 — Per-channel pipeline. Bit widths and the LUT-multiplier decision are RTL-derived [S10].*
+**Throughput discipline:** the compute core produces one output position (all K
+channel results) per clock once the pipeline is filled. The output serializer
+packs 4 int16 values per 64-bit AXI-Stream beat
+(`axi_stream_output_serializer.vhd` [S10]), so the **sustained external rate is
+4/K output positions per cycle**: 1.0 for K=4, 0.5 for K=8, 0.25 for K=16 —
+derated by the disclosed edge bubbles below. Channel-result rate is K per cycle
+while data is available. All measured frame times are host-clock wall-clock
+intervals including DMA and polling overhead, reported separately (§9).
 
-Bit-width derivation (design analysis, RTL `config_pkg.vhd` [S10]): a product of
-unsigned 8-bit × signed 8-bit needs 17 bits signed; summing N=3 products adds
-ceil(log2 3) = 2 bits (19-bit partial sums); summing 3 partial sums adds 2 more
-(21 bits); the signed-24 bias dominates, so the full accumulator is
-max(21, 24) + 1 = 25 bits (`CFG_BIAS_WIDTH = 24` in config_pkg.vhd [S10]).
+### 3.4 Edge-free window generation
 
-**Multipliers are deliberately implemented in LUT fabric, not DSP48s** — the RTL
-carries `attribute use_dsp of products_s1 : signal is "no"` [S10: conv_channel.vhd],
-and the routed utilization confirms 0 DSP blocks in the accelerator [S3]. This is a
-measured trade-off discussed in §11.
+`window_generator.vhd` [S10] implements (N−1) SRL-mapped row-delay line buffers
+feeding the tap window, with a **prefetch strategy that keeps the channel
+pipeline supplied across row transitions**. The five releases expose measured,
+disclosed behavior at the frame edges (wrapper-sim record, frame D =
+continuously-supplied stress case [S28]):
 
-**Throughput:** the compute pipeline produces one channel result per clock once
-filled. The output serializer packs 4 int16 values per 64-bit AXI-Stream beat
-(`axi_stream_output_serializer.vhd` [S10]), so the output interface imposes a
-**ceiling of 4/K output positions per clock**: 0.5 positions/cycle for K=8,
-0.25 for K=16. This is a theoretical upper bound derived from the interface —
-at least two output beats are required per K=8 position, so one complete
-position per cycle cannot be sustained through the interface. At that ceiling a
-32×32 K=8 frame needs 2,048 output beats = 2,048 clocks = 20.48 µs of streaming
-time (derived). All measured frame times in this report are host-clock
-wall-clock intervals that include DMA and Python-side polling — 0.074–0.121 ms
-per frame (median 0.076 ms) across 103 consecutive verified frames [S5] — and
-are not cycle-accurate core measurements.
+| Release | Frame-D invalid core advances | External output gaps | Sustained external rate (effective) |
+|---|---:|---:|---:|
+| B32_CFGLUT125 (3×16) | **0** | **0** | 0.250 positions/cycle (bus ceiling) |
+| A32_CFGLUT125 (3×8) | 31 | **0** | 0.500 (bus ceiling) |
+| C32_CFGLUT125 (5×8) | 62 | 31 | 0.492 |
+| D32_CFGLUT125 (3×4) | 62 | 62 | 0.940 |
+| D640_CFGLUT125 (3×4, 640×480) | 958 | 958 | 0.997 (of 1.000) |
+
+At K≥8 the output prefetch slack hides the residual transition bubbles entirely
+from the external stream (A32: zero external gaps; B32: zero even internally);
+at K=4 one beat per position exposes one-to-two bubbles per row transition
+(~6% of beats at 32×32, ~0.3% at 640×480), disclosed here and measured in the
+simulator record [S28]. Output correctness is unaffected: every delivered
+value is bit-exact against the golden model in all five releases.
+
+![Figure 2 — exact CFGLUT5 channel pipeline: KCM digit lookups, generated Dadda bit heap, and S2–S5 post-processing](figures/fig2_pipeline.png)
+
+*Figure 2 — Per-channel pipeline (regenerated for the CFGLUT5 datapath; §C figures). Bit widths are RTL-derived [S10], [S33].*
 
 ## 4. Control FSM
 
@@ -105,8 +177,12 @@ lifecycle FSM — **IDLE, RUN, FAULT** — with command-encoded transitions:
   zero architectural errors; otherwise SLVERR with BAD_COMMAND_STATE. On acceptance:
   state → RUN, all four transfer counters zero, event flags cleared.
 - **RESET** (command 2): legal from IDLE or FAULT while QUIESCENT; clears counters,
-  event bits and all error bits while **preserving parameter storage and admission**.
+  event bits and all error bits while **preserving parameter storage and admission**
+  (hardware-verified: the fault-injection round of §8.2 observed STATUS `0x181` —
+  parameters retained — across RESET).
 - **ABORT** (command 4): legal in any state; forces FAULT and latches ERR_ABORTED.
+  Both fault paths (ABORT-from-IDLE and the ABORT-after-START race) were injected
+  on hardware and recovered cleanly (§8.2, gate 6) [S26].
 
 Frame completion is self-checking: on the final output beat the hardware requires
 the four counters to equal the compiled quotas exactly (input accepted/consumed =
@@ -121,42 +197,54 @@ completion guard]. Sticky events are cleared via EVENT_CLEAR or RESET.
 ## 5. Memory organization
 
 **Line buffers / window generation** (`window_generator.vhd` [S10]): (N−1) row-delay
-line buffers of depth W+N−1 implemented as SRL-mapped shift registers (the routed
-design contains 141 SRL primitives [S3]), feeding a 3×3 register window. The design
-uses **zero block RAM** for windowing; the only BRAM in the system belongs to the
-DMA IP's internal FIFOs [S3].
+line buffers of depth W+N−1 implemented as SRL-mapped shift registers, feeding the
+N×N register window with the prefetch strategy of §3.4. The design uses **zero
+block RAM** for windowing and the datapath; the only BRAM in the system belongs to
+the DMA IP's internal FIFOs (2 RAMB36 + 2 RAMB18 in every release) [S32].
 
 **DMA buffer layout** (`software/m7_switch.py` `compute_layout`; manifests
-`software/hardware_*.json` [S9][S19]): a physically contiguous u-dma-buf
-allocation (4 MiB at 0x1F100000, sync_mode 1 [see boot record, §13 S14]) is
-partitioned per compiled profile by the approved formula TX at +0x1000, RX at
-`ALIGN_UP(0x1000 + TX_BYTES + 2·G, 64)` with G = 64 — giving RX at +5440
-(profiles A32/B32/D32), +5568 (C32) and +313728 (D640 at 640×480) — with
-**four** 64-byte 0xA5-filled guard regions (leading and trailing on both TX and
+`software/hardware_<ID>_CFGLUT125.json` [S9][S32]): a physically contiguous u-dma-buf
+allocation (4 MiB at 0x1F100000, sync_mode 1) is partitioned per compiled release by
+the approved formula TX at +0x1000, RX at `ALIGN_UP(0x1000 + TX_BYTES + 2·G, 64)` with
+G = 64 — giving RX at +5440 (A32/B32/D32), +5568 (C32) and +313728 (D640 at 640×480) —
+with **four** 64-byte 0xA5-filled guard regions (leading and trailing on both TX and
 RX). All transfer lengths are bounded by the 22-bit DMA length field and the
 runtime-discovered allocation, RX DMA capacity is exactly the RX byte count,
 and all four guards are rewritten and verified after every transfer to prove
-the DMA wrote exactly its length.
+the DMA wrote exactly its length. D640 exercises the full 4 MiB layout with
+2,457,600-byte output frames [S26].
 
 ## 6. Fixed-point arithmetic
 
-Per channel: `acc = bias + Σ pixel·weight`, then round-half-up
+Per channel: `acc = bias + Σ pixel·weight` (exact Dadda-compressed sum, no
+truncation), then arithmetic shift by the per-channel 5-bit shift with the
+discarded half-bit retained (§3.3), round-half-up
 (`acc += 2^(shift-1); acc >>= shift`), saturation to signed int16, and an optional
 per-channel ReLU clamp [S10: conv_channel.vhd; S13: golden_conv.py].
+
+**Bit-width derivation** (design analysis, RTL `config_pkg.vhd` + generated
+entities [S10], [S33]): a product of unsigned 8-bit × signed 8-bit needs 17 bits
+signed; the digit-LUT form produces two signed 12-bit radix-16 partial products
+whose combination is exact by construction. The N=3 bit heap reduces 18 signed
+rows to a 21-bit exact pair (max |Σ| = 9·255·128 = 293,760 < 2^19, one sign
+bit of margin); N=5 reduces 50 rows to 22 bits (25 taps). The signed-24 bias
+dominates, so the accumulator is max(sum, 24) + 1 = **25 bits**
+(`CFG_BIAS_WIDTH = 24`).
 
 The identical arithmetic is implemented three independent times and compared:
 (1) the RTL; (2) an arbitrary-precision Python golden model
 (`golden_model/golden_conv.py` [S13]); (3) an independent test oracle in the
-software stack. The golden model was anchored to a trained network: a grayscale
-CIFAR-10 CNN trained for 50 epochs reaching **68.15% test accuracy at epoch 43**
-(`golden_model/data/training_log.txt` [S11]), whose first layer was quantized to
-int8 weights (per-channel fraction bits = 8), int32-quantized biases and shift 8
-(`golden_model/data/weights/` [S13]).
+software stack. The golden model was anchored to trained networks: a grayscale
+CIFAR-10 CNN trained for 50 epochs reaching **68.15% test accuracy** (K=8,
+`golden_model/data/training_log.txt` [S11]) and a retrained K=16 network at
+**70.08%** / N=5 network at **67.72%** [S13]. Quantized weights (int8, per-channel
+fraction bits = 8), int32 biases and shifts populate the canonical parameter
+bundles per release [S9].
 
-Four stimulus sets were generated (`golden_model/data/test_vectors_*` [S13]):
-the trained K=8 configuration, a custom filter set (identity / Sobel-X / Sobel-Y /
-box-blur with ReLU disabled so signed outputs remain visible), an all-zero input,
-and an all-255 input for saturation corner cases.
+Stimulus coverage on silicon includes the trained configurations, the
+hand-authored D-filter set (identity / Sobel-X / Sobel-Y / 4× box-blur, ReLU off
+on the Sobels so signed outputs remain visible), all-zero and all-255 inputs,
+both saturation rails, signed-24 bias endpoints and every shift 0–31 [S26].
 
 ## 7. Control ABI and identity
 
@@ -167,9 +255,9 @@ bits), COMMAND (START/RESET/ABORT), EVENT_CLEAR, ERROR_FLAGS, geometry/width
 discovery registers, four live transfer counters, a 128-bit BUILD_ID and the
 DMA length-width capability [S10:
 axi_lite_ctrl.vhd; S9]. The companion register map and channel layout are given in
-Appendix A. Each compiled profile carries its own frozen BUILD_ID (§10.1);
-software validates MAGIC, ABI version, capabilities, BUILD_ID, geometry and DMA
-length width against the selected profile's manifest **before any parameter
+Appendix A. Each compiled release carries its own frozen BUILD_ID (§9); software
+validates MAGIC, ABI version, capabilities, BUILD_ID, geometry and DMA
+length width against the selected release's manifest **before any parameter
 write** and rejects mismatches — a rule the
 platform itself enforces: a deliberately illegal access from userspace escalates to
 a PS external abort (SIGBUS), i.e. the system fails stop [recorded 2026-09-12,
@@ -179,257 +267,357 @@ see AI_HANDOFF.md §12].
 
 ### 8.1 Simulation
 
-- **Bit-exact datapath regression** (`tb_conv_top`): custom 4-filter configuration,
-  32×32 image, 4 channels × 1,024 positions = 4,096 comparisons, 0 mismatches;
-  and `tb_conv_top_trained_k8`: the trained K=8 configuration, 8,192 comparisons,
-  0 mismatches (simulation log and waveforms in the submission package).
-- **M4 integration regression** (`tb_conv_axis_wrapper`): 8 phases, all PASS —
-  "CONV_AXIS_WRAPPER COMPLETE M4 INTEGRATION REGRESSION PASS" [S4].
-- AXI protocol, datapath-stall, window-generator (square + non-square), register
-  file, frontend and serializer regressions: all PASS [S4].
+- **Exact datapath regressions for both generated geometries**
+  (`tb_cfglut5_exact`, `tb_cfglut5_pipeline`, `tb_cfglut5_exact_n5`,
+  `tb_cfglut5_pipeline_n5` [S33]): nonzero exact 3×3 and 5×5 convolution,
+  runtime coefficient reload, signed-24 bias, **all 32 shift values**, both ReLU
+  modes, saturation boundaries, CE stalls, valid latency and in-flight reset
+  flushing — 5,120 (N=3) and 6,144 (N=5) output comparisons, all PASS
+  (`CFGLUT_GEOMETRY_REGRESSION_PASS`, Vivado 2025.2).
+- **Five-release wrapper regression** (`tb_conv_axis_wrapper`, generalized to
+  N∈{3,5} × K∈{4,8,16}) [S28]: the full A–H framing/backpressure/lifecycle
+  suite executed officially per release from a clean, commit-bound state —
+  all five PASS with the exact per-release edge metrics of §3.4
+  (`wrapper_official_user_20260914T210835Z`, 16/16 checksums verified).
+- Legacy regressions (bit-exact datapath, AXI protocol, window generator,
+  register file, frontend, serializer): all PASS [S4].
 
 ![Figure 5 — behavioral simulation waveform of the streaming wrapper regression](figures/fig5_waveform.png)
 
 *Figure 5 — XSim waveform of `tb_conv_axis_wrapper` [screenshot, user capture]: AXI-Stream
-input bursts (`s_axis_*`, TKEEP=0xFF) and packed result beats (`m_axis_*`) with TLAST,
-under live backpressure — the run visible here recorded 677 output stalls and 2,155
-input stalls with zero data errors.*
+input bursts (`s_axis_*`, TKEEP) and packed result beats (`m_axis_*`) with TLAST,
+under live backpressure. (Captured on the predecessor datapath build; the
+five-release CFGLUT5 wrapper regression passes the same fixture — per-release
+metrics in [S28].)*
 
 ### 8.2 Physical silicon evidence
 
-All runs on the ZedBoard through the full PS→DDR→DMA→accelerator path. Transcripts
-are included verbatim in `report/evidence/`:
+All runs on the ZedBoard through the full PS→DDR→DMA→accelerator path. The
+**final qualification campaign (G5, 2026-09-15)** ran the five qualified
+releases end-to-end [S26]; every run below is transcript-recorded and the
+structured run records are preserved with hashes [S27]:
 
-| Run | Frames | Result | Source |
-|---|---:|---|---|
-| Trained golden anchor run | 1 | bit-exact, output SHA256 `cb397559…` | [S8] |
-| 20-frame repeat (no inter-frame reset) | 20 | all PASS, zero mismatches | [S8] |
-| Saturation filter run (±32768 exercised) | 1 | PASS | [S8] |
-| File-driven library inference | 3 | PASS, 0.136–0.156 ms/frame | [S8] |
-| Multi-image demo (Sobel maps rendered on board) | 36 | PASS, 135 PNGs | [S8] |
-| **M5 qualification** (100-frame soak, extremes, lifecycle, bounded-failure) | 103 | **PASS**, median 0.076 ms | [S5] |
-| **M6 reload ×20** + cold-boot sample | 21 | PASS, 21 full-PL reconfigurations | [S6][S7] |
-| **M7 profile switching** (first switch, 4 singles, 58-switch matrix, cold boot) | 76 | PASS, 58+ full-PL reconfigurations, all 20 ordered profile pairs covered, every activation anchor-exact | [S16] |
-| **M7 per-profile soaks** (A32/B32/C32/D32/D640, 100 frames each + D640 probe) | 501 | PASS, zero inter-frame resets | [S17] |
-| **M8 CLI file-driven runs + benchmark** (archived records) | 114 | PASS, records in `/var/lib/conv-lab/results` | [S18] |
-| **E2 extremes ×5 profiles + provably-consecutive matrix rerun** (58 full-PL reloads, 20 consecutive A32→B32→A32 cycles) | 78 | PASS, zero-tolerance exact-reference stimulus, both saturation rails | [S21] |
-| **M9 1,000-frame varied soak** (200×A32/B32/C32/D32 + 100×D640 + 100×B32; library-anchor + isolated-worker image paths) | 1000 | PASS, zero mismatches, zero inter-frame resets | [S22] |
-| **M9 five physical power-cycle boots** (B32/C32/D32/D640 reload paths + A32 parameter-only from factory identity) | 5 | PASS, anchor-exact activation, cleanup 0x181 | [S23] |
-| **R14 repair-batch board revalidation** (short soak + image run on the repaired runtime) | 7 | PASS, strict admission + shared finalization live | [S24] |
+| Gate | Coverage | Result |
+|---|---|---|
+| 1. Per-release identity + anchor activation (full-PL reload, 3 frames each) | 15 frames, 5 reloads | **PASS** — anchor-exact on every activation, cleanup `0x181` |
+| 2. Numerical extremes (12 exact-reference frames ×5 releases) | 60 frames | **PASS** — all-zero, all-255, both saturation rails, signed-24 endpoints, shifts 24–31, reinstall+revalidation; zero mismatches |
+| 3. 100-frame no-reset soaks ×5 | 500 frames | **PASS** — 100% bit-exact, medians 0.123–0.126 ms (32×32) and 3.731 ms (640×480) |
+| 4. Five-profile switching matrix | 58 switches / 58 full-PL reloads | **PASS** — all 20 ordered pairs, 20 provably consecutive A32↔B32 cycles, 58.5 s |
+| 5. True power-cycle cold boot | persistence + 125 MHz SLCR + fresh anchor | **PASS** — 68 runtime files and 5 firmware images cmp-identical |
+| 6. Bounded fault injection + recovery | ABORT-from-IDLE, ABORT-after-START race | **PASS** — FAULT latched (ABORTED alone), clean RESET recovery, anchor-exact proof frames |
 
-**Total: 1,966 transcript-recorded bit-exact frames across 35+ runs, zero
-mismatches** — 876 through M8 (185 through M6 in the runs above, plus 691 in
-the M7 profile-switching campaign and M8 CLI validation), then 78 in the E2
-extremes/matrix rerun, 1,000 in the M9 varied soak, 5 across the M9 physical
-power-cycle boots, and 7 in the repair-batch revalidation — together with
-**148 verified full-PL reconfigurations** [S5]–[S8], [S16]–[S24] (plus the M4
-integration bring-up run documented in the project record). Corner-case
-coverage demonstrated on silicon includes ±32768 saturation, the all-zero input
-(including the bias-rounding case: channel bias +179 with shift 8 correctly produces
-output 1), the all-255 input, and signed Sobel outputs with ReLU disabled [S5][S8].
+**Campaign total: 577 bit-exact frames, zero mismatches**, every switch a
+verified full-PL reload of the frozen firmware set. Combined with the
+predecessor datapath's recorded history (§8.4), the platform total is
+**2,543 bit-exact frames across 50+ runs and 200+ verified full-PL
+reconfigurations**.
+
+The per-record verification scope note is embedded in every record: timing
+values are host-clock intervals including polling; the declared fabric clock is
+125 MHz; neither is a hardware cycle count. Board run-ids carry 2018 stamps
+from the dead RTC — they are identifiers, not chronology.
 
 ### 8.3 Edge-detection demonstration
 
-The Sobel-magnitude feature map below was computed by the accelerator on-silicon
-from a 32×32 test image, returned over DMA, and rendered on the embedded Linux
-side (`report/evidence` pipeline; full-size render in `debug_captures/`):
+The five releases include hand-authored D-profile kernels (identity / Sobel-X /
+Sobel-Y / 4× box-blur), and the platform renders Sobel-magnitude maps from
+hardware output on the embedded Linux side. The render below was computed
+on-silicon from a 32×32 test image over the DMA path:
 
 ![Figure 4 — Sobel magnitude map computed by the accelerator on silicon](../debug_captures/m3_demo_sobel_mag_aeroplane_view.png)
 
-*Figure 4 — Board-computed Sobel magnitude map (aeroplane test image), rendered from hardware output retrieved over the serial console (`debug_captures/m3_demo_sobel_mag_aeroplane_view.png`).*
+*Figure 4 — Board-computed Sobel magnitude map (aeroplane test image), rendered from hardware output retrieved over the serial console (`debug_captures/m3_demo_sobel_mag_aeroplane_view.png`; captured on the predecessor build — the qualified D32/D640 releases implement the identical filter set and were anchor-qualified bit-exact [S26]).*
+
+### 8.4 Predecessor datapath record (historical)
+
+Before the CFGLUT5 datapath, the platform's MAC-array datapath (LUT
+multipliers + 4-stage adder-tree pipeline, 100 MHz) accumulated **1,966
+transcript-recorded bit-exact frames across 35+ runs** — including a
+1,000-frame varied soak, five physical power-cycle boots, a 103-frame M5
+qualification and the full profile-switching campaign [S5]–[S8], [S16]–[S24].
+That datapath is superseded by the exact CFGLUT5 architecture of §3 (its shift
+24–31 rounding restriction is removed there by construction); its results are
+retained as historical evidence and as the baseline of the architecture
+comparison in §11.
 
 ## 9. Implementation results (XC7Z020CLG484-1, Vivado 2025.2)
 
-Routed design `accelerator_dma_wrapper`, full system including PS, DMA,
-SmartConnects and accelerator:
+All five releases are routed, DRC-clean, timing-clean builds from the same
+generalized RTL source set — every routed artifact is hash-bound in its
+source-bound build manifest [S32], and the five firmware images the board
+actually executed are the Bootgen products of exactly these bitstreams
+[S30]. Per-release routed results (full system = PS + DMA + SmartConnects +
+accelerator; core = `conv_axis_wrapper` accelerator hierarchy):
 
-| Metric | Value | Source |
-|---|---|---|
-| Slice LUTs (full system) | 12,362 / 53,200 (23.24%) | [S3] |
-| Slice LUTs (accelerator core only) | 7,967 — the remainder is AXI DMA, SmartConnects and reset/integration fabric | [S3] |
-| LUTRAM | 655 / 17,400 (3.76%) | [S3] |
-| Slice FFs | 9,787 / 106,400 (9.20%); accelerator core 3,541 | [S3] |
-| Block RAM | 3 / 140 RAMB36-equivalent (2.14%) — 2 RAMB36 + 2 RAMB18, all in the DMA IP; **accelerator core uses 0** | [S3] |
-| DSP blocks | **0 / 220** | [S3] |
-| SRL primitives | 141 (line buffers) | [S3] |
-| Clock | 100 MHz; WNS **+0.066 ns**, TNS 0, WHS +0.022 ns, THS 0 | [S1] |
-| Timing status | "All user specified timing constraints are met" (0 failing endpoints of 32,224) | [S1] |
-| Power (full system) | 1.765 W total (1.621 dynamic + 0.144 static); of which processing_system7 = 1.563 W and **accelerator core = 0.018 W** (hierarchical block analysis) | [S2] |
-| DRC | 0 errors; advisory messages reviewed | [S15] |
+| Release | WNS / WHS (ns) | Failing endpoints | LUTs (sys / core) | FFs (sys / core) | BRAM | DSP | Power (sys / core, W) |
+|---|---|---|---|---|---|---|---|
+| D32_CFGLUT125 | +0.093 / +0.014 | 0 / 0 | 7,273 / 2,883 | 8,308 / 2,062 | 3 | **0** | 1.768 / 0.015 |
+| D640_CFGLUT125 | +0.001 / +0.022 | 0 / 0 | 7,679 / 3,281 | 8,940 / 2,694 | 3 | **0** | 1.769 / 0.017 |
+| A32_CFGLUT125 | +0.197 / +0.037 | 0 / 0 | 9,145 / 4,746 | 9,758 / 3,512 | 3 | **0** | 1.785 / 0.028 |
+| B32_CFGLUT125 | +0.090 / +0.053 | 0 / 0 | 12,670 / 8,274 | 12,686 / 6,440 | 3 | **0** | 1.806 / 0.049 |
+| C32_CFGLUT125 | +0.003 / +0.037 | 0 / 0 | 14,162 / 9,764 | 13,934 / 7,688 | 3 | **0** | 1.823 / 0.065 |
 
-Maximum frequency is ≥100 MHz by constraint closure with positive setup slack
-(Fmax ≈ 100.7 MHz derived from WNS).
+Every release meets "All user specified timing constraints are met" at the
+125 MHz constraint (routing errors = 0, DRC errors = 0, methodology checks = 0;
+per-release reports preserved and hash-bound [S32]). Maximum frequency is
+≥125 MHz by constraint closure; deriving from WNS gives Fmax ≈ 126.5 MHz
+(D32) down to ≈ 125.0 MHz (D640).
 
 ![Figure 6 — implemented device view](figures/fig6_deviceview.png)
 
-*Figure 6 — Placed design on the XC7Z020 [screenshot, user capture]: the repeating
-structure of the 8-channel MAC array is visible in the fabric; the PS occupies the
+*Figure 6 — Placed design on the XC7Z020 [screenshot, user capture, predecessor build]: the
+repeating per-channel structure is visible in the fabric; the PS occupies the
 die center-left by construction.*
 
-![Figure 7 — Vivado utilization summary](figures/fig7_utilization.png)
+### 9.1 Competition results tables — one per release, ranked by FOM
 
-*Figure 7 — Post-implementation utilization [screenshot, user capture], matching [S3].*
+The competition's Table 1 is given per release, ordered by full-system FOM
+(§11 defines the FOM scopes; [S29] is the reproducible generator). The
+"Specification" column is the competition requirement [S12]; the "Team Result"
+column is this release.
 
-![Figure 8 — Vivado timing summary](figures/fig8_timing_summary.png)
+#### Rank 1 — D32_CFGLUT125 (N=3, K=4, 32×32)
 
-*Figure 8 — Routed design timing summary [screenshot, user capture], matching [S1].*
+| Parameter | Specification | Team Result | Units | Comments |
+|---|---|---|---|---|
+| Input image size | ≥ 32×32, grayscale | 32×32 | px | single-channel; larger sizes supported (D640: 640×480) |
+| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 (value/256) | — | §6: quantized trained networks; digit-LUT addressing needs unsigned pixels |
+| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | runtime-programmable via CFGLUT5 configuration |
+| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 4 parallel channels, edge-free window generation with prefetch, AXI-Stream I/O, CVH1 control | — | §3 |
+| Multipliers / MACs | — | 36 exact LUT multipliers (4 ch × 9 taps), **0 DSP** | — | 12 CFGLUT5 primitives per multiplier |
+| Pipeline stages | — | 5 named stages (BH, S2–S5); Dadda tree adds 1 registered internal boundary at N=3 | — | §3.3 |
+| Latency | — | 0.125 ms measured frame median (host-clock, 100-frame soak); 1,024-beat streaming floor ≈ 8.19 µs (derived) | — | [S26], [S27] |
+| Throughput | — | 1.0 positions/cycle interface ceiling; **0.940 sustained** (disclosed edge bubbles); core computes 1 position/cycle filled | positions/cycle | §3.4, [S28] |
+| FPGA utilization | — | full system 7,273 LUT (13.7%), 8,308 FF, 3 BRAM, **0 DSP**; core 2,883 LUT, 2,062 FF, 0 BRAM, 0 DSP | — | [S32] |
+| Maximum frequency | — | 125 MHz met, WNS +0.093 ns (Fmax ≈ 126.5 MHz derived) | MHz | [S32] |
+| Power estimate | — | 1.768 W full system (core block 0.015 W), Vivado vectorless | W | [S32] |
+| Verification status | golden-model comparison | bit-exact: 115 frames this release (singles + 60-frame shared extremes + 100-frame soak), zero mismatches; exact to all 32 shifts | — | [S26], [S27] |
+| FOM | — | full system **7.47×10⁻⁵** · core **2.31×10⁻²** | — | §11, [S29] |
 
-### 9.1 Competition results table
+#### Rank 2 — D640_CFGLUT125 (N=3, K=4, 640×480)
 
-| Parameter | Team Result | Units | Source / comments |
-|---|---|---|---|
-| Input image size | 32×32 (profiles A/B/C/D) and 640×480 (profile D640); single-channel grayscale | px | [S10], [S16], [S19] |
-| Input precision | unsigned 8-bit fixed-point (Q0.8, value/256) | — | [S10: config_pkg] |
-| Kernel precision | signed 8-bit weights; signed 24-bit bias; 5-bit shift | — | [S10] |
-| Architecture type | parallel K-channel MAC array with shared sliding-window generator, AXI-Stream I/O, AXI-Lite control | — | [S10] |
-| Multipliers / MACs | 72 (8 channels × 9 taps), LUT fabric, **0 DSP** | — | [S10: conv_channel, `use_dsp="no"`]; [S3] |
-| Pipeline stages | 4 (multiply → adder-tree L1 → adder-tree L2 + bias → round/saturate/ReLU) | — | [S10: conv_channel] |
-| Latency | 4 cycles compute pipeline; 2,048 output beats ≈ 20.48 µs streaming floor per frame at K=8 (derived); 0.076 ms measured end-to-end median (host-clock) | — | [S10], [S5] |
-| Throughput | 4/K output positions per cycle — output-interface ceiling (theoretical upper bound; ≥2 beats per position at K=8). Measured frame rates are wall-clock and lower | positions/cycle | [S10: serializer], [S5] |
-| FPGA utilization | full system: 12,362 LUT (23.24%), 9,787 FF, 3 BRAM (DMA FIFOs), 0 DSP; accelerator core alone: 7,967 LUT, 3,541 FF, 0 BRAM, 0 DSP | — | [S3] |
-| Maximum frequency | 100 MHz met with WNS +0.066 ns (Fmax ≈ 100.7 MHz, derived) | MHz | [S1] |
-| Power estimate | 1.765 W full system (accelerator core block 0.018 W) | W | [S2] |
-| Verification status | bit-exact vs golden model: 1,966 transcript-recorded board frames across 35+ runs (five profiles), 0 mismatches + full simulation regressions | — | [S4]–[S8], [S16]–[S24] |
-| FOM | accelerator core scope: ≈ **3.5×10⁻³** · full-system scope: ≈ **2.2×10⁻⁵** (both shown; see §11) | — | [S1][S2][S3] |
+| Parameter | Specification | Team Result | Units | Comments |
+|---|---|---|---|---|
+| Input image size | ≥ 32×32, grayscale | **640×480** | px | largest supported release; same D-filter set |
+| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 | — | §6 |
+| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | byte-identical bundle to D32 |
+| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 4 parallel channels, edge-free window generation with prefetch | — | §3 |
+| Multipliers / MACs | — | 36 exact LUT multipliers (4 ch × 9 taps), **0 DSP** | — | §3.1 |
+| Pipeline stages | — | 5 named stages (BH, S2–S5) | — | §3.3 |
+| Latency | — | 3.731 ms measured frame median (host-clock, 100-frame soak); 307,200-beat streaming floor ≈ 2.458 ms (derived) | — | [S26], [S27] |
+| Throughput | — | 1.000 positions/cycle interface ceiling; **0.997 sustained** | positions/cycle | §3.4 |
+| FPGA utilization | — | full system 7,679 LUT (14.4%), 8,940 FF, 3 BRAM, **0 DSP**; core 3,281 LUT, 2,694 FF | — | [S32] |
+| Maximum frequency | — | 125 MHz met, WNS +0.001 ns | MHz | [S32] |
+| Power estimate | — | 1.769 W full system (core block 0.017 W), Vivado vectorless | W | [S32] |
+| Verification status | golden-model comparison | bit-exact: 115 frames this release incl. actual 640×480 frames and the recorded LANCZOS input preprocessing (hash-anchored) | — | [S26], [S27] |
+| FOM | — | full system **7.09×10⁻⁵** · core **1.79×10⁻²** | — | §11, [S29] |
 
-## 10. Runtime reconfiguration (system-level feature)
+#### Rank 3 — A32_CFGLUT125 (N=3, K=8, 32×32)
+
+| Parameter | Specification | Team Result | Units | Comments |
+|---|---|---|---|---|
+| Input image size | ≥ 32×32, grayscale | 32×32 | px | trained-CIFAR10 K8 parameters |
+| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 | — | §6 |
+| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | §6 |
+| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 8 parallel channels, edge-free window generation with prefetch | — | §3 |
+| Multipliers / MACs | — | 72 exact LUT multipliers (8 ch × 9 taps), **0 DSP** | — | §3.1 |
+| Pipeline stages | — | 5 named stages (BH, S2–S5) | — | §3.3 |
+| Latency | — | 0.126 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived) | — | [S26], [S27] |
+| Throughput | — | 0.5 positions/cycle interface ceiling; **0.500 sustained — zero external output gaps** (internal transition bubbles hidden by prefetch) | positions/cycle | §3.4, [S28] |
+| FPGA utilization | — | full system 9,145 LUT (17.2%), 9,758 FF, 3 BRAM, **0 DSP**; core 4,746 LUT, 3,512 FF | — | [S32] |
+| Maximum frequency | — | 125 MHz met, WNS +0.197 ns (Fmax ≈ 126.7 MHz derived) | MHz | [S32] |
+| Power estimate | — | 1.785 W full system (core block 0.028 W), Vivado vectorless | W | [S32] |
+| Verification status | golden-model comparison | bit-exact: 115 frames this release, zero mismatches | — | [S26], [S27] |
+| FOM | — | full system **2.97×10⁻⁵** · core **3.76×10⁻³** | — | §11, [S29] |
+
+#### Rank 4 — C32_CFGLUT125 (N=5, K=8, 32×32)
+
+| Parameter | Specification | Team Result | Units | Comments |
+|---|---|---|---|---|
+| Input image size | ≥ 32×32, grayscale | 32×32 | px | N=5 25-tap kernel — beyond the 3×3 baseline |
+| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 | — | §6 |
+| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | retrained N=5 network, 67.72% |
+| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 8 parallel channels, edge-free window generation with prefetch | — | §3 |
+| Multipliers / MACs | — | 200 exact LUT multipliers (8 ch × 25 taps), **0 DSP** | — | 50-row Dadda heap per channel |
+| Pipeline stages | — | 5 named stages (BH, S2–S5); Dadda tree adds a second registered boundary | — | §3.3 |
+| Latency | — | 0.124 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived) | — | [S26], [S27] |
+| Throughput | — | 0.5 positions/cycle interface ceiling; **0.492 sustained** (disclosed edge bubbles) | positions/cycle | §3.4 |
+| FPGA utilization | — | full system 14,162 LUT (26.6%), 13,934 FF, 3 BRAM, **0 DSP**; core 9,764 LUT, 7,688 FF | — | [S32] |
+| Maximum frequency | — | 125 MHz met, WNS +0.003 ns | MHz | [S32] |
+| Power estimate | — | 1.823 W full system (core block 0.065 W), Vivado vectorless | W | [S32] |
+| Verification status | golden-model comparison | bit-exact: 115 frames this release, zero mismatches | — | [S26], [S27] |
+| FOM | — | full system **1.90×10⁻⁵** · core **7.88×10⁻⁴** | — | §11, [S29] |
+
+#### Rank 5 — B32_CFGLUT125 (N=3, K=16, 32×32)
+
+| Parameter | Specification | Team Result | Units | Comments |
+|---|---|---|---|---|
+| Input image size | ≥ 32×32, grayscale | 32×32 | px | 16 parallel channels — the edge-free showcase |
+| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 | — | §6 |
+| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | retrained K16 network, 70.08% |
+| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 16 parallel channels, edge-free window generation with prefetch | — | §3 |
+| Multipliers / MACs | — | 144 exact LUT multipliers (16 ch × 9 taps), **0 DSP** | — | §3.1 |
+| Pipeline stages | — | 5 named stages (BH, S2–S5) | — | §3.3 |
+| Latency | — | 0.123 ms measured frame median (host-clock, 100-frame soak); 4,096-beat streaming floor ≈ 32.77 µs (derived) | — | [S26], [S27] |
+| Throughput | — | 0.25 positions/cycle interface ceiling; **0.250 sustained — zero gaps, zero internal invalid advances** | positions/cycle | §3.4, [S28] |
+| FPGA utilization | — | full system 12,670 LUT (23.8%), 12,686 FF, 3 BRAM, **0 DSP**; core 8,274 LUT, 6,440 FF | — | [S32] |
+| Maximum frequency | — | 125 MHz met, WNS +0.090 ns | MHz | [S32] |
+| Power estimate | — | 1.806 W full system (core block 0.049 W), Vivado vectorless | W | [S32] |
+| Verification status | golden-model comparison | bit-exact: 115 frames this release, zero mismatches; release first board-qualified in the predecessor campaign and re-qualified on the rebuild | — | [S25], [S26] |
+| FOM | — | full system **1.07×10⁻⁵** · core **6.17×10⁻⁴** | — | §11, [S29] |
+
+**Cross-release observation:** the FOM ranking is set by the K·N² LUT cost of
+the exact-compressor datapath — the leanest release (D32) leads at
+7.47×10⁻⁵ full-system, and every release keeps the DSP term at zero and BRAM
+at the DMA's 3 blocks. The K=16 release trades FOM for channel parallelism
+(16 results/cycle compute rate) and is the release where edge-free operation
+is proven with zero internal invalid advances.
+
+## 10. Runtime reconfiguration and multi-release operation
 
 The platform reprograms the complete FPGA fabric at runtime from embedded Linux
-through the Zynq FPGA Manager: 20 consecutive full reconfigurations plus one after
-a cold boot, each followed by automatic identity re-validation, a stale-state proof
-(STATUS must read exactly the fresh-boot value `0x101` — proving no register, error
-or counter state survived), full parameter re-installation, and a bit-exact
-activation frame. Reconfiguration takes ~183 ms; the OS and application continue
-running throughout [S6][S7]. This capability is the basis for the multi-profile
-operation below.
+through the Zynq FPGA Manager: each switch validates the live BUILD_ID first; a
+mismatch triggers the full sequence (quiesce → detach → FPGA-Manager reload →
+reattach with identity re-validation and stale-state proof → parameter
+installation with readback → anchor-checked activation frame), while a match
+takes the parameter-only path [S19], [S26]. The active catalog contains exactly
+the five qualified releases [S31]; legacy 100 MHz/MAC entries are inadmissible.
 
-### 10.1 Multi-profile operation (implemented and qualified)
-
-The same platform, block design and CVH1 ABI host **five compiled profiles**, each
-a distinct bitstream with its own frozen 128-bit BUILD_ID, compiled geometry
-(independently configurable W/H), and per-profile hardware manifest
-(`software/hardware_<P>.json`, catalog `profiles/m7_profiles.json`) [S19]:
-
-| Profile | N×K, W×H | BUILD_ID (ASCII) | Board-qualified WNS | Parameters / model |
-|---|---|---|---|---|
-| A32 | 3×8, 32×32 | `M4N3K8W32-260911` | +0.066 ns (qualified M4 build [S1]) | trained CIFAR-10 K8, 68.15% [S11] |
-| B32 | 3×16, 32×32 | `BN3K16W32-260912` | +0.009 ns [S16] | retrained K16, 70.08% |
-| C32 | 5×8, 32×32 | `CN5K08W32-260912` | +0.290 ns [S16] | retrained N5, 67.72% |
-| D32 | 3×4, 32×32 | `DN3K04W32-260912` | +0.003 ns [S16] | hand-authored identity / Sobel-X / Sobel-Y / box-blur, ReLU off on Sobels |
-| D640 | 3×4, 640×480 | `D640N3K04-260912` | +0.001 ns (post-physopt, frozen [S20]) | same D filters; recorded LANCZOS resize preprocessing |
-
-Switching is driven by an exclusive-owner manager (`software/m7_switch.py` [S19])
-implementing the approved lifecycle: the live BUILD_ID is read first; a mismatch
-triggers the full sequence (quiesce → detach → FPGA-Manager reload → reattach with
-identity re-validation and the stale-state proof `0x101` → parameter installation
-with readback → anchor-checked activation frame), while a match takes the
-parameter-only path with full identity validation and no reprogramming. Board
-evidence [S16][S17]: a 58-switch matrix covering **all 20 ordered profile pairs**
-with every activation frame anchor-exact; five 100-frame soaks (one per profile,
-zero inter-frame resets); a cold-boot fallback proof (persistence hash verified,
-then factory-identity → B32 reload → anchor-exact frames). Combined with M6 this
-gave **90 verified full-PL reconfigurations** through M7; the E2 matrix rerun
-added 58 (20 provably consecutive A32→B32→A32 cycles), for **148 on record**
-[S21], and the five M9 physical power-cycle boots added four further reload-path
-activations plus one parameter-only activation from factory identity [S23].
-Incompatible geometry is
-admitted only with explicit recorded preprocessing — D640's LANCZOS resize of the
-library image (hash-recorded in `profiles/anchors_m7.json`) is such a record; D640
-frames are validated per frame against their frozen golden-output SHA-256.
+G5 qualification evidence [S26]: the 58-switch matrix (all 20 ordered pairs,
+20 provably consecutive A32↔B32 cycles, every activation anchor-exact), a true
+power-cycle cold boot with byte-exact persistence of all 68 runtime files and
+5 firmware images plus SLCR-verified 125 MHz, and hardware fault injection
+(ABORT-from-IDLE and ABORT-after-START race) with clean RESET recovery and
+anchor-exact proof frames. Combined with the predecessor campaigns, **200+
+full-PL reconfigurations are on record**. Incompatible geometry is admitted
+only with explicit recorded preprocessing — D640's LANCZOS resize of the
+library image (hash-recorded in `profiles/anchors_m7.json`) is such a record;
+D640 frames are validated per frame against their frozen golden-output SHA-256.
 
 ## 11. Design trade-offs and Figure of Merit
 
-- **LUT multipliers vs DSP48:** the 8×8 multipliers are forced to LUT fabric
-  (`use_dsp = "no"` [S10]), keeping all 220 DSPs free and the design's DSP term in
-  the FOM at zero. The cost is LUT count; the routed design still fits at 23.2%.
-- **Zero-BRAM windowing:** SRL-based line buffers keep BRAM usage at the DMA
-  FIFOs only (2 RAMB36-equivalents system-wide [S3]).
+- **Exact LUT multiplication vs DSP48:** all multiplication is performed by
+  CFGLUT5 configuration lookup — the routed design contains **0 DSP blocks in
+  every release**, keeping the FOM's DSP term at zero. The cost is LUT count
+  (worst case 14,162 LUT, 26.6%, for the 25-tap K=8 release [S32]).
+- **Exactness by construction:** the generated Dadda heap compresses to an
+  exact sum (no truncation before the bias), and the discarded-bit shift path
+  makes all 32 shifts exact — a deliberate architecture change that removed
+  the predecessor's shift restriction (§3.3, [S33]).
+- **Zero-BRAM datapath:** SRL line buffers and LUT-based windowing keep BRAM
+  at the DMA FIFOs only (3 RAMB36-equivalents system-wide, identical in all
+  five releases [S32]).
+- **Edge-free with disclosed bubbles:** output prefetch hides row-transition
+  bubbles at K≥8 (A32/B32 external gapless); the K=4 releases expose ~6%
+  (32×32) / ~0.3% (640×480) transition bubbles, disclosed and measured
+  [S28] rather than claimed away.
 - **Fail-stop error architecture:** illegal accesses are rejected with SLVERR in
   RTL (qualified in simulation); from userspace the platform escalates them to a
   process-fatal abort, so the software contract "validate before write" is enforced
-  by construction (observed and documented 2026-09-12; AI_HANDOFF.md §12).
+  by construction. Hardware fault paths were injected and recovered on the
+  qualified releases (§8.2 gate 6).
 - **Self-checking frame completion:** the hardware faults itself if the transfer
   counters do not exactly match the compiled frame quotas at TLAST.
 
 **Figure of Merit** (competition formula [S12]):
-FOM = Throughput / (Power × (LUTs + 50·DSPs + 100·BRAMs)). Throughput is stated as
-the **output-interface ceiling**: the serializer packs 4 int16 values per 64-bit
-beat, giving 4/K positions per clock (0.5 for K=8). This is a theoretical upper
-bound derived from the interface, not a measured sustained rate — measured
-end-to-end frame times are wall-clock intervals and are reported separately
-(§3, §9.1). Using the same interface-ceiling definition for both scopes keeps the
-comparison consistent.
+FOM = Throughput / (Power × (LUTs + 50·DSPs + 100·BRAMs)). Throughput is the
+**sustained external output rate in positions per cycle**: the 4-int16-per-beat
+serializer bounds each release at 4/K positions/cycle, derated by the disclosed
+edge bubbles (§3.4) — the compute core itself produces 1 position/cycle filled.
+Power is the Vivado **vectorless** routed estimate (no activity factors
+measured); BRAM counts RAMB36-equivalents (3). Both scopes are stated: the
+accelerator core (the contest deliverable hierarchy) and the full routed
+system. Reproducible generator: `scripts/packaging/fom_table.py` [S29].
 
-| Scope | Throughput | Power | LUTs | DSP | BRAM | FOM |
-|---|---|---|---|---|---|---|
-| **Accelerator core only** (hierarchical block power + utilization, [S2][S3]) | 0.5 pos/cycle (interface ceiling) | 0.018 W | 7,967 | 0 | 0 | **0.5 / (0.018 × 7,967) ≈ 3.5×10⁻³** |
-| **Full routed system** | 0.5 pos/cycle (interface ceiling) | 1.765 W | 12,362 | 0 | 3 | **0.5 / (1.765 × 12,662) ≈ 2.2×10⁻⁵** |
+| Rank | Release | Throughput (pos/cycle) | Power (W) | LUTs | DSP | BRAM | FOM (full system) | FOM (core) |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| 1 | D32_CFGLUT125 | 0.940 | 1.768 | 7,273 | 0 | 3 | **7.47×10⁻⁵** | **2.31×10⁻²** |
+| 2 | D640_CFGLUT125 | 0.997 | 1.769 | 7,679 | 0 | 3 | **7.09×10⁻⁵** | **1.79×10⁻²** |
+| 3 | A32_CFGLUT125 | 0.500 | 1.785 | 9,145 | 0 | 3 | **2.97×10⁻⁵** | **3.76×10⁻³** |
+| 4 | C32_CFGLUT125 | 0.492 | 1.823 | 14,162 | 0 | 3 | **1.90×10⁻⁵** | **7.88×10⁻⁴** |
+| 5 | B32_CFGLUT125 | 0.250 | 1.806 | 12,670 | 0 | 3 | **1.07×10⁻⁵** | **6.17×10⁻⁴** |
 
-The ≈160× difference between the scopes is precisely the cost of the delivered
-system integration: DMA engines, AXI SmartConnect interconnect, clock/reset
-infrastructure, and the runtime-reconfiguration capability of §10. Both scopes are
-stated rather than the flattering one alone; we further note that 88.6% of
-full-system power (1.563 W of 1.765 W [S2]) is the ARM processing system, not the
-accelerator.
+The core-scope FOM is 260–300× higher than full-system because 88% of
+full-system power (≈1.56 W [S32]) is the ARM processing system and the
+remaining LUTs are DMA/SmartConnect plumbing; both scopes are stated rather
+than the flattering one alone. Historical comparison, clearly labeled: the
+predecessor MAC datapath at 100 MHz reported a full-system FOM of ≈2.2×10⁻⁵
+at the K=8 shape [S24-era report] — the CFGLUT5 release of the same shape
+(A32) improves this to 2.97×10⁻⁵ (+35%) while raising the clock 25% and
+removing the shift restriction, at comparable LUT cost (9,145 vs 12,362
+full-system LUTs — the compressor is *smaller* than the MAC array it
+replaced).
 
 ## 12. Assumptions
 
-1. FOM throughput is the output-interface ceiling in positions per cycle — 4 int16
-   per 64-bit beat → 4/K positions per clock (0.5 at K=8). It is a derived
-   theoretical upper bound, not a measured sustained rate; measured wall-clock
-   frame times are reported separately (§3, §9.1).
-   Power in watts; BRAM counted in RAMB36-equivalents per the Vivado utilization
-   report (value 3 [S3]). The FOM is reported at two scopes (§11) — accelerator
-   core only and full routed system — both computed from Vivado hierarchical
-   outputs [S2][S3]; none assumed.
-2. Power is the Vivado vectorless routed estimate at 100 MHz [S2]; no on-board
+1. FOM throughput is the sustained external output rate in positions per
+   cycle: the serializer's 4-int16-per-beat ceiling (4/K) derated by the
+   disclosed edge bubbles. The compute core's 1-position/cycle filled rate and
+   the K channel-results/cycle rate are stated separately (§3.3); per-position
+   framing is used consistently across all releases and both scopes [S29].
+   BRAM counted in RAMB36-equivalents (3 per release [S32]). None of the FOM
+   inputs is assumed.
+2. Power is the Vivado vectorless routed estimate at 125 MHz [S32]; no on-board
    rail measurement is claimed.
 3. Board latency figures are host-clock wall-clock intervals including DMA setup
-   and Python-side polling overhead; the serializer-bound streaming floor
-   (2,048 output beats ≈ 20.48 µs at K=8) is derived, not measured.
+   and Python-side polling overhead; the per-release streaming floors are
+   derived from beat counts at 125 MHz, not measured.
 4. Utilization percentages use the XC7Z020 capacities stated in the Vivado
-   utilization report [S3].
+   utilization reports [S32].
+5. The board RTC is dead; all board run-ids carry 2018 stamps and are used as
+   identifiers only. Host evidence dates are authoritative [S26].
 
 ## 13. Source index
 
 | # | Source |
 |---|---|
-| S1 | A32 routed timing: `Convlution_Accelerator.runs/impl_1/accelerator_dma_wrapper_timing_summary_routed.rpt` as of commit `5d7e416` (A32 build, 2026-09-11; now overwritten by D640 build — numbers cited in this report were read from that file at A32 closeout) |
-| S2 | A32 routed power: `Convlution_Accelerator.runs/impl_1/accelerator_dma_wrapper_power_routed.rpt` as of commit `5d7e416` (same caveat as S1) |
-| S3 | `m4_final_utilization.rpt` (hierarchical routed utilization, A32 build, frozen at repo root) and `..._utilization_placed.rpt` |
-| S4 | `Convlution_Accelerator.sim/sim_1/behav/xsim/simulate.log` |
+| S1 | Predecessor A32 (MAC) routed timing/power as of commit `5d7e416` — historical (§8.4, §11 comparison) |
+| S2 | Predecessor A32 (MAC) routed power — historical |
+| S3 | `m4_final_utilization.rpt` (hierarchical routed utilization, predecessor build) — historical |
+| S4 | `Convlution_Accelerator.sim/sim_1/behav/xsim/simulate.log` + legacy regression set |
 | S5 | `report/evidence/m5_qualification_transcript.txt` |
 | S6 | `report/evidence/m6_reload_transcript.txt` |
 | S7 | `report/evidence/m6_coldboot_sample.txt` |
 | S8 | `report/evidence/m3_board_runs_transcript.txt` |
-| S9 | `software/hardware.json` |
-| S10 | RTL: `Convlution_Accelerator.srcs/sources_1/new/*.vhd` (per-module cites in text) |
+| S9 | `software/hardware.json` (predecessor manifest), `software/hardware_<ID>_CFGLUT125.json` ×5 (qualified manifests) |
+| S10 | RTL: `Convlution_Accelerator.srcs/sources_1/new/*.vhd` (incl. `cfglut5_kcm.vhd`, generated `cfglut5_bitheap_3x3.vhd` / `cfglut5_bitheap_5x5.vhd`); generator `scripts/generate_cfglut_bitheap.py` |
 | S11 | `golden_model/data/training_log.txt` |
 | S12 | `Important documents/2026 SSCS_Egypt Competition Announcement.pdf` |
 | S13 | `golden_model/` scripts, weights and `data/test_vectors_*/` |
 | S14 | Board boot log (udmabuf 4 MiB @ 0x1F100000, FPGA Manager registered) — submission package |
-| S15 | `Convlution_Accelerator.runs/impl_1/accelerator_dma_wrapper_drc_routed.rpt`, `..._route_status.rpt` |
-| S16 | `report/evidence/m7_switch_B32_first_20260913.txt`, `m7_switch_matrix_20260913.txt`, `m7_coldboot_20260913.txt` (profile-switching campaign); per-profile build records in `M7_STATE.md` — the D32/D640 archived routing reports under `report/profile_builds/<P>/` are pre-physopt intermediates, labeled as such |
-| S17 | `report/evidence/m7_soaks_20260913.txt` (five 100-frame per-profile soaks; carries a verification-mechanism correction banner) |
-| S18 | `report/evidence/m8_cli_board_validation_20260913.txt` (M8 CLI board runs, benchmark; the archived record schema later evolved to `m8-run-record/3`) |
-| S19 | `software/m7_switch.py`, `software/m8_cli.py`, `profiles/m7_profiles.json`, `profiles/anchors_m7.json`, `software/hardware_{A32,B32,C32,D32,D640}.json` |
-| S20 | `report/profile_builds/D640/final/accelerator_dma_wrapper_timing_summary_postroute_physopted.rpt` — D640 final post-physopt routing (WNS +0.001 ns, WHS +0.028 ns, 0 failing endpoints of 30,797), frozen 2026-09-13 |
-| S21 | `report/evidence/e2_extremes_matrix_20260914.txt` (E2: per-profile extremes ×5 + provably-consecutive matrix rerun) |
-| S22 | `report/evidence/m9_soak1000_20260914.txt` (M9 1,000-frame varied soak summary; true schema-v3 records recovered) |
-| S23 | `report/evidence/m9_coldboots_20260914.txt` (five true power-cycle cold boots) |
-| S24 | `report/evidence/schema_v3_records_20260913/` (recovered schema-v3 records + repair-batch revalidation records; see its MANIFEST.md) |
+| S15 | Predecessor DRC/route status reports — historical |
+| S16 | `report/evidence/m7_switch_B32_first_20260913.txt`, `m7_switch_matrix_20260913.txt`, `m7_coldboot_20260913.txt` |
+| S17 | `report/evidence/m7_soaks_20260913.txt` |
+| S18 | `report/evidence/m8_cli_board_validation_20260913.txt` |
+| S19 | `software/m7_switch.py`, `software/m8_cli.py`, `profiles/m7_profiles.json` (active five-release catalog), `profiles/anchors_m7.json` |
+| S20 | Predecessor D640 routing reports — historical |
+| S21 | `report/evidence/e2_extremes_matrix_20260914.txt` |
+| S22 | `report/evidence/m9_soak1000_20260914.txt` |
+| S23 | `report/evidence/m9_coldboots_20260914.txt` |
+| S24 | `report/evidence/schema_v3_records_20260913/` |
+| S25 | `report/research_builds/CFGLUT125_MATRIX/G5_QUALIFICATION_RECORD_20260915.md` (qualification decision; per-release artifact hashes) |
+| S26 | `report/evidence/g5_board_qualification_20260915.txt` (verbatim G5 campaign transcript: singles, extremes, soaks, matrix, cold boot, fault injection) |
+| S27 | `report/evidence/g5_board_records_20260915/` (17 schema-v3 run records, SHA256SUMS `17b4dcc1…`) |
+| S28 | `report/research_builds/CFGLUT125_MATRIX/profile_wrapper_sims_20260914.md` + `wrapper_official_user_20260914T210835Z/` (five-release wrapper-sim matrix; edge metrics) |
+| S29 | `scripts/packaging/fom_table.py` + `report/research_builds/CFGLUT125_MATRIX/fom_results.json` (reproducible FOM/results extraction) |
+| S30 | `report/research_builds/CFGLUT125_MATRIX/firmware_20260915/FIRMWARE_RECORD.md` (Bootgen firmware generation + hashes) |
+| S31 | `report/research_builds/CFGLUT125_MATRIX/catalog_cutover_20260915.md` (active five-release catalog cutover) |
+| S32 | Five routed build records: `report/research_builds/{A32,B32,C32,D32,D640}_CFGLUT125/` (B32 under `rebuild_20260915/`) — build manifests, timing/power/utilization/DRC/route reports, `results.txt`, `BUILD_NOTES.md`; bitstreams `bitstreams/<id>_cfglut125_125mhz.bit/.xsa` |
+| S33 | `report/research_builds/CFGLUT125_MATRIX/geometry_generalization_20260914.md` (generated-compressor geometry regression; canonical generator hashes) |
+| S34 | `software/g5_fault_check.py` (bounded-recovery harness) |
 
 ## 14. Reproduction
 
-All RTL, the scripted block design (`scripts/`), testbenches, golden model and
-board scripts are in the repository. The build is reproducible via
-`scripts/create_accelerator_dma_bd.tcl` + Vivado 2025.2 implementation; board
-experiments via the included scripts — `software/m5_qualify.py`,
-`software/m6_reload.py` (M5/M6 evidence), `software/m7_switch.py --matrix |
---soak X 100` (profile switching and soaks) and `software/m8_cli.py run |
-benchmark | list | record` (file-driven operation and the run archive) — with
-`software/hardware_<P>.json` and `profiles/m7_profiles.json` as platform
-identity [S9][S19].
+All RTL (including the generated compressor entities and their deterministic
+generator), the scripted block design, testbenches, golden model and board
+software are in the repository. Per-release builds reproduce via
+`scripts/research_release/research_build.tcl` (isolated projects under `work/`),
+with the FOM table regenerating from the routed reports via
+`scripts/packaging/fom_table.py` [S29]. Board experiments use
+`software/m7_switch.py --matrix | --profile <REL> N` and
+`software/m8_cli.py run | extremes | soak | benchmark | list | record`
+against the active five-release catalog [S19], [S31]; the fault-injection
+harness is `software/g5_fault_check.py` [S34].
 
 ---
 
@@ -443,7 +631,7 @@ Channel slots occupy `0x0000–0x3FFF`, one 0x100-byte block per channel, channe
 
 | Offset in slot | Access | Content |
 |---|---|---|
-| `0x00`, `0x04`, `0x08` | RW | Packed signed-8 coefficients; coefficient 0 in bits 7:0 of word 0 (N=3 → 9 coefficients, lane 0 of the last word only) |
+| `0x00`, `0x04`, `0x08` | RW | Packed signed-8 coefficients; coefficient 0 in bits 7:0 of word 0 (N=3 → 9 coefficients, N=5 → 25, lane 0 of the last word only) |
 | `0xF8` | RW | Bias, signed 24-bit value sign-extended in the 32-bit word |
 | `0xFC` | RW | Bits 4:0 = shift (0..31); bit 8 = ReLU enable |
 | all other offsets | — | SLVERR; reads return zero; no state change |
@@ -455,29 +643,41 @@ Global block (fixed offsets, independent of K):
 | `0x4100` | MAGIC | RO | `0x43564831` ("CVH1") |
 | `0x4104` | ABI_VERSION | RO | `0x00010000` (major 1, minor 0) |
 | `0x4108` | CAPABILITIES | RO | `0x000001FF` |
-| `0x410C` | STATUS | RO | bit0 IDLE · 1 BUSY · 2 CORE_COMPLETE · 3 OUTPUT_DRAINED · 4 DONE · 5 ERROR · 6 FAULT · 7 PARAM_COMPLETE · 8 QUIESCENT (reset `0x101`) |
+| `0x410C` | STATUS | RO | bit0 IDLE · 1 BUSY · 2 CORE_COMPLETE · 3 OUTPUT_DRAINED · 4 DONE · 5 ERROR · 6 FAULT · 7 PARAM_COMPLETE · 8 QUIESCENT (reset `0x101`; `0x181` with retained parameters) |
 | `0x4110` | COMMAND | WO | 1 = START · 2 = RESET · 4 = ABORT (other values: SLVERR + BAD_VALUE) |
 | `0x4114` | EVENT_CLEAR | WO | sticky event clearing (IDLE only) |
 | `0x4118` | ERROR_FLAGS | RO/clear | bits 0..8: BAD_ADDRESS, BAD_ACCESS, BAD_STROBE, BAD_VALUE, BUSY_PARAMETER_WRITE, BAD_COMMAND_STATE, INPUT_FRAME, INTERNAL, ABORTED |
-| `0x4120` / `0x4124` | IMAGE_W / IMAGE_H | RO | 32 / 32 |
-| `0x4128` / `0x412C` | KERNEL_N / CHANNEL_K | RO | 3 / 8 |
+| `0x4120` / `0x4124` | IMAGE_W / IMAGE_H | RO | compiled per release (32/32 or 640/480) |
+| `0x4128` / `0x412C` | KERNEL_N / CHANNEL_K | RO | compiled per release (3 or 5 / 4, 8, 16) |
 | `0x4130` | WIDTHS_0 | RO | [7:0] pixel width 8 · [15:8] weight width 8 |
-| `0x4134` | WIDTHS_1 | RO | [7:0] sum width 21 · [15:8] accumulator width max(sum, bias)+1 |
-| `0x4138` / `0x413C` | EXPECTED_INPUT/OUTPUT_BYTES | RO | 1156 / 16384 |
+| `0x4134` | WIDTHS_1 | RO | [7:0] sum width (21 at N=3, 22 at N=5) · [15:8] accumulator width 25 |
+| `0x4138` / `0x413C` | EXPECTED_INPUT/OUTPUT_BYTES | RO | compiled per release (1156/16384 at 32×32 K8; 309444/2457600 at D640) |
 | `0x4140`–`0x414C` | INPUT_ACCEPT · INPUT_CONSUMED · CORE_ACCEPT_PIXELS · OUTPUT_ACCEPT_BYTES | RO | live per-frame counters |
-| `0x4150`–`0x415C` | BUILD_ID_0..3 | RO | `M4N3K8W32-260911` (word 0 = bits 31:0) |
+| `0x4150`–`0x415C` | BUILD_ID_0..3 | RO | per-release frozen identity (§9) |
 | `0x4160` | DMA_LENGTH_WIDTH | RO | 22 |
 | `0x4000–0x40FF` | legacy space | — | decommissioned: SLVERR, reads zero, writes never control the datapath |
 
 ## Appendix B — submission bundle
 
+Two top-level directories, each with a `SHA256SUMS.txt` and a README:
+
+**`submission/src/`** — everything needed to rebuild and re-verify:
+
 | Item | Location |
 |---|---|
-| RTL sources | `Convlution_Accelerator.srcs/sources_1/new/*.vhd` (13 files) |
-| Testbenches | `Convlution_Accelerator.srcs/sim_1/new/*.vhd` (10) + `verification/axi_address_normalization/` |
-| Scripted block design | `scripts/create_accelerator_dma_bd.tcl`, `scripts/zedboard_ps_platform.tcl`, tracked `accelerator_dma.bd` |
-| Golden model + training | `golden_model/*.py`, `golden_model/data/weights/`, `golden_model/data/test_vectors_{custom,trained,zeros,ones}/` |
-| Board software | `software/conv_lab/`, `software/m4_filebackend.py`, `software/m5_qualify.py`, `software/m6_reload.py`, `software/m7_switch.py`, `software/m8_cli.py`, `software/hardware.json`, `software/hardware_{A32,B32,C32,D32,D640}.json`, `profiles/` |
-| FPGA reports | timing, power, utilization, DRC, route status (`Convlution_Accelerator.runs/impl_1/*.rpt`, `m4_final_utilization.rpt`, `report/profile_builds/` frozen per-profile copies) |
-| Board-run evidence | `report/evidence/*.txt` (9 transcripts), `debug_captures/` (Sobel renders, ILA captures) |
-| Platform identity | `software/hardware.json` (BUILD_ID, device map, artifact hashes) |
+| RTL sources | `rtl/*.vhd` — the 16 active files incl. `cfglut5_kcm.vhd` and the generated `cfglut5_bitheap_3x3/5x5.vhd`, plus `scripts/generate_cfglut_bitheap.py` |
+| Testbenches | `tb/` — datapath, geometry and wrapper regressions incl. `tb_conv_axis_wrapper` and the CFGLUT5 geometry tests |
+| Golden model | `golden_model/` — `golden_conv.py`, training scripts, weights, `data/test_vectors_*/` |
+| Test images + expected outputs | `vectors/` — canonical input images and per-configuration expected-output files |
+| Block design + constraints | `bd/` — scripted BD, PS platform, XDC |
+| Board software | `software/` — `m7_switch.py`, `m8_cli.py`, `m4_filebackend.py`, `conv_lab/`, manifests, catalog, anchors |
+
+**`submission/docs/`** — the documents:
+
+| Item | Location |
+|---|---|
+| This report | `report.md` (+ rendered PDF/HTML) |
+| Presentation | `presentation.pptx` |
+| FPGA reports | `fpga_reports/<RELEASE>/` — timing, power, utilization, DRC, route, methodology, check_timing per release + build manifests |
+| Board-run evidence | `board_evidence/` — G5 qualification transcript, schema-v3 run records, Sobel render, boot identity |
+| FOM table | `fom_results.json` + generator |
