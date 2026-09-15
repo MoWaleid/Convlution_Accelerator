@@ -1433,6 +1433,38 @@ five.
 All are BUILT / BOARD_VALIDATION=NOT_RUN. Next: §19.7 — `.bit.bin` firmware
 generation, manifest hash binding, catalog cutover, then board qualification.
 
+### 18.18 Firmware generated and manifests admitted — §19.7 steps 1-2 done (2026-09-15)
+
+Executed on the Windows host with Bootgen v2025.2 (proven M6 BIF form,
+`-arch zynq -process_bitstream bin`; `-w on` only for B32 whose dated
+preservation copy was re-verified immediately before its canonical overwrite).
+All five `bitstreams/<id>_cfglut125_125mhz.bit.bin` images are 4,045,568 B
+with hashes bound in `software/hardware_<ID>_CFGLUT125.json`: A32
+`880505fe…461997a`, B32 `757595d4…db95dea`, C32 `f046eec5…716909`,
+D32 `5f83266d…a81692`, D640 `20289d5e…2f6ea96`. Full record, BIFs and bootgen
+logs: `report/research_builds/CFGLUT125_MATRIX/firmware_20260915/`.
+
+Admission (`scripts/research_release/admit_built_manifests.py`, fail-closed)
+verified per release: routed-build manifest identity (shape/BUILD_ID/
+125 MHz/nonnegative slack/NOT_RUN), catalog release-entry agreement, canonical
+artifact existence, and canonical BIT/XSA hashes equal to the build manifests.
+It refused to bind on one earlier run (it had read the older B32 build's
+manifest instead of the `rebuild_20260915/` one) — nothing was written until
+the path was corrected and all five passed. All five runtime manifests are
+now `release_status: built-unqualified`, `deployable: true` (controlled
+test-loadable only; qualification remains external evidence). B32's manifest
+now binds the rebuild's hashes; the old qualified firmware `4e827310…` stays
+preserved at `bitstreams/history/20260914_b32_board_qualified/`.
+
+Host regression after the state change: candidate-undeployable mocks (the
+mock now fabricates the pre-build candidate state in its stage), `--profile
+B32 3`, `--matrix-seq`, the full M8 mock suite, and `test_m7_profiles.py`
+12/12 — all PASS.
+
+Next: §19.7 step 3 — cut the active catalog/runtime to exactly the five
+releases (reject placeholders, missing firmware, 100 MHz and MAC entries),
+then step 4 runtime staging on the proven 125 MHz PetaLinux image.
+
 ## 19. GLM RESUME RUNBOOK — AUTHORITATIVE FROM THIS POINT (2026-09-15)
 
 This section supersedes every older "next action", pending-build count and
@@ -1529,13 +1561,14 @@ C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — §19.7 firmware and catalog cutover
+### 19.4 Immediate action — §19.7 step 3 catalog cutover
 
-All five routed builds are frozen (§18.17). The next action is §19.7 step 1:
-generate the five FPGA-manager `.bit.bin` firmware images with Bootgen Zynq
-`-process_bitstream bin` (user-run, one block), verify hashes, then bind
-canonical BIT/BIN filenames/hashes in the candidate manifests and cut the
-active catalog/runtime to exactly the five releases.
+§19.7 steps 1-2 are done (§18.18): five firmware images generated and hashed,
+all five runtime manifests admitted as `built-unqualified` / `deployable:true`
+with canonical BIT/BIN hash bindings. Next: step 3 — cut the active
+catalog/runtime to exactly the five releases, rejecting placeholders, missing
+firmware, 100 MHz and MAC entries (loader + catalog + ORDER + tests), then
+step 4 runtime staging on the proven 125 MHz PetaLinux image (user relay).
 
 ### 19.5 Mandatory post-build acceptance
 

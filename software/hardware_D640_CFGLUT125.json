@@ -38,12 +38,12 @@
   },
   "layout_note": "runtime derives the approved four-guard layout via conv_lab/compute_layout from expected byte counts and the discovered buffer; the manifest deliberately carries no rx_offset (IP-07 single source of truth)",
   "artifacts": {
-    "bitstream_sha256": "TBD_FIRST_BUILD",
-    "firmware_bin_sha256": "TBD_FIRST_BUILD",
+    "bitstream_sha256": "6e95188e197f402bf9029295b3d4584111aa7b5afbb06802045596f49f41cca3",
+    "firmware_bin_sha256": "20289d5e0405e2e62e46d95db2367a3197434173f8bef6689b5d7e41e2f6ea96",
     "bitstream_file": "bitstreams/d640_cfglut125_125mhz.bit",
     "firmware_file": "bitstreams/d640_cfglut125_125mhz.bit.bin",
-    "note": "placeholder hashes are deliberately fail-closed; this candidate manifest is not deployable until a routed build replaces TBD_FIRST_BUILD with canonical 64-hex SHA-256 values (GLM-F7)"
+    "note": "canonical routed bitstream and bootgen-generated FPGA-manager firmware bound from the frozen five-build record (AI_HANDOFF.md SS18.17); BUILT, BOARD_VALIDATION=NOT_RUN"
   },
-  "release_status": "candidate-unbuilt",
-  "deployable": false
+  "release_status": "built-unqualified",
+  "deployable": true
 }

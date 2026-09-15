@@ -38,10 +38,12 @@
   },
   "layout_note": "runtime derives the approved four-guard layout via conv_lab/compute_layout from expected byte counts and the discovered buffer; the manifest deliberately carries no rx_offset (IP-07 single source of truth)",
   "artifacts": {
-    "bitstream_sha256": "133713c5eca1f8a41a7baa40719e1c101364f3a835111028db925a7d7a309858",
-    "firmware_bin_sha256": "4e827310eb7f1e8c9278d0c9b36905eb4b7c766d9878a3a551e1909843d5b73b",
+    "bitstream_sha256": "2388f249aa1ae8c4bce2b9aa0cfd612acecf11d0e4cf595f020ff8bf4b8abcdd",
+    "firmware_bin_sha256": "757595d54cef273d7975f1f7e6ce783e41e0ccafcab8702555ea4a87ddb95dea",
     "bitstream_file": "bitstreams/b32_cfglut125_125mhz.bit",
     "firmware_file": "bitstreams/b32_cfglut125_125mhz.bit.bin",
-    "note": "first isolated research build passed timing, DRC and route gates; board validation remains NOT_RUN"
-  }
+    "note": "canonical routed bitstream and bootgen-generated FPGA-manager firmware bound from the frozen five-build record (AI_HANDOFF.md SS18.17); BUILT, BOARD_VALIDATION=NOT_RUN"
+  },
+  "release_status": "built-unqualified",
+  "deployable": true
 }

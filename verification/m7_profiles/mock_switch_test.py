@@ -396,8 +396,18 @@ if __name__ == "__main__":
                 json.dumps(repo_catalog, indent=2))
             for cand in ("A32_CFGLUT125", "C32_CFGLUT125",
                          "D32_CFGLUT125", "D640_CFGLUT125"):
-                shutil.copyfile(REPO / f"software/hardware_{cand}.json",
-                                STAGE / f"hardware_{cand}.json")
+                cand_doc = json.loads(
+                    (REPO / f"software/hardware_{cand}.json").read_text())
+                # The repo manifests are admitted since the five-build
+                # freeze (built-unqualified, deployable); fabricate the
+                # pre-build candidate state in the stage so this negative
+                # test keeps proving the GLM-F7 fail-closed gate.
+                cand_doc["artifacts"]["bitstream_sha256"] = "TBD_FIRST_BUILD"
+                cand_doc["artifacts"]["firmware_bin_sha256"] = "TBD_FIRST_BUILD"
+                cand_doc["release_status"] = "candidate-unbuilt"
+                cand_doc["deployable"] = False
+                (STAGE / f"hardware_{cand}.json").write_text(
+                    json.dumps(cand_doc, indent=2))
             program_profile("A32")   # board starts with the A32 build live
             before_acc = bytes(acc_regs.mem)
             before_dma = bytes(dma_regs.mem)
