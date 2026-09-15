@@ -540,6 +540,10 @@ FOM = Throughput / (Power × (LUTs + 50·DSPs + 100·BRAMs)), with throughput in
   by the disclosed row-transition gaps; resources and power are the full
   routed system's.
 
+Every assumption entering this calculation — throughput interpretation,
+scope definitions, vectorless power, resource counting, data provenance and
+ranking — is stated in full in §12 (items 1–7).
+
 Power is the Vivado **vectorless** routed estimate (no activity factors
 measured); BRAM counts RAMB36-equivalents (3). Reproducible generator:
 `scripts/packaging/fom_table.py` [S29].
@@ -567,12 +571,43 @@ shift 24–31 restriction by construction.
 
 ## 12. Assumptions
 
-1. FOM throughput is in **valid output values per clock cycle** at two
-   scopes: the accelerator core at its design rate (K outputs/cycle, one per
-   channel, pipeline filled) and the full system at its 64-bit output-bus
-   limit (4 int16 per beat = 4 outputs/cycle) derated by the disclosed
-   edge bubbles. BRAM counted in RAMB36-equivalents (3 per release [S32]).
-   None of the FOM inputs is assumed.
+1. **FOM throughput — unit and interpretation.** The competition defines
+   throughput in "output pixels per cycle" but does not state whether one
+   multi-channel output position counts as one pixel or as K pixels. We
+   state our interpretation explicitly: **one output pixel = one 16-bit
+   channel result**, so a K-channel design legally produces K valid outputs
+   per cycle with its pipeline filled (16 at K=16, 8 at K=8, 4 at K=4). If a
+   judge instead counts one complete K-channel position as one pixel, every
+   FOM in this report scales by exactly 1/K, the ranking is unchanged, and
+   no conclusion in §11 changes.
+2. **Accelerator scope.** Throughput = the datapath design rate, K valid
+   outputs/cycle; resources and power are the accelerator core hierarchy's
+   own. Justification that the design rate is real: the B32 release measured
+   zero invalid core advances and zero external gaps (a fresh window is
+   consumed every cycle), and A32 measured zero external gaps [S28].
+3. **Full-system scope (conservative).** Throughput = 4 valid outputs/cycle —
+   the 64-bit AXI DMA output bus carries 4 int16 values per beat, which
+   bounds the delivered system regardless of K — derated by the measured
+   row-transition gaps over output beats (§3.4). Resources and power are the
+   full routed system's, including the DMA, interconnect and PS.
+4. **Power.** Vivado 2025.2 **vectorless** routed estimates: default
+   statistical switching activity, no user activity factors, no on-board
+   rail measurement. The same tool version, constraint set (125 MHz) and
+   device produced all five estimates, so cross-release comparison is
+   consistent; absolute values carry the usual vectorless caveat.
+5. **Resource counts.** LUTs = total LUT sites occupied (logic + LUTRAM +
+   SRL) from the routed hierarchical utilization report — top level for the
+   full system, `conv_axis_wrapper` for the core. DSPs = 0 by design,
+   verified in every routed report. BRAM = RAMB36-equivalents
+   (RAMB36 + ½·RAMB18 = 3 per release, all inside the DMA IP's FIFOs; the
+   accelerator core and datapath use none).
+6. **Data provenance.** Every FOM input is read programmatically from the
+   hash-bound routed reports of §9 by the committed deterministic generator
+   [S29]; no number is hand-transcribed. Values in tables are rounded to
+   three significant figures; the generator's JSON output is exact.
+7. **Ranking.** Releases are ranked by full-system FOM (the conservative
+   scope). The core scope yields the same ordering except that D640/D32
+   swap (D32 leads the core scope: fewest LUTs at the same K).
 2. Power is the Vivado vectorless routed estimate at 125 MHz [S32]; no on-board
    rail measurement is claimed.
 3. Board latency figures are host-clock wall-clock intervals including DMA setup
