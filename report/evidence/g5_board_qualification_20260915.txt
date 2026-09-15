@@ -153,3 +153,30 @@ fpga_manager fpga0: writing m7_A32_CFGLUT125.bin to Xilinx Zynq FPGA Manager
   [A32_CFGLUT125] frame 3 OK 0.125 ms
   cleanup: final STATUS 0x00000181
 M7_SWITCH A32_CFGLUT125: PASS (3 frames, reload=yes)
+
+## Bounded-recovery fault injection (§19.7 step 6)
+Harness: software/g5_fault_check.py (register-only; identity-gated; commit
+1bffc31; delivered via 4-chunk verified serial transport, per-chunk md5
+gates — a first 93-line single-paste attempt corrupted in transit and was
+correctly rejected by the md5 gate before decode).
+First run note: ABORT-from-IDLE fault latched correctly on silicon; the
+harness then failed its own over-strict equality check (expected factory
+0x101 after RESET) — real CVH1 silicon retains PARAM_COMPLETE across RESET
+(0x181), matching the m4_filebackend cleanup contract. Harness fixed to
+bits-set semantics, re-validated against a retention-aware mock, re-pushed,
+re-run:
+$ sudo -n python3 /home/petalinux/g5_fault_check.py A32_CFGLUT125
+G5 FAULT CHECK: target A32_CFGLUT125 (EF125K08N3W32R01)
+  live identity matches manifest
+  ABORT-from-IDLE: FAULT latched, ABORTED alone in ERROR_FLAGS
+  recovered to clean quiescent state
+  ABORT race: FAULT path taken, recovered
+G5 FAULT CHECK: PASS (A32_CFGLUT125 fault paths + recovery clean)
+Recovery proof frame via the qualified runtime path:
+$ sudo -n python3 /home/petalinux/m8_cli.py run --profile A32_CFGLUT125 --frames 1
+  admitted A32_CFGLUT125 parameter bundle 367fb1f5a45a3271
+  live build already A32_CFGLUT125: parameter re-admission only
+  [A32_CFGLUT125] activation OK 0.139 ms sha=cb3975593073652b
+  cleanup: final STATUS 0x00000181
+M8 RUN 20180309T232234Z-A32_CFGLUT125-library_alley_cat: PASS (1 frames, median 0.145 ms)
+# Also proven in the first (fixed-harness) round: m8 run 20180309T230706Z PASS.
