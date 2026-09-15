@@ -1589,16 +1589,24 @@ C32/D640/A32/D32 BITs are ignored under `bitstreams/` with hashes in tracked
 records; their XSAs/reports are tracked. New `.bit.bin` and board
 qualification are open.
 
-### 19.4 Immediate action — §19.7 step 4 runtime staging (user relay)
+### 19.4 Immediate action — §19.7 step 4 board install (user relay)
 
-§19.7 steps 1-3 are done (§18.18, §18.19): five firmware images generated
-and hashed, all five runtime manifests admitted (`built-unqualified` /
-`deployable:true`), and the active catalog/runtime cut to exactly the five
-releases. Next: build the runtime transport archive (five firmware images,
-cut catalog, five admitted manifests, anchors, canonical bundles,
-m7_switch/m8_cli/conv_lab runtime files) with SHA256 manifest, hand the
-user the staged board/VM relay commands (recovery checkpoint first,
-`sudo -v` in its own block), then step 5 per-release board qualification.
+The runtime transport archive is built and verified:
+`C:\VMShare\g5_runtime_20260915T024500Z.tar.gz` (2,036,229 B, SHA-256
+`9d92785537f858e5807e39711dc2711496fbf1588838324b028ac7b9683587b3`;
+68 payload files + `SHA256SUMS.txt` inside
+`g5_runtime_20260915T024500Z/`, extraction re-hash verified). Contents,
+mirroring board destinations: `home/petalinux/{m7_switch,m8_cli,
+m4_filebackend}.py`, `home/petalinux/conv_lab/{__init__,errors,strict,
+types,preprocessing,_decoder_worker,profiles,dma}.py`,
+`home/petalinux/profiles/{m7_profiles.json,anchors_m7.json,
+hardware_<ID>_CFGLUT125.json x5, A32..D640 bundle dirs}`,
+`lib/firmware/m7_<ID>_CFGLUT125.bin x5` (from the five canonical
+`.bit.bin` images). Transfer is sneakernet via the SD FAT partition
+(2 MB archive). Board flow: verify archive hash + member hashes,
+recovery checkpoint of the current runtime, install explicit files
+(petalinux for /home/petalinux, sudo only for /lib/firmware), verify
+byte-for-byte, sanity-import the cut catalog, then step 5 qualification.
 
 ### 19.5 Mandatory post-build acceptance
 
