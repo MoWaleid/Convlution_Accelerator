@@ -13,9 +13,9 @@ STAGES = [
     ("S5  POST-PROCESS", "round-half-up\nsaturate int16\nReLU (per-channel)"),
 ]
 
-fig, ax = plt.subplots(figsize=(15.5, 3.4), dpi=200)
+fig, ax = plt.subplots(figsize=(16.8, 3.4), dpi=200)
 ax.axis("off")
-bw, bh, gap = 2.75, 1.7, 0.45
+bw, bh, gap = 2.75, 1.7, 0.42
 x0, y0 = 0.4, 0.8
 ax.annotate("from edge-free window generator:\nN x N window (shared, K channels)", xy=(x0, y0 + bh / 2),
             xytext=(x0 - 0.05, y0 + bh + 0.45), fontsize=9, ha="left", color="#444444")
@@ -32,11 +32,10 @@ for i, (title, body) in enumerate(STAGES):
     else:
         ax.add_patch(FancyArrowPatch((x0 - 0.55, y0 + bh / 2), (x, y0 + bh / 2),
                                      arrowstyle="-|>", mutation_scale=16, color="#2c5aa0", lw=1.6))
-xe = x0 + 4 * (bw + gap)
+xe = x0 + len(STAGES) * (bw + gap)
 ax.add_patch(FancyArrowPatch((xe - gap, y0 + bh / 2), (xe + 0.15, y0 + bh / 2),
                              arrowstyle="-|>", mutation_scale=16, color="#2c5aa0", lw=1.6))
-ax.text(xe + 0.25, y0 + bh / 2, "int16 result\n(1 channel result\nper clock)", fontsize=9, va="center")
-ax.annotate("valid/enable pipelined alongside data (4-cycle latency)", xy=(x0, y0 - 0.25),
+ax.annotate("valid/enable pipelined alongside data; compute latency = registered Dadda levels + 4 stages", xy=(x0, y0 - 0.25),
             fontsize=9, color="#666666")
 ax.set_xlim(-0.2, xe + 2.2)
 ax.set_ylim(0.1, y0 + bh + 0.9)
