@@ -60,7 +60,7 @@ class FixtureDecoder:
                       canonical_sha256=sha256(self.pixels),pillow_version="SYNTHETIC-NO-DECODER",
                       decoder_versions=[dict(name="fixture",version="NOT-RUN")],preprocessing_version="1",
                       decode_policy=dict(max_source_bytes=8388608,max_width=4096,max_height=4096,
-                                         max_pixels=2097152,resource_strategy=RESOURCE_STRATEGY),
+                                         max_pixels=12000000,resource_strategy=RESOURCE_STRATEGY),
                       extensions=dict(evidence="SYNTHETIC-TEST-DOUBLE-NOT-LINUX-ENFORCEMENT"))
         return Decoded(self.pixels,encoded_json(record))
 

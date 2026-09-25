@@ -26,6 +26,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -36,6 +37,7 @@ SPEC_KEYS = ("release_id", "shape_id", "n", "k", "w", "h", "build_id_hex",
              "clock_mhz", "profile", "render_config_pkg", "sources")
 CONFIG_PKG = ROOT / "Convlution_Accelerator.srcs/sources_1/new/config_pkg.vhd"
 CATALOG = ROOT / "profiles/m7_profiles.json"
+DEVELOPMENT_CATALOG = ROOT / "profiles/development_profiles.json"
 BUILD_TCL = ROOT / "scripts/research_release/research_build.tcl"
 BLOCK_DESIGN = ROOT / (
     "Convlution_Accelerator.srcs/sources_1/bd/accelerator_dma/"
@@ -64,7 +66,28 @@ def parse_spec(release_id):
 
 
 def load_catalog():
-    return json.loads(CATALOG.read_text())
+    catalog = json.loads(CATALOG.read_text())
+    if DEVELOPMENT_CATALOG.is_file():
+        development = json.loads(DEVELOPMENT_CATALOG.read_text())
+        for release_id, profile in development.get("profiles", {}).items():
+            if release_id in catalog.get("profiles", {}) or \
+                    release_id in catalog.get("releases", {}):
+                raise RuntimeError(
+                    f"{release_id}: development profile collides with the "
+                    "qualified catalog"
+                )
+            catalog.setdefault("profiles", {})[release_id] = profile
+            shape_id = (f"N{int(profile['N'])}K{int(profile['K'])}"
+                        f"W{int(profile['W'])}H{int(profile['H'])}-CVH1")
+            catalog.setdefault("releases", {})[release_id] = {
+                "shape_id": shape_id,
+                "bundle_dir": None,
+                "bundle_sha256": None,
+                "manifest": None,
+                "build_id_hex": profile["build_id"],
+                "status": "DEVELOPMENT_UNQUALIFIED",
+            }
+    return catalog
 
 
 def crosscheck(spec, catalog):
@@ -185,7 +208,7 @@ def source_paths(spec, release_id):
 
 
 def build_input_paths(release_id):
-    return [
+    paths = [
         Path(__file__).resolve(),
         BUILD_TCL,
         spec_path(release_id),
@@ -193,6 +216,9 @@ def build_input_paths(release_id):
         BLOCK_DESIGN,
         BOARD_XDC,
     ]
+    if DEVELOPMENT_CATALOG.is_file():
+        paths.append(DEVELOPMENT_CATALOG)
+    return paths
 
 
 def do_check(release_id):
@@ -211,7 +237,12 @@ def do_check(release_id):
                            "\n  ".join(missing))
     print(f"SPEC OK: {release_id} shape={spec['shape_id']} "
           f"clock={spec['clock_mhz']} MHz, build_id {spec['build_id_hex'][:16]}…")
-    print(f"catalog binding: {rel['shape_id']} / {rel['bundle_sha256'][:16]}…")
+    if rel.get("bundle_sha256"):
+        print(f"qualified catalog binding: {rel['shape_id']} / "
+              f"{rel['bundle_sha256'][:16]}…")
+    else:
+        print(f"development hardware profile: {rel['shape_id']} "
+              "(no runtime bundle; not board-qualified)")
     for p in paths:
         if p == out_dir(release_id) / "src" / "config_pkg.vhd":
             print("  (rendered at prepare/build)  config_pkg.vhd")
@@ -269,13 +300,85 @@ def do_manifest(release_id):
     return manifest
 
 
+def do_publish(release_id):
+    """Preserve the compact release evidence outside the disposable Vivado tree."""
+    spec = parse_spec(release_id)
+    crosscheck(spec, load_catalog())
+    source = out_dir(release_id) / "artifacts"
+    manifest_path = source / "build_manifest.json"
+    if not manifest_path.is_file():
+        raise RuntimeError(
+            f"{release_id}: build manifest missing; run the manifest command first"
+        )
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("release_id") != release_id:
+        raise RuntimeError(f"{release_id}: artifact manifest identity mismatch")
+
+    target = ROOT / "releases" / release_id
+    if target.exists():
+        raise RuntimeError(
+            f"{release_id}: published directory already exists: {target}"
+        )
+    target.mkdir(parents=True)
+    excluded = {"research.routed.dcp"}
+    copied = []
+    for item in sorted(source.iterdir()):
+        if not item.is_file() or item.name in excluded:
+            continue
+        destination = target / item.name
+        shutil.copy2(item, destination)
+        if hashlib.sha256(item.read_bytes()).digest() != \
+                hashlib.sha256(destination.read_bytes()).digest():
+            raise RuntimeError(f"copy verification failed: {item.name}")
+        copied.append(destination)
+    if not copied:
+        raise RuntimeError(f"{release_id}: no release artifacts were copied")
+    sums = "".join(
+        f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n"
+        for path in copied
+    )
+    (target / "SHA256SUMS.txt").write_text(sums, newline="\n")
+    print(f"PUBLISHED: {release_id} -> {target} ({len(copied)} files)")
+    return target
+
+
+def do_clean(release_id, confirmed=False):
+    """Delete only a generated Vivado tree whose published copy verifies."""
+    if not confirmed:
+        raise RuntimeError("clean requires --yes")
+    generated = out_dir(release_id).resolve()
+    expected_parent = (ROOT / "work").resolve()
+    if generated.parent != expected_parent or \
+            generated.name != f"research_{release_id}":
+        raise RuntimeError(f"refusing unsafe generated path: {generated}")
+    published = ROOT / "releases" / release_id
+    sums_path = published / "SHA256SUMS.txt"
+    if not sums_path.is_file():
+        raise RuntimeError(
+            f"{release_id}: published checksums missing; run publish first"
+        )
+    for line in sums_path.read_text().splitlines():
+        expected, name = line.split("  ", 1)
+        path = published / name
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise RuntimeError(f"{release_id}: published verification failed: {name}")
+    if not generated.is_dir():
+        print(f"ALREADY CLEAN: {generated}")
+        return
+    shutil.rmtree(generated)
+    print(f"REMOVED GENERATED BUILD: {generated}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("command", choices=["check", "verify-render", "build",
-                                        "prepare", "manifest"])
+                                        "prepare", "manifest", "publish",
+                                        "clean"])
     ap.add_argument("release_id")
     ap.add_argument("--vivado", default="vivado")
     ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--yes", action="store_true",
+                    help="confirm deletion for the clean command")
     args = ap.parse_args()
 
     if args.command == "check":
@@ -286,6 +389,12 @@ def main():
         return
     if args.command == "manifest":
         do_manifest(args.release_id)
+        return
+    if args.command == "publish":
+        do_publish(args.release_id)
+        return
+    if args.command == "clean":
+        do_clean(args.release_id, args.yes)
         return
 
     spec = do_check(args.release_id)          # check + (render below)

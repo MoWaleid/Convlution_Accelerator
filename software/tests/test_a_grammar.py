@@ -74,9 +74,9 @@ class GrammarTests(unittest.TestCase):
             layout(640,480,3,8,fixture_allocation())
 
     def test_joint_source_limits(self):
-        for values in ((8388608,4096,512),(1,512,4096),(1,2048,1024)):
+        for values in ((8388608,4096,2160),(1,3000,4000),(1,3840,2160)):
             source_bounds(*values)
         for values in ((8388609,1,1),(1,4097,1),(1,1,4097),(1,4096,4096),
-                       (True,1,1),(1,0,1),(1,2049,1024)):
+                       (True,1,1),(1,0,1),(1,4001,3000)):
             with self.subTest(values=values),self.assertRaises(AdmissionError):
                 source_bounds(*values)

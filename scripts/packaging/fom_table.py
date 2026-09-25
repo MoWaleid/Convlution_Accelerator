@@ -8,10 +8,11 @@ CFGLUT125 releases in both resource scopes:
   - accelerator core (conv_axis_wrapper hierarchy; the contest deliverable
     core, excluding AXI DMA/SmartConnect plumbing)
 
-FOM = Throughput / (Power * (LUTs + 50*DSPs + 100*BRAMs)), throughput in
-output positions per cycle. Design throughput is 1.0 position/cycle once
-filled; C32/D32/D640 carry disclosed row-transition bubbles (wrapper-sim
-record) so their effective rates are also shown.
+FOM = Throughput / (Power * (LUTs + 50*DSPs + 100*BRAMs)), with throughput
+reported in valid 16-bit output values per cycle. The accelerator-core scope
+uses K outputs/cycle once filled. The full-system scope uses the 64-bit output
+bus ceiling of four int16 values/cycle, derated by the disclosed transition
+gaps for C32/D32/D640.
 
 Power is the Vivado vectorless estimate (no activity factors), stated as
 such. BRAMs counted as RAMB36 equivalents (2x RAMB36 + 2x RAMB18 = 3).

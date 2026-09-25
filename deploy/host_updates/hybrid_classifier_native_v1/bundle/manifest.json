@@ -1,0 +1,137 @@
+{
+  "checkpoint_metadata": {
+    "boundary_mode": "same",
+    "epoch": 42,
+    "format_version": 2,
+    "input_scale_divisor": 256,
+    "input_size": 32,
+    "kernel_size": 3,
+    "num_channels": 16,
+    "output_fraction_bits": 8,
+    "test_acc": 70.08
+  },
+  "checkpoint_sha256": "2f81490bfe87367575f3f9c3660c3474ea0a03ed7712dbeea021d4a078dff008",
+  "classes": [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck"
+  ],
+  "input": {
+    "activation": "ReLU",
+    "dtype": "signed-int16-little-endian",
+    "layout": "pixel-major-channel-interleaved",
+    "scale": {
+      "denominator": 256,
+      "numerator": 1
+    },
+    "shape": [
+      32,
+      32,
+      16
+    ]
+  },
+  "network": [
+    "maxpool2x2",
+    "conv2-same3x3",
+    "relu",
+    "maxpool2x2",
+    "conv3-same3x3",
+    "relu",
+    "flatten-CHW",
+    "fc1",
+    "relu",
+    "fc2",
+    "softmax"
+  ],
+  "profile": "B32_CFGLUT125",
+  "schema_version": 1,
+  "tensors": {
+    "conv2.bias": {
+      "bytes": 128,
+      "dtype": "float32-little-endian",
+      "file": "conv2_bias.f32le",
+      "sha256": "ed14a4efa5e0ac56d63aa07d4d5661e6c16332196fed5b4611ee0b608333e7ff",
+      "shape": [
+        32
+      ]
+    },
+    "conv2.weight": {
+      "bytes": 18432,
+      "dtype": "float32-little-endian",
+      "file": "conv2_weight.f32le",
+      "sha256": "5efa7138d7f0785d1ac6205335456247dbc1a5e8105adf236c7fbe74df5d826f",
+      "shape": [
+        32,
+        16,
+        3,
+        3
+      ]
+    },
+    "conv3.bias": {
+      "bytes": 128,
+      "dtype": "float32-little-endian",
+      "file": "conv3_bias.f32le",
+      "sha256": "f95c10e5a5177b309516ad7e9e0abfd7bb0a57153caa0cdc8a4f18640d9ec1ec",
+      "shape": [
+        32
+      ]
+    },
+    "conv3.weight": {
+      "bytes": 36864,
+      "dtype": "float32-little-endian",
+      "file": "conv3_weight.f32le",
+      "sha256": "a2ada41fbcbeda8246711e83495ffde0d0fb2cf97215c2fc827564092bed694f",
+      "shape": [
+        32,
+        32,
+        3,
+        3
+      ]
+    },
+    "fc1.bias": {
+      "bytes": 1024,
+      "dtype": "float32-little-endian",
+      "file": "fc1_bias.f32le",
+      "sha256": "ebcfa92f9acc62f3b8bcd6309247188b0344659d0e8ae2fe35e087cdbd2781e5",
+      "shape": [
+        256
+      ]
+    },
+    "fc1.weight": {
+      "bytes": 2097152,
+      "dtype": "float32-little-endian",
+      "file": "fc1_weight.f32le",
+      "sha256": "c76c06b286c02a405ecdbfea76f8718331ee5c6238b7a6ae0300812ee4a0d650",
+      "shape": [
+        256,
+        2048
+      ]
+    },
+    "fc2.bias": {
+      "bytes": 40,
+      "dtype": "float32-little-endian",
+      "file": "fc2_bias.f32le",
+      "sha256": "69d5f604cc3df28d8f9814e7d86bcb1d3d98d11ba3f706ee8be082aca8b2bfcd",
+      "shape": [
+        10
+      ]
+    },
+    "fc2.weight": {
+      "bytes": 10240,
+      "dtype": "float32-little-endian",
+      "file": "fc2_weight.f32le",
+      "sha256": "eab17ddd9b8391770d95616b94b4becc69f7c4390d75be011bd4af5fa3deb860",
+      "shape": [
+        10,
+        256
+      ]
+    }
+  }
+}

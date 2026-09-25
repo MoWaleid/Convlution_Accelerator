@@ -106,7 +106,7 @@ class LinuxDecoderTests(LinuxMechanismTests):
         record = json.loads(result.record_json)
         self.assertFalse(record["extensions"]["hardware_descriptors_inherited"])
         self.assertGreater(record["extensions"]["worker_uid"],0)
-        self.assertLessEqual(record["extensions"]["address_space_limit"],134217728)
+        self.assertLessEqual(record["extensions"]["address_space_limit"],268435456)
         self.assertTrue(record["extensions"]["no_new_privs"])
         self.assertTrue(record["pillow_version"])
         self.assertTrue(record["decoder_versions"][0]["version"])
@@ -120,6 +120,15 @@ class LinuxDecoderTests(LinuxMechanismTests):
         image = Image.new("L",(2,2),128)
         out = io.BytesIO(); image.save(out,format="JPEG")
         self.assertEqual(self.decode(out.getvalue(),2,2).canonical,b"\x80"*4)
+
+    def test_jpeg_nonimage_trailer_allowed_but_second_image_rejected(self):
+        from PIL import Image
+        out = io.BytesIO(); Image.new("L",(2,2),128).save(out,format="JPEG")
+        jpeg = out.getvalue()
+        self.assertEqual(self.decode(jpeg+b"\0editor-trailer\r\n",2,2).canonical,b"\x80"*4)
+        for trailer in (jpeg,png(1,1,b"\0")):
+            with self.subTest(signature=trailer[:8]),self.assertRaises(AdmissionError):
+                self.decode(jpeg+trailer,2,2)
 
     def test_exif_orientation_before_geometry_and_explicit_resize(self):
         from PIL import Image
@@ -140,14 +149,27 @@ class LinuxDecoderTests(LinuxMechanismTests):
         # Source limits are not independently imposed as compiled target dimensions.
         self.assertEqual(self.decode(png(1,1,b"\x2a"),8192,1,"resize_exact").canonical,b"\x2a"*8192)
 
-    def test_unsupported_modes_transparency_animation_and_corruption(self):
+    def test_common_static_png_modes_and_transparency(self):
         from PIL import Image
-        cases = [b"invalid",png(1,1,b"\0")[:-1],png(1,1,b"\0",depth=16),
-                 png(1,1,b"\0",extras=((b"tRNS",b"\0\0"),))]
-        for mode in ("1","P","RGBA","I;16"):
-            out = io.BytesIO()
-            Image.new(mode,(2,2)).save(out,format="PNG")
-            cases.append(out.getvalue())
+        for mode in ("1","P","RGBA"):
+            with self.subTest(mode=mode):
+                image = Image.new(mode,(2,2))
+                if mode == "RGBA":
+                    image.putdata([(255,0,0,255),(0,0,0,0),
+                                   (0,255,0,128),(0,0,255,255)])
+                out = io.BytesIO(); image.save(out,format="PNG")
+                result = self.decode(out.getvalue(),3,3,"resize_exact")
+                self.assertEqual(len(result.canonical),9)
+                record = json.loads(result.record_json)
+                self.assertEqual(record["source_mode"],mode)
+                want_alpha = "composite_white" if mode == "RGBA" else "none"
+                self.assertEqual(record["extensions"]["alpha_policy"],want_alpha)
+
+    def test_unsupported_precision_animation_and_corruption(self):
+        from PIL import Image
+        cases = [b"invalid",png(1,1,b"\0")[:-1],png(1,1,b"\0",depth=16)]
+        out = io.BytesIO(); Image.new("I;16",(2,2)).save(out,format="PNG")
+        cases.append(out.getvalue())
         out = io.BytesIO()
         Image.new("CMYK",(1,1)).save(out,format="JPEG"); cases.append(out.getvalue())
         out = io.BytesIO()

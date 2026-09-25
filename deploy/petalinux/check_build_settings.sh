@@ -12,7 +12,7 @@ readonly M2P_CHECK_PROJECT=/home/walid/projects/zedboard_linux
 readonly M2P_CHECK_BUILD=/home/walid/projects/zedboard_linux/build
 readonly M2P_CHECK_TOOLS=/home/walid/petalinux/2025.2
 readonly M2P_CHECK_POKY="$M2P_CHECK_PROJECT/components/yocto/layers/poky"
-readonly M2P_CHECK_RECIPES=(python3 python3-pillow conv-lab conv-lab-starter conv-lab-validation petalinux-image-minimal)
+readonly M2P_CHECK_RECIPES=(python3 python3-pillow conv-lab conv-lab-starter conv-lab-gui conv-lab-classifier conv-lab-validation petalinux-image-minimal)
 
 test -d "$M2P_CHECK_OUTPUT"
 test -w "$M2P_CHECK_OUTPUT"

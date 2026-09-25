@@ -1,5 +1,17 @@
 # Settings-check repair: already-applied project
 
+## Competition GUI addition
+
+`recipes-apps/conv-lab-gui` installs the authenticated board-hosted browser UI
+under `/opt/conv-lab-gui`. Select `CONFIG_conv-lab-gui=y` after copying the
+recipes into the PetaLinux project's `project-spec/meta-user/recipes-apps/`.
+The GUI recipe depends on `conv-lab-classifier`, so the native B32 processor
+tail, model bundle, and `/home/petalinux/m8_classify_cli.py` wrapper are pulled
+into the image automatically. The service wraps the qualified CLI and does not
+reimplement profile switching or DMA access. See `software/gui/README.md` for
+the admitted board image roots, timing definitions, tests, credentials, and
+direct-Ethernet security boundary.
+
 Current recovery handoff: **run the repaired evaluated-settings check ONLY**.
 The user reports application already completed, rootfs regeneration succeeded and
 CONFIG_conv-lab-validation=y survived. Do not rerun preflight.py, apply.py, configuration
@@ -307,4 +319,3 @@ matching, output SHA256 cb3975593073652b9d5f2fcb206748ad70c4abf621339ea19878b686
 Host evidence does not substitute for these runs. Inspect reports for PASS, skips/failures and
 actual resources. DMA inference, cache/MMIO/IRQ mechanisms, safe full-PL switching, whole-library
 qualification, clean rebuild and complete M2-P acceptance remain later work.
-

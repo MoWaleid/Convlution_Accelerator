@@ -1,0 +1,121 @@
+{
+ "format_version": 2,
+ "dialect": "canonical-flat-2",
+ "N": 3,
+ "K": 16,
+ "bias_width": 24,
+ "channels": [
+  {
+   "channel": 0,
+   "weights_file": "kernel_ch0.mem",
+   "bias_quantized": -1564,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 1,
+   "weights_file": "kernel_ch1.mem",
+   "bias_quantized": 1740,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 2,
+   "weights_file": "kernel_ch2.mem",
+   "bias_quantized": 13386,
+   "shift": 9,
+   "relu_en": true
+  },
+  {
+   "channel": 3,
+   "weights_file": "kernel_ch3.mem",
+   "bias_quantized": -3242,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 4,
+   "weights_file": "kernel_ch4.mem",
+   "bias_quantized": 380,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 5,
+   "weights_file": "kernel_ch5.mem",
+   "bias_quantized": 11015,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 6,
+   "weights_file": "kernel_ch6.mem",
+   "bias_quantized": 3957,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 7,
+   "weights_file": "kernel_ch7.mem",
+   "bias_quantized": -1367,
+   "shift": 7,
+   "relu_en": true
+  },
+  {
+   "channel": 8,
+   "weights_file": "kernel_ch8.mem",
+   "bias_quantized": -4797,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 9,
+   "weights_file": "kernel_ch9.mem",
+   "bias_quantized": -1364,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 10,
+   "weights_file": "kernel_ch10.mem",
+   "bias_quantized": -873,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 11,
+   "weights_file": "kernel_ch11.mem",
+   "bias_quantized": 839,
+   "shift": 7,
+   "relu_en": true
+  },
+  {
+   "channel": 12,
+   "weights_file": "kernel_ch12.mem",
+   "bias_quantized": 7428,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 13,
+   "weights_file": "kernel_ch13.mem",
+   "bias_quantized": -15143,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 14,
+   "weights_file": "kernel_ch14.mem",
+   "bias_quantized": 883,
+   "shift": 8,
+   "relu_en": true
+  },
+  {
+   "channel": 15,
+   "weights_file": "kernel_ch15.mem",
+   "bias_quantized": -357,
+   "shift": 8,
+   "relu_en": true
+  }
+ ]
+}

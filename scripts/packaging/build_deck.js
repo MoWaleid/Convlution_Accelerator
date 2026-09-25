@@ -10,7 +10,7 @@ const shadow = () => ({ type: "outer", color: "0A0F14", blur: 7, offset: 2, angl
 
 let p = new pptxgen();
 p.layout = "LAYOUT_WIDE";
-p.author = "SSCS Egypt 2026 Submission";
+p.author = "Attention is all you need";
 p.title = "Exact CFGLUT5 CNN Convolution Accelerator";
 
 function titleSlide() {
@@ -25,7 +25,7 @@ function titleSlide() {
   s.addText("Five board-qualified releases · 125 MHz · zero DSP · bit-exact against the golden model", {
     x: M, y: 4.15, w: W - 2*M, h: 0.5, fontFace: F, fontSize: 19, color: LIGHT_ON_DARK, margin: 0 });
   const stats = [
-    ["5", "qualified releases"], ["2,543", "bit-exact frames on silicon"],
+    ["5", "qualified releases"], ["577", "final-campaign frames"],
     ["0", "DSP blocks"], ["125 MHz", "FCLK0 on ZedBoard"],
   ];
   stats.forEach((st, i) => {
@@ -35,7 +35,7 @@ function titleSlide() {
     s.addText(st[1], { x, y: 5.95, w: (W-2*M)/4 - 0.3, h: 0.6, fontFace: F,
       fontSize: 13.5, color: LIGHT_ON_DARK, margin: 0 });
   });
-  s.addText("Team submission · ZedBoard (Zynq-7020 XC7Z020) · VHDL-2008 · Vivado 2025.2", {
+  s.addText("Team: Attention is all you need · ZedBoard (Zynq-7020 XC7Z020) · VHDL-2008 · Vivado 2025.2", {
     x: M, y: 6.85, w: W - 2*M, h: 0.35, fontFace: F, fontSize: 12, color: MUTED, margin: 0 });
 }
 
@@ -44,7 +44,7 @@ function specSlide() {
   s.background = { color: BG_LIGHT };
   s.addText("The competition problem", { x: M, y: 0.45, w: 8.5, h: 0.7,
     fontFace: F, fontSize: 32, bold: true, color: TEXT, margin: 0 });
-  s.addText("An FPGA NxN CNN convolution accelerator for edge-AI vision — every mandatory spec met, then taken further.", {
+  s.addText("A parameterized fixed-point convolution accelerator implemented and qualified on Zynq-7020.", {
     x: M, y: 1.15, w: W - 2*M, h: 0.6, fontFace: F, fontSize: 16, color: MUTED, margin: 0 });
   const specs = [
     ["32×32+", "grayscale input", "shipped up to 640×480"],
@@ -68,7 +68,7 @@ function specSlide() {
   });
   s.addText("Bonuses delivered: on-board demonstration · multiple kernels (5 releases) · ReLU · edge-detection demo · one-position-per-cycle core", {
     x: M, y: 5.95, w: W - 2*M, h: 0.5, fontFace: F, fontSize: 13.5, color: TEXT, margin: 0 });
-  s.addText("Source: 2026 SSCS Egypt Competition Announcement, Required Specifications 1–10", {
+  s.addText("Source: IEEE SSCS Egypt 2026 Student Design Competition announcement, required specifications 1–10", {
     x: M, y: 6.9, w: W - 2*M, h: 0.35, fontFace: F, fontSize: 11, color: MUTED, margin: 0 });
 }
 
@@ -107,7 +107,7 @@ function datapathSlide() {
   const facts = [
     ["Weight = LUT configuration", "Each 8×8 tap product is a radix-16 lookup in six CFGLUT5 primitives — coefficients are reprogrammed through the LUT configuration chain (32 clocks/bank), no DSP48s."],
     ["Exact Dadda compression", "A generated, column-aware bit heap (183 full + 13 half LUT6_2 compressors at N=3) reduces 18 signed rows to an exact 21-bit sum pair — no truncation before the bias."],
-    ["Exact at every shift", "S4 registers the discarded half-bit; S5's round-half-up consumes it. Shifts 24–31 verified exact on silicon — a restriction the predecessor MAC datapath could not lift."],
+    ["Exact at every shift", "S4 registers the discarded half-bit; S5's round-half-up consumes it. Shifts 24–31 were verified exactly on silicon."],
   ];
   facts.forEach((f, i) => {
     const x = M + i * ((W - 2*M - 0.5) / 3), w = (W - 2*M - 0.5) / 3;
@@ -147,7 +147,7 @@ function edgeSlide() {
     { text: "Claim discipline: ", options: { bold: true, color: TEXT } },
     { text: "every delivered value is bit-exact in all five releases. The zero-gap claim is made only where measured; the rest is disclosed, not claimed away.", options: { color: TEXT } },
   ], { x: M, y: 5.9, w: W - 2*M, h: 0.7, fontFace: F, fontSize: 14, margin: 0 });
-  s.addText("Source: five-release wrapper regression, official run wrapper_official_user_20260914T210835Z (16/16 checksums verified)", {
+  s.addText("Source: five-release wrapper regression; all 16 evidence checks verified", {
     x: M, y: 6.85, w: W - 2*M, h: 0.35, fontFace: F, fontSize: 11, color: MUTED, margin: 0 });
 }
 
@@ -172,10 +172,8 @@ function releasesSlide() {
   s.addTable(rows, { x: M, y: 1.4, w: W - 2*M, colW: [2.9, 2.2, 2.1, 2.4, 0.9, 1.6],
     fontFace: F, fontSize: 13, color: TEXT, border: { pt: 0.5, color: "C9D2DC" },
     fill: { color: CARD }, rowH: 0.55, margin: 0.08, valign: "middle" });
-  s.addText([
-    { text: "One source of truth: ", options: { bold: true, color: TEXT } },
-    { text: "all five bitstreams build from the same generalized RTL and the same 125 MHz constraint; every artifact is hash-bound in a source-bound build manifest, and every bitstream the board executed is the Bootgen product of exactly that bitstream.", options: { color: TEXT } },
-  ], { x: M, y: 5.15, w: W - 2*M, h: 0.85, fontFace: F, fontSize: 14, margin: 0 });
+  s.addText("All five bitstreams use the same generalized RTL and 125 MHz constraint. Each release includes a build manifest that binds its source, reports, bitstream and board firmware by SHA-256.", {
+    x: M, y: 5.15, w: W - 2*M, h: 0.85, fontFace: F, fontSize: 14, margin: 0, color: TEXT });
   s.addText("Trained parameters per release: K8 68.15% · K16 70.08% · N5 67.72% (CIFAR-10 grayscale) · D-set hand-authored identity/Sobel/blur", {
     x: M, y: 6.2, w: W - 2*M, h: 0.5, fontFace: F, fontSize: 13, color: MUTED, margin: 0 });
   s.addText("Source: per-release routed build reports (timing/power/utilization/DRC), hash-verified", {
@@ -185,7 +183,7 @@ function releasesSlide() {
 function qualSlide() {
   const s = p.addSlide();
   s.background = { color: BG_DARK };
-  s.addText("Qualified on silicon — the G5 campaign", { x: M, y: 0.5, w: W - 2*M, h: 0.7,
+  s.addText("Final board qualification", { x: M, y: 0.5, w: W - 2*M, h: 0.7,
     fontFace: F, fontSize: 32, bold: true, color: "FFFFFF", margin: 0 });
   const gates = [
     ["577", "bit-exact frames, zero mismatches — anchors, 60 exact-reference extremes, five 100-frame soaks"],
@@ -209,7 +207,7 @@ function qualSlide() {
 function fomSlide() {
   const s = p.addSlide();
   s.background = { color: BG_LIGHT };
-  s.addText("Figure of Merit — two honest scopes", { x: M, y: 0.45, w: W - 2*M, h: 0.65,
+  s.addText("Figure of Merit — core and full-system scopes", { x: M, y: 0.45, w: W - 2*M, h: 0.65,
     fontFace: F, fontSize: 30, bold: true, color: TEXT, margin: 0 });
   s.addText("FOM = Throughput / (Power × (LUTs + 50·DSP + 100·BRAM)) · throughput in valid output values per clock cycle", {
     x: M, y: 1.1, w: W - 2*M, h: 0.45, fontFace: F, fontSize: 13.5, color: MUTED, margin: 0 });
@@ -254,10 +252,10 @@ function tradeoffSlide() {
     fontFace: F, fontSize: 32, bold: true, color: TEXT, margin: 0 });
   const rows = [
     ["Exact LUT multiplication vs DSP48", "All multiplication is CFGLUT5 configuration lookup — 0 DSP in every release, FOM DSP term zero. Cost: up to 14,162 LUT (26.6%) at the 25-tap shape."],
-    ["The compressor is smaller than the MAC it replaced", "Same K=8 shape: 9,145 vs 12,362 system LUTs (−26%) at 125 vs 100 MHz — and shifts 24–31 became exact by construction."],
+    ["Resource cost of exact compression", "The largest release uses 14,162 system LUTs (26.6% of the device). All five releases meet 125 MHz and implement shifts 0–31 exactly."],
     ["Zero-BRAM datapath", "SRL line buffers + LUT windowing: the only BRAM is the DMA's 3 blocks. Windowing cost is pure LUT."],
     ["Fail-stop + self-checking frames", "Illegal accesses are SLVERR in RTL and process-fatal in the platform; the core faults itself if frame counters miss the compiled quotas."],
-    ["Disclosed beats claimed", "Edge bubbles at K=4 are measured and printed (§3.4 of the report) instead of claimed away — the zero-gap claim is limited to where it was proven."],
+    ["Measured transition gaps", "K=4 row-transition gaps are measured and reported in §3.4. The zero-gap result is stated only for releases where it was observed."],
   ];
   rows.forEach((r, i) => {
     const y = 1.35 + i * 1.12;
@@ -275,12 +273,12 @@ function demoSlide() {
   s.background = { color: BG_LIGHT };
   s.addText("On-board demonstration", { x: M, y: 0.45, w: 8, h: 0.65,
     fontFace: F, fontSize: 32, bold: true, color: TEXT, margin: 0 });
-  s.addImage({ path: "debug_captures/m3_demo_sobel_mag_aeroplane_view.png",
+  s.addImage({ path: "report/figures/m3_demo_sobel_mag_aeroplane_view.png",
     x: M, y: 1.4, w: 6.2, h: 4.65, sizing: { type: "contain", w: 6.2, h: 4.65 } });
   const pts = [
     ["Sobel maps rendered from silicon", "The board computed the magnitude map and returned it over DMA; Linux rendered the PNG from the raw hardware output."],
     ["D-profiles = edge-detection demo", "The qualified D32/D640 releases carry identity / Sobel-X / Sobel-Y / blur kernels — an industrial-inspection style demo in hardware."],
-    ["575-frame final campaign", "Anchors, extremes, soaks, switching matrix, cold boot and fault recovery — all bit-exact against the Python golden model."],
+    ["577-frame final campaign", "Anchors, extremes, soaks and two fault-recovery proof frames — all bit-exact against the Python golden model."],
   ];
   pts.forEach((pt, i) => {
     const y = 1.5 + i * 1.6;
@@ -296,11 +294,11 @@ function demoSlide() {
 function closeSlide() {
   const s = p.addSlide();
   s.background = { color: BG_DARK };
-  s.addText("Everything the rules ask for,\nverified past the requirements.", {
+  s.addText("Measured results and\nreproducible evidence.", {
     x: M, y: 1.1, w: W - 2*M, h: 2.0, fontFace: F, fontSize: 40, bold: true,
     color: "FFFFFF", margin: 0, lineSpacing: 50 });
   const items = [
-    "Correctness — bit-exact against an arbitrary-precision golden model, 2,543 frames on silicon, zero mismatches",
+    "Correctness — 577 final-campaign frames bit-exact against an arbitrary-precision golden model, zero mismatches",
     "Quality — exact CFGLUT5 compressor datapath, edge-free windowing, fail-stop CVH1 control, deterministic generated RTL",
     "Efficiency — 0 DSP, 3 BRAM (DMA only), 125 MHz with positive slack on all five releases, FOM reported at two transparent scopes",
     "Demonstration — five live releases with runtime full-FPGA switching, Sobel edge demo, fault-injection recovery",

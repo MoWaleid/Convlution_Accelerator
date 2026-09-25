@@ -18,12 +18,12 @@ from .types import Decoded
 
 MAX_SOURCE_BYTES = 8388608
 MAX_WIDTH = MAX_HEIGHT = 4096
-MAX_PIXELS = 2097152
-ADDRESS_SPACE_BYTES = 134217728
+MAX_PIXELS = 12000000
+ADDRESS_SPACE_BYTES = 268435456
 TIMEOUT_SECONDS = 30
 MAX_RECORD_BYTES = 16384
 MAX_CANONICAL_BYTES = 4194303//2  # Derived RX limit at the smallest K=1, not a source dimension policy.
-RESOURCE_STRATEGY = "linux-process-rlimit-as-supervised-v1"
+RESOURCE_STRATEGY = "linux-process-rlimit-as-supervised-v2"
 
 
 def source_bounds(byte_count, width, height):
@@ -150,7 +150,9 @@ def validate_decoded(result, source, w, h, policy):
             record["resize_filter"] == ("NONE" if policy == "exact" else "LANCZOS"), "decoder geometry")
     source_bounds(len(source),record["source_width"],record["source_height"])
     source_bounds(len(source),record["oriented_width"],record["oriented_height"])
-    require(record["source_format"] in ("PNG","JPEG") and record["source_mode"] in ("L","RGB"),"decoder format")
+    require(record["source_format"] in ("PNG","JPEG") and
+            record["source_mode"] in ("1","L","P","RGB","LA","RGBA"),
+            "decoder format")
     orientation = record["exif_orientation"]
     if orientation is not None:
         integer(orientation,1,8)

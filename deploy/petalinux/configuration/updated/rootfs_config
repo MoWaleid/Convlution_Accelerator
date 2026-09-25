@@ -3760,3 +3760,4 @@ CONFIG_CREATE_NEW_GROUPS="aie;"
 CONFIG_ADD_USERS_TO_GROUPS="petalinux:audio,video,aie,input;"
 CONFIG_ADD_USERS_TO_SUDOERS="petalinux"
 CONFIG_conv-lab-validation=y
+CONFIG_conv-lab-gui=y

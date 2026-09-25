@@ -29,6 +29,9 @@ set rtl_files [list \
     [file join $rtl_dir coeff_bias_shift_regfile.vhd] \
     [file join $rtl_dir axi_lite_ctrl.vhd] \
     [file join $rtl_dir window_generator.vhd] \
+    [file join $rtl_dir cfglut5_kcm.vhd] \
+    [file join $rtl_dir cfglut5_bitheap_3x3.vhd] \
+    [file join $rtl_dir cfglut5_bitheap_5x5.vhd] \
     [file join $rtl_dir conv_channel.vhd] \
     [file join $rtl_dir conv_engine.vhd] \
     [file join $rtl_dir conv_top.vhd] \
@@ -58,7 +61,7 @@ apply_zedboard_ps_platform $ps
 set_property -dict [list \
     CONFIG.PCW_USE_M_AXI_GP0 {1} \
     CONFIG.PCW_USE_S_AXI_HP0 {1} \
-    CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100}] $ps
+    CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {125}] $ps
 
 set dma [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:* axi_dma_0]
 set_property -dict [list \
@@ -69,6 +72,7 @@ set_property -dict [list \
     CONFIG.c_s_axis_s2mm_tdata_width {64} \
     CONFIG.c_m_axi_mm2s_data_width {64} \
     CONFIG.c_m_axi_s2mm_data_width {64} \
+    CONFIG.c_sg_length_width {22} \
     CONFIG.c_include_mm2s_dre {0} \
     CONFIG.c_include_s2mm_dre {0}] $dma
 
@@ -98,7 +102,7 @@ connect_bd_intf_net [get_bd_intf_pins hp0_smartconnect/M00_AXI] [get_bd_intf_pin
 connect_bd_intf_net [get_bd_intf_pins axi_dma_0/M_AXIS_MM2S] [get_bd_intf_pins conv_axis_wrapper_bd_0/S_AXIS]
 connect_bd_intf_net [get_bd_intf_pins conv_axis_wrapper_bd_0/M_AXIS] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
 
-# One common 100 MHz PL clock domain.
+# One common 125 MHz PL clock domain.
 set clk [get_bd_pins processing_system7_0/FCLK_CLK0]
 connect_bd_net $clk \
     [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] \
@@ -113,9 +117,8 @@ connect_bd_net $clk \
 # distributes synchronous active-low peripheral reset to all PL peripherals.
 connect_bd_net [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_100m/ext_reset_in]
 connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins rst_100m/dcm_locked]
-connect_bd_net [get_bd_pins const_zero/dout] \
-    [get_bd_pins rst_100m/aux_reset_in] \
-    [get_bd_pins rst_100m/mb_debug_sys_rst]
+connect_bd_net [get_bd_pins const_one/dout] [get_bd_pins rst_100m/aux_reset_in]
+connect_bd_net [get_bd_pins const_zero/dout] [get_bd_pins rst_100m/mb_debug_sys_rst]
 connect_bd_net [get_bd_pins rst_100m/peripheral_aresetn] \
     [get_bd_pins axi_lite_smartconnect/aresetn] \
     [get_bd_pins hp0_smartconnect/aresetn] \

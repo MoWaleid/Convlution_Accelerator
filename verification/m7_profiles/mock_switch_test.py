@@ -23,7 +23,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 STAGE = Path(os.environ.get(
     "M7_MOCK_STAGE", "C:/Users/moham/AppData/Local/Temp/m7_bundle2/profiles"))
-PNG = REPO / "golden_model/data/cifar10_images/test/cat/alley_cat_s_000013.png"
+CANONICAL_INPUT_HEX = REPO / "golden_model/data/test_vectors_trained/input.hex"
 BUFSZ = 4 * 1024 * 1024
 
 # --- fake m4_filebackend before importing the manager -------------------------
@@ -56,6 +56,7 @@ def _ensure_stage_releases():
     the shared canonical parameter bundles and the anchors file. Idempotent;
     keeps the mock hermetic against catalog evolution."""
     M.BASE = STAGE
+    STAGE.mkdir(parents=True, exist_ok=True)
     cat_p = STAGE / "m7_profiles.json"
     cat_p.write_text((REPO / "profiles/m7_profiles.json").read_text())
     (STAGE / "anchors_m7.json").write_text(
@@ -172,7 +173,8 @@ def fake_program(firmware):
 
 def fake_load_input(n, w, h):
     from PIL import Image
-    image = Image.open(PNG).convert("L")
+    raw32 = bytes(int(line, 16) for line in CANONICAL_INPUT_HEX.read_text().splitlines())
+    image = Image.frombytes("L", (32, 32), raw32)
     if image.size != (w, h):
         image = image.resize((w, h), Image.LANCZOS)
     raw = image.tobytes()
@@ -368,7 +370,10 @@ if __name__ == "__main__":
         elif args == ["--d640-input-hash"]:
             import hashlib
             from PIL import Image
-            image = Image.open(PNG).convert("L").resize((640, 480), Image.LANCZOS)
+            raw32 = bytes(int(line, 16) for line in
+                          CANONICAL_INPUT_HEX.read_text().splitlines())
+            image = Image.frombytes("L", (32, 32), raw32).resize(
+                (640, 480), Image.LANCZOS)
             digest = hashlib.sha256(image.tobytes()).hexdigest()
             want = json.loads((STAGE / "anchors_m7.json").read_text())[
                 "D640_preprocessing"]["canonical_sha256"]

@@ -1,4 +1,4 @@
-"""User-run check of six saved bitbake -e outputs; never invokes BitBake or app code."""
+"""User-run check of eight saved bitbake -e outputs; never invokes BitBake or app code."""
 import argparse
 from pathlib import Path
 import re
@@ -20,10 +20,10 @@ def main():
     args = parser.parse_args()
     configs = {x: read(args.directory, x) for x in
                ("python3", "python3-pillow", "conv-lab", "conv-lab-starter",
-                "conv-lab-validation", "petalinux-image-minimal")}
+                "conv-lab-gui", "conv-lab-classifier", "conv-lab-validation", "petalinux-image-minimal")}
     for name, data in configs.items():
         need(data.get("MACHINE") == "zynq-generic-7z020", name+": unexpected MACHINE")
-        if name in ("python3", "python3-pillow", "petalinux-image-minimal"):
+        if name in ("python3", "python3-pillow", "conv-lab-classifier", "petalinux-image-minimal"):
             need(data.get("TARGET_ARCH") == "arm", name+": target is not ARM")
         else:
             need(data.get("PACKAGE_ARCH") == "all" and data.get("TARGET_ARCH") == "allarch",
@@ -38,22 +38,28 @@ def main():
     options = pillow.get("PEP517_BUILD_OPTS", "")
     need("jpeg=enable" in options and "zlib=enable" in options and
          "jpeg=disable" not in options and "zlib=disable" not in options, "PNG/JPEG configuration differs")
-    for name in ("conv-lab", "conv-lab-starter", "conv-lab-validation"):
+    for name in ("conv-lab", "conv-lab-starter", "conv-lab-gui", "conv-lab-classifier", "conv-lab-validation"):
         data = configs[name]
         need(data.get("S") == data.get("WORKDIR") and bool(data.get("S")), "unpack root differs: "+name)
         need("/project-spec/meta-user/recipes-apps/"+name+"/" in data.get("FILE", ""), "unexpected recipe provider: "+name)
     need(configs["conv-lab"].get("LICENSE") == "CLOSED" and
+         configs["conv-lab-gui"].get("LICENSE") == "CLOSED" and
+         configs["conv-lab-classifier"].get("LICENSE") == "CLOSED" and
          configs["conv-lab-validation"].get("LICENSE") == "CLOSED", "team license classification changed")
     need(configs["conv-lab-starter"].get("LICENSE") == "LicenseRef-ConvLab-Starter-Provenance-Unresolved",
          "starter provenance classification changed")
     for package in ("python3-core", "python3-modules", "python3-pillow"):
         need(package in configs["conv-lab"].get("RDEPENDS:conv-lab", "").split(), "missing runtime "+package)
-    for package in ("conv-lab", "conv-lab-starter", "python3-modules"):
+    for package in ("conv-lab", "conv-lab-starter", "conv-lab-classifier", "python3-core", "python3-modules", "python3-pillow"):
+        need(package in configs["conv-lab-gui"].get("RDEPENDS:conv-lab-gui", "").split(),
+             "missing GUI dependency "+package)
+    for package in ("conv-lab", "conv-lab-starter", "conv-lab-gui", "python3-modules"):
         need(package in configs["conv-lab-validation"].get("RDEPENDS:conv-lab-validation", "").split(),
              "missing validation dependency "+package)
     image = configs["petalinux-image-minimal"]
     selected = (image.get("IMAGE_INSTALL", "")+" "+image.get("PACKAGE_INSTALL", "")).split()
     need("conv-lab-validation" in selected, "validation package not selected in image")
+    need("conv-lab-gui" in selected, "GUI/runtime package not selected in image")
     print("Evaluated settings match this stage. This is not a successful build or codec/runtime test.")
 
 

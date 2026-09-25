@@ -5,3 +5,4 @@ CONFIG_gpio-demo
 CONFIG_peekpoke
 CONFIG_udmabuf
 CONFIG_conv-lab-validation
+CONFIG_conv-lab-gui

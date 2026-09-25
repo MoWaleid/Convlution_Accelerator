@@ -33,20 +33,30 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, "/home/petalinux")
+_support_roots = ("/home/petalinux", "/opt/conv-lab/app")
+# Keep the board runtime override deterministic. The script directory is
+# normally already present in sys.path, so repeated insert(0) calls made the
+# packaged /opt copy win accidentally and allowed mixed runtime versions.
+sys.path[:] = list(_support_roots) + [
+    entry for entry in sys.path if entry not in _support_roots
+]
 import m4_filebackend as fb   # noqa: E402  (fake in mock tests)
 import m7_switch as m7        # noqa: E402
 
 # M1_DEPLOYMENT_POLICY approved values.
 MAX_SOURCE_BYTES = 8388608
 MAX_DIM = 4096
-MAX_PIXELS = 2097152
+MAX_PIXELS = 12000000
 DISPOSABLE_BUDGET = 268435456        # 256 MiB run-payload budget
 HEADROOM_REQUIRED = 536870912        # 512 MiB free after the reservation
 
 D_PROFILES = ("D32_CFGLUT125", "D640_CFGLUT125")   # channels 1,2 are Sobel X/Y by construction
 DEFAULT_RESULTS = Path("/var/lib/conv-lab/results")
 FALLBACK_RESULTS = Path("/home/petalinux/runs")
+REFERENCE_CATALOG = Path(os.environ.get(
+    "CONV_LAB_REFERENCE_CATALOG",
+    "/opt/conv-lab/library/datasets/cifar10-demo/v1/reference_catalog.json"))
+SHA256_RE = re.compile(r"[0-9a-f]{64}")
 def file_md5(path):
     return hashlib.md5(Path(path).read_bytes()).hexdigest()
 
@@ -134,11 +144,13 @@ def _decoder():
     return pp.LinuxDecoder()
 
 
-def load_image_exact(path, w, h):
+def load_image_exact(path, w, h, policy="resize_exact"):
     """Approved pipeline via the isolated decoder worker: source read once
     and hashed by the worker, decoded under the address-space ceiling and
     supervisor deadline, canonical W*H bytes plus the validated preprocessing
-    record returned. Exact geometry; no resize. The supervisor read itself is
+    record returned. ``resize_exact`` deterministically converts to grayscale
+    and resizes with LANCZOS to the active profile geometry; ``exact`` retains
+    strict qualification behavior. The supervisor read itself is
     bounded (R14-05): non-regular inputs are rejected before any read, at
     most MAX_SOURCE_BYTES+1 bytes ever enter root memory, and oversize
     sources fail admission here instead of inside the worker."""
@@ -148,7 +160,8 @@ def load_image_exact(path, w, h):
         blob = fh.read(MAX_SOURCE_BYTES + 1)
     m7.require(len(blob) <= MAX_SOURCE_BYTES,
                f"source exceeds the {MAX_SOURCE_BYTES} B limit: {p}")
-    result = _decoder().decode(blob, w, h, "exact")
+    m7.require(policy in ("exact", "resize_exact"), "unsupported image policy")
+    result = _decoder().decode(blob, w, h, policy)
     meta = json.loads(result.record_json)
     meta["source_path"] = str(p)
     return result.canonical, meta
@@ -176,7 +189,16 @@ def render_sobel(values, k, w, h, path):
     pixels = bytes(int((v - lo) * 255 / span) for v in mag)
     scale = 8 if w <= 64 else 1
     Image.frombytes("L", (w, h), pixels).resize((w * scale, h * scale),
-                                                Image.NEAREST).save(path)
+                                                 Image.NEAREST).save(path)
+
+
+def admitted_image_tag(args):
+    """Return a short record/display identity, never a filesystem path."""
+    if not args.image:
+        return "library_alley_cat"
+    candidate = args.image_label or Path(args.image).stem
+    candidate = re.sub(r"[^A-Za-z0-9._-]+", "_", candidate).strip("._-")
+    return (candidate or "uploaded_image")[:64]
 
 
 def environment(clock_mhz):
@@ -279,6 +301,92 @@ def parameter_identity(bundle_dir):
     return out
 
 
+def trusted_catalog_reference(profile, hw, release, parameters, input_record,
+                              path=REFERENCE_CATALOG):
+    """Resolve one content-addressed trusted-library oracle before mutation.
+
+    Trust never comes from a filename. The immutable source bytes, canonical
+    resized bytes, padded DMA payload, hardware/build identity, and complete
+    parameter bundle must all match the reviewed catalog entry.
+    """
+    path = Path(path)
+    m7.require(path.is_file(), f"trusted reference catalog missing: {path}")
+    blob = path.read_bytes()
+    m7.require(0 < len(blob) <= 1048576, "trusted reference catalog size")
+    try:
+        document = json.loads(blob)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"trusted reference catalog is invalid: {exc}") from exc
+    m7.require(type(document) is dict and document.get("schema_version") == 1,
+               "trusted reference catalog schema")
+    profile_records = document.get("profiles")
+    images = document.get("images")
+    m7.require(type(profile_records) is dict and type(images) is list
+               and 1 <= len(images) <= 512, "trusted reference catalog structure")
+    profile_record = profile_records.get(profile)
+    m7.require(type(profile_record) is dict,
+               f"trusted reference catalog has no {profile} oracle")
+    expected_profile = {
+        "shape_id": release["shape_id"],
+        "build_id_hex": release["build_id_hex"],
+        "bundle_sha256": release["bundle_sha256"],
+        "W": hw["image_w"], "H": hw["image_h"],
+        "N": hw["kernel_n"], "K": hw["channels_k"],
+        "expected_output_bytes": hw["expected_output_bytes"],
+        "parameters": {
+            "bundle_dir": parameters["bundle_dir"],
+            "channel_config_sha256": parameters["channel_config_sha256"],
+            "weights": parameters["weights"],
+        },
+    }
+    m7.require(profile_record == expected_profile,
+               f"{profile}: trusted catalog profile/parameter identity mismatch")
+
+    source_sha = input_record["source_sha256"]
+    m7.require(SHA256_RE.fullmatch(source_sha) is not None,
+               "trusted input source hash")
+    matches = []
+    seen_ids = set()
+    for entry in images:
+        m7.require(type(entry) is dict, "trusted image entry type")
+        image_id = entry.get("id")
+        m7.require(type(image_id) is str and re.fullmatch(r"[A-Za-z0-9._-]{1,96}", image_id)
+                   and image_id not in seen_ids, "trusted image ID")
+        seen_ids.add(image_id)
+        if entry.get("source_sha256") == source_sha:
+            matches.append(entry)
+    m7.require(len(matches) == 1,
+               f"trusted source must match exactly one catalog image (found {len(matches)})")
+    entry = matches[0]
+    class_name = entry.get("class")
+    display_name = entry.get("display_name")
+    m7.require(type(class_name) is str and re.fullmatch(r"[a-z0-9_-]{1,32}", class_name)
+               and type(display_name) is str and 1 <= len(display_name) <= 96,
+               "trusted image metadata")
+    references = entry.get("references")
+    reference = references.get(profile) if type(references) is dict else None
+    m7.require(type(reference) is dict, f"trusted image has no {profile} reference")
+    for key in ("canonical_sha256", "padded_tx_sha256", "output_sha256"):
+        m7.require(type(reference.get(key)) is str
+                   and SHA256_RE.fullmatch(reference[key]) is not None,
+                   f"trusted reference {key}")
+    m7.require(reference["canonical_sha256"] == input_record["canonical_sha256"],
+               "trusted canonical image hash mismatch")
+    m7.require(reference["padded_tx_sha256"] == input_record["padded_tx_sha256"],
+               "trusted padded payload hash mismatch")
+    m7.require(reference.get("expected_output_bytes") == hw["expected_output_bytes"],
+               "trusted reference output length mismatch")
+    return {
+        "catalog_id": document.get("catalog_id"),
+        "catalog_sha256": hashlib.sha256(blob).hexdigest(),
+        "image_id": entry["id"],
+        "class": class_name,
+        "display_name": display_name,
+        "source_sha256": source_sha,
+        "output_sha256": reference["output_sha256"],
+    }
+
+
 def high_shift_channels(n, k, shift):
     """Deterministic signed stimulus for the research shift range.
 
@@ -349,7 +457,7 @@ def cmd_run(args):
     hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
     n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
 
-    image_tag = Path(args.image).stem if args.image else "library_alley_cat"
+    image_tag = admitted_image_tag(args)
     rec = new_record(args.profile, hw, image_tag, catalog_doc)
     root, root_name = archive_root()
     rec["archive_root"] = root_name
@@ -359,6 +467,8 @@ def cmd_run(args):
     rec["run_id"] = run_dir.name
 
     m7.require(args.frames >= 1, "--frames must be >= 1")
+    m7.require(not args.trusted_library or args.image,
+               "--trusted-library requires --image")
 
     m7.acquire_lock()
     ctx = None
@@ -379,7 +489,7 @@ def cmd_run(args):
         rec["parameters"]["bundle_sha256"] = pbundle
         t0 = time.perf_counter()
         if args.image:
-            raw, meta = load_image_exact(args.image, w, h)
+            raw, meta = load_image_exact(args.image, w, h, args.image_policy)
             padded = pad_bytes(raw, n, w, h)
             canonical = raw
             library_mode = False
@@ -398,11 +508,25 @@ def cmd_run(args):
         rec["timings"]["preprocess_s"] = time.perf_counter() - t0
 
         t0 = time.perf_counter()
+        trusted = None
+        if args.trusted_library:
+            release = m7.resolve_release(args.profile, catalog_doc)
+            trusted = trusted_catalog_reference(
+                args.profile, hw, release, rec["parameters"], rec["input"])
+            rec["trusted_library"] = trusted
         if library_mode:
             expected = None
             anchor = anchors.get(args.profile, {}).get("output_sha256")
             m7.require(anchor, f"{args.profile}: no golden anchor")
             rec["verification"] = {"mode": "anchor_sha256", "anchor": anchor}
+        elif trusted is not None:
+            expected = None
+            rec["verification"] = {
+                "mode": "catalog_sha256",
+                "anchor": trusted["output_sha256"],
+                "catalog_sha256": trusted["catalog_sha256"],
+                "image_id": trusted["image_id"],
+            }
         elif w * h * k <= m7.REF_POSITION_LIMIT or args.reference:
             expected = m7.make_expected(padded, n, w, h, channels)
             rec["verification"] = {"mode": "exact_reference"}
@@ -438,7 +562,7 @@ def cmd_run(args):
             wall = time.perf_counter() - w0
             if expected is not None:
                 m7.require(mismatches == 0, f"frame {i + 1}: {mismatches} mismatches")
-            if library_mode:
+            if rec["verification"]["mode"] in ("anchor_sha256", "catalog_sha256"):
                 m7.require(sha == rec["verification"]["anchor"],
                            f"frame {i + 1}: output sha {sha[:16]} != anchor")
             rec["frames"].append({"index": i + 1, "sha256": sha,
@@ -507,7 +631,7 @@ def cmd_soak(args):
     hw = json.loads((m7.BASE / f"hardware_{args.profile}.json").read_text())["accelerator"]
     n, k, w, h = hw["kernel_n"], hw["channels_k"], hw["image_w"], hw["image_h"]
 
-    image_tag = Path(args.image).stem if args.image else "library_alley_cat"
+    image_tag = admitted_image_tag(args)
     rec = new_record(args.profile, hw, image_tag, catalog_doc)
     rec["soak"] = {"frames": args.frames}
     root, root_name = archive_root()
@@ -541,7 +665,7 @@ def cmd_soak(args):
                        f"image soak needs an exact-reference profile "
                        f"({w}*{h}*{k} positions > {m7.REF_POSITION_LIMIT}); "
                        "use the library-anchor soak for this profile")
-            raw, meta = load_image_exact(args.image, w, h)
+            raw, meta = load_image_exact(args.image, w, h, args.image_policy)
             padded = pad_bytes(raw, n, w, h)
             expected = m7.make_expected(padded, n, w, h, channels)
             rec["input"] = {**meta,
@@ -883,11 +1007,17 @@ def main(argv=None):
     r = sub.add_parser("run", help="switch + file-driven verified frames")
     r.add_argument("--profile", required=True)
     r.add_argument("--frames", type=int, default=3)
-    r.add_argument("--image", help="exact-geometry grayscale-able PNG/JPEG")
+    r.add_argument("--image", help="grayscale-able PNG/JPEG; resized on-board by default")
+    r.add_argument("--image-label", help="safe display label recorded instead of the source path")
+    r.add_argument("--image-policy", choices=("resize_exact", "exact"),
+                   default="resize_exact",
+                   help="resize with deterministic LANCZOS (default), or require exact geometry")
     r.add_argument("--previews", action="store_true",
                    help="render display-only channel planes (+ Sobel mag on D)")
     r.add_argument("--reference", action="store_true",
                    help="force exact reference above the position limit")
+    r.add_argument("--trusted-library", action="store_true",
+                   help="require a content-bound precomputed library oracle")
 
     b = sub.add_parser("benchmark", help="measurement harness (anchor mode)")
     b.add_argument("--profile", required=True)
@@ -900,7 +1030,10 @@ def main(argv=None):
     s = sub.add_parser("soak", help="baseline soak (M9), archived record")
     s.add_argument("--profile", required=True)
     s.add_argument("--frames", type=int, default=100)
-    s.add_argument("--image", help="exact-geometry image (32x32 profiles only)")
+    s.add_argument("--image", help="grayscale-able PNG/JPEG; resized on-board by default")
+    s.add_argument("--image-label", help="safe display label recorded instead of the source path")
+    s.add_argument("--image-policy", choices=("resize_exact", "exact"),
+                   default="resize_exact")
 
     sub.add_parser("list", help="list archived runs")
     c = sub.add_parser("record", help="print one archived record")

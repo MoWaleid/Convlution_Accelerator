@@ -26,7 +26,6 @@ os.environ["M8_ARCHIVE_ROOT"] = str(ARCHIVE)
 sys.path.insert(0, str(REPO / "software"))
 import m8_cli as CLI                   # noqa: E402  (uses the patched M)
 
-PNG = MH.PNG
 CANONICAL_A32 = ("a240bb760e2a85951f5c4e27c95041e98d4919c5cc32114cc4f5191f6ffb6771")
 
 # --- stage fixture: clone the synced profile stage so catalog/bundle
@@ -58,6 +57,42 @@ def newest_record():
 
 def main():
     MH.M.LOCK_FILE.unlink(missing_ok=True)   # clear stale mock locks
+
+    # Content-addressed D640 library admission is independent of filesystem
+    # names and happens before hardware mutation.  Validate one real catalog
+    # entry, then prove a canonical-byte mismatch fails closed.
+    reference_path = (REPO / "deploy" / "petalinux" / "recipes-apps" /
+                      "conv-lab-starter" / "files" / "demo_library" /
+                      "reference_catalog.json")
+    reference_doc = json.loads(reference_path.read_text())
+    entry = reference_doc["images"][0]
+    oracle = entry["references"]["D640_CFGLUT125"]
+    hardware = json.loads((MH.M.BASE / "hardware_D640_CFGLUT125.json").read_text())["accelerator"]
+    catalog = json.loads((MH.M.BASE / "m7_profiles.json").read_text())
+    release = MH.M.resolve_release("D640_CFGLUT125", catalog)
+    parameters = CLI.parameter_identity("D640")
+    parameters["bundle_sha256"] = release["bundle_sha256"]
+    input_record = {
+        "source_sha256": entry["source_sha256"],
+        "canonical_sha256": oracle["canonical_sha256"],
+        "padded_tx_sha256": oracle["padded_tx_sha256"],
+    }
+    trusted = CLI.trusted_catalog_reference(
+        "D640_CFGLUT125", hardware, release, parameters, input_record,
+        reference_path)
+    assert trusted["image_id"] == entry["id"]
+    assert trusted["output_sha256"] == oracle["output_sha256"]
+    bad_input = dict(input_record, canonical_sha256="0" * 64)
+    try:
+        CLI.trusted_catalog_reference(
+            "D640_CFGLUT125", hardware, release, parameters, bad_input,
+            reference_path)
+    except Exception:
+        pass
+    else:
+        raise AssertionError("tampered canonical image was trusted")
+    print("MOCK OK: content-bound D640 library oracle and tamper rejection")
+
     MH.program_profile("A32_CFGLUT125")          # cold-start equivalent: A32 live
 
     # 1) same-build run, library image, anchor mode, previews on
@@ -97,14 +132,14 @@ def main():
     real_loader = CLI.load_image_exact
     import hashlib as hl
 
-    def fake_loader(path, w, h):
+    def fake_loader(path, w, h, policy="resize_exact"):
         canonical = Image.open(path).convert("L").tobytes()
         meta = {"source_path": str(path),
                 "source_sha256": hl.sha256(Path(path).read_bytes()).hexdigest(),
                 "source_format": "PNG", "source_mode": "L",
                 "source_width": w, "source_height": h,
                 "oriented_width": w, "oriented_height": h,
-                "geometry_policy": "exact",
+                "geometry_policy": policy,
                 "decode_policy": {"resource_strategy": "mock"}}
         return canonical, meta
 

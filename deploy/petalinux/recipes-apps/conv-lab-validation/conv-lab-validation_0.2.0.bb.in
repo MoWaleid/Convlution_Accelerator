@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "@VALIDATION_LICENSE_CHECKSUM@"
 SRC_URI = "file://tests/ file://evidence/ file://conv-lab-tests"
 S = "@VERIFIED_UNPACK_ROOT@"
 inherit allarch
-RDEPENDS:${PN} = "conv-lab conv-lab-starter @VALIDATION_RUNTIME_PACKAGES@"
+RDEPENDS:${PN} = "conv-lab conv-lab-starter conv-lab-gui @VALIDATION_RUNTIME_PACKAGES@"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 do_install() {

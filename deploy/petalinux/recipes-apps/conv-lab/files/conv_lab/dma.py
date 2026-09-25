@@ -16,7 +16,7 @@ def transfer_length(value, width):
     return integer(value, 1, (1 << width)-1)
 
 
-def layout(w, h, n, k, allocation):
+def _layout(w, h, n, k, allocation, proposed=None):
     require(type(allocation) is Allocation, "mock allocation required")
     for value in (w, h, k):
         integer(value, 1, 0xffffffff)
@@ -29,9 +29,20 @@ def layout(w, h, n, k, allocation):
             "allocation outside supplied aperture")
     require(allocation.base + allocation.size <= allocation.aperture_end,
             "allocation extends beyond supplied aperture")
+    require(allocation.alignment & (allocation.alignment - 1) == 0,
+            "DMA alignment must be a power of two")
     tx = transfer_length((w+n-1)*(h+n-1), allocation.length_width)
     rx = transfer_length(w*h*k*2, allocation.length_width)
-    rxoff = ((4096+tx+128+63)//64)*64
+    expected_rxoff = ((4096+tx+128+63)//64)*64
+    rxoff = expected_rxoff
+    if proposed is not None:
+        require(type(proposed) is Layout, "Layout required")
+        for value in (proposed.tx_offset, proposed.tx_bytes,
+                      proposed.rx_offset, proposed.rx_bytes):
+            integer(value, 0)
+        require(proposed.tx_offset == 4096 and proposed.tx_bytes == tx and
+                proposed.rx_bytes == rx, "exact complete-frame lengths required")
+        rxoff = proposed.rx_offset
     regions = (("tx_pre",4032,4096), ("tx",4096,4096+tx),
                ("tx_post",4096+tx,4096+tx+64), ("rx_pre",rxoff-64,rxoff),
                ("rx",rxoff,rxoff+rx), ("rx_post",rxoff+rx,rxoff+rx+64))
@@ -43,7 +54,20 @@ def layout(w, h, n, k, allocation):
         require((allocation.base+offset) % 64 == 0 and
                 (allocation.base+offset) % allocation.alignment == 0,
                 "physical payload alignment")
-    return Layout(4096, tx, rxoff, rx, regions)
+    require(rxoff == expected_rxoff, "approved RX offset required")
+    result = Layout(4096, tx, rxoff, rx, regions)
+    if proposed is not None:
+        require(proposed == result, "payload/guard inventory differs from contract")
+    return result
+
+
+def layout(w, h, n, k, allocation):
+    return _layout(w, h, n, k, allocation)
+
+
+def validate_layout(w, h, n, k, allocation, proposed):
+    """Validate a proposed layout through the same bounds/guard implementation."""
+    return _layout(w, h, n, k, allocation, proposed)
 
 
 def pad_pixels(canonical, w, h, n):

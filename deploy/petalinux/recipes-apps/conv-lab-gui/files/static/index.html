@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Control and inspect the Attention is all you need convolution accelerator.">
+  <title>Convolution Lab</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div>
+        <strong>Convolution Lab</strong>
+        <small>Attention is all you need</small>
+      </div>
+    </div>
+    <div class="connection" id="connection"><i></i><span>Connecting to board</span></div>
+  </header>
+
+  <main>
+    <section class="profile-panel" aria-labelledby="profiles-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">Hardware release</span><h1 id="profiles-title">Choose a profile</h1></div>
+        <button class="ghost" id="refresh" type="button">Refresh</button>
+      </div>
+      <div class="profiles" id="profiles" role="radiogroup" aria-label="Qualified hardware profiles"></div>
+    </section>
+
+    <section class="workspace">
+      <article class="control-card">
+        <div class="section-heading compact">
+          <div><span class="eyebrow">Inference</span><h2>Run inference</h2></div>
+          <span class="qualified">Qualified profiles only</span>
+        </div>
+
+        <div class="source-tabs" role="tablist" aria-label="Image source">
+          <button type="button" class="source-tab active" data-source="board" role="tab" aria-selected="true">Board library</button>
+          <button type="button" class="source-tab" data-source="library" role="tab" aria-selected="false">Verified sample</button>
+          <button type="button" class="source-tab" data-source="upload" role="tab" aria-selected="false">Upload image</button>
+        </div>
+
+        <div class="source-body" id="board-source">
+          <label class="field-label" for="board-image">Image stored on the ZedBoard</label>
+          <select id="board-image" class="board-image-select" aria-describedby="board-image-meta">
+            <option value="">Scanning approved image directories…</option>
+          </select>
+          <div class="board-image-card">
+            <div class="board-image-frame"><img id="board-image-preview" alt="Selected board image preview"></div>
+            <div>
+              <strong id="board-image-name">No board image selected</strong>
+              <span id="board-image-meta">PNG/JPEG files from approved board directories appear here.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="source-body hidden" id="library-source">
+          <div class="input-preview library-preview" aria-hidden="true">
+            <div class="pixel-grid"></div>
+            <span>Verified library input</span>
+          </div>
+          <p>Uses the admitted test image and checks the hardware output against its recorded anchor.</p>
+        </div>
+
+        <div class="source-body hidden" id="upload-source">
+          <label class="drop-zone" for="image-file">
+            <input id="image-file" type="file" accept="image/png,image/jpeg">
+            <span class="drop-icon" aria-hidden="true">+</span>
+            <strong>Select a PNG or JPEG</strong>
+            <small>The board converts to grayscale and resizes to the selected profile using LANCZOS.</small>
+          </label>
+          <div class="file-choice" id="file-choice">No file selected</div>
+        </div>
+
+        <div class="run-options">
+          <label>Frames
+            <select id="frames">
+              <option value="1">1 frame</option>
+              <option value="3" selected>3 frames</option>
+              <option value="10">10 frames</option>
+              <option value="20">20 frames</option>
+            </select>
+          </label>
+          <label class="check"><input id="previews" type="checkbox" checked><span>Render output channels</span></label>
+        </div>
+
+        <button class="primary" id="run" type="button"><span>Run inference</span><b aria-hidden="true">→</b></button>
+        <p class="validation" id="validation" role="alert"></p>
+      </article>
+
+      <article class="result-card" aria-labelledby="result-title">
+        <div class="result-head">
+          <div>
+            <span class="eyebrow">Latest result</span>
+            <h2 id="result-title">Ready for a run</h2>
+          </div>
+          <span class="outcome idle" id="outcome">IDLE</span>
+        </div>
+
+        <div class="job-progress hidden" id="job-progress">
+          <div class="progress-track"><span></span></div>
+          <p id="job-message">Programming and validating the selected profile…</p>
+        </div>
+
+        <div class="metrics" id="metrics">
+          <div class="metric"><span>Accelerator path median</span><strong>—</strong><small>PS timer: DMA launch → completion</small></div>
+          <div class="metric"><span>Accelerator path p95</span><strong>—</strong><small>PS-observed; excludes profile loading</small></div>
+          <div class="metric"><span>Whole call median</span><strong>—</strong><small>Includes runtime checks</small></div>
+          <div class="metric"><span id="frame-count-label">Processed frames</span><strong>—</strong><small id="frame-verification-label">Verification status appears after the run</small></div>
+        </div>
+
+        <div class="result-meta" id="result-meta">
+          <div><span>Profile</span><b>—</b></div>
+          <div><span>Input</span><b>—</b></div>
+          <div><span>Output SHA-256</span><code>—</code></div>
+        </div>
+
+        <section class="classification-panel hidden" id="classification-panel">
+          <div>
+            <span class="eyebrow">Full model classification</span>
+            <div class="classification-answer"><strong id="classification-name">—</strong><span id="classification-confidence">—</span></div>
+          </div>
+          <div class="classification-top" id="classification-top"></div>
+          <div class="classification-timing" id="classification-timing"></div>
+        </section>
+
+        <div class="gallery-wrap hidden" id="gallery-wrap">
+          <div class="gallery-heading"><h3>Output feature maps</h3><span id="gallery-note">Display-normalized previews</span></div>
+          <div class="gallery" id="gallery"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="history-panel" aria-labelledby="history-title">
+      <div class="section-heading compact">
+        <div><span class="eyebrow">Evidence</span><h2 id="history-title">Recent runs</h2></div>
+        <button class="ghost" id="benchmark" type="button">Benchmark selected profile</button>
+      </div>
+      <div class="history" id="history"><p class="empty">No archived runs found.</p></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Exact CFGLUT5 / Dadda accelerator</span>
+    <span id="board-name">Zynq-7000 · 125 MHz</span>
+  </footer>
+
+  <dialog class="feature-dialog" id="feature-map-dialog" aria-labelledby="feature-map-title">
+    <div class="feature-dialog-card">
+      <div class="feature-dialog-head">
+        <div><span class="eyebrow">Feature map</span><h2 id="feature-map-title">Channel</h2></div>
+        <button class="dialog-close" id="feature-map-close" type="button" aria-label="Close enlarged feature map">×</button>
+      </div>
+      <div class="feature-dialog-image"><img id="feature-map-image" alt=""></div>
+      <div class="feature-dialog-actions">
+        <span>Display-normalized preview</span>
+        <a class="download-button" id="feature-map-download" href="#" download>Download PNG</a>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

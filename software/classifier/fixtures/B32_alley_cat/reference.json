@@ -1,0 +1,42 @@
+{
+  "comparison": {
+    "absolute_tolerance": 0.0002,
+    "relative_tolerance": 2e-05
+  },
+  "logits": [
+    -0.4398648142814636,
+    -6.738289833068848,
+    0.9297702312469482,
+    1.3931344747543335,
+    0.837440550327301,
+    1.7954015731811523,
+    -1.8709080219268799,
+    0.06489916890859604,
+    -4.355659008026123,
+    -3.1892483234405518
+  ],
+  "prediction": {
+    "class_index": 5,
+    "class_name": "dog",
+    "confidence": 0.3581453999757012,
+    "top3": [
+      {
+        "class_index": 5,
+        "class_name": "dog",
+        "confidence": 0.3581453999757012
+      },
+      {
+        "class_index": 3,
+        "class_name": "cat",
+        "confidence": 0.23952839054009395
+      },
+      {
+        "class_index": 2,
+        "class_name": "bird",
+        "confidence": 0.15070250187630244
+      }
+    ]
+  },
+  "profile": "B32_CFGLUT125",
+  "source_image": "alley_cat_s_000013.png"
+}

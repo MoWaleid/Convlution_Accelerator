@@ -22,7 +22,9 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, "/home/petalinux")
+for _support_root in ("/opt/conv-lab/app", "/home/petalinux"):
+    if _support_root not in sys.path:
+        sys.path.insert(0, _support_root)
 import m4_filebackend as fb
 from conv_lab.strict import boolean, coefficients, integer, obj, parse_json, string
 

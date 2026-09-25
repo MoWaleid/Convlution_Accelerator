@@ -8,7 +8,7 @@ def _isolate():
         raise RuntimeError("unprivileged Linux worker required")
     import resource
     import ctypes
-    ceiling = 134217728
+    ceiling = 268435456
     _,hard = resource.getrlimit(resource.RLIMIT_AS)
     effective = ceiling if hard == resource.RLIM_INFINITY else min(hard,ceiling)
     resource.setrlimit(resource.RLIMIT_AS,(effective,effective))
@@ -38,6 +38,9 @@ def _header(data):
     import zlib
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         pos,first,ended,shape = 8,True,False,None
+        png_color = None
+        seen_trns = False
+        seen_idat = False
         while pos < len(data):
             if pos+12 > len(data):
                 raise ValueError("truncated PNG chunk")
@@ -53,14 +56,30 @@ def _header(data):
                 if tag != b"IHDR" or count != 13:
                     raise ValueError("PNG IHDR")
                 w,h,depth,color,compression,filtering,interlace = struct.unpack(">IIBBBBB",chunk)
-                if depth != 8 or color not in (0,2) or compression != 0 or filtering != 0 or interlace not in (0,1):
+                valid_depths = {0: (1,2,4,8), 2: (8,), 3: (1,2,4,8),
+                                4: (8,), 6: (8,)}
+                if color not in valid_depths or depth not in valid_depths[color] or \
+                        compression != 0 or filtering != 0 or interlace not in (0,1):
                     raise ValueError("unsupported PNG encoding")
-                shape = w,h,"L" if color == 0 else "RGB"
+                mode = ({0: "1" if depth == 1 else "L", 2: "RGB", 3: "P",
+                         4: "LA", 6: "RGBA"})[color]
+                shape = w,h,mode
+                png_color = color
                 first = False
             elif tag == b"IHDR":
                 raise ValueError("duplicate IHDR")
-            if tag in (b"tRNS",b"acTL",b"fcTL",b"fdAT"):
-                raise ValueError("transparency/animation forbidden")
+            if tag == b"tRNS":
+                if seen_trns or seen_idat or png_color not in (0,2,3):
+                    raise ValueError("invalid PNG transparency")
+                if ((png_color == 0 and count != 2) or
+                        (png_color == 2 and count != 6) or
+                        (png_color == 3 and not (1 <= count <= 256))):
+                    raise ValueError("invalid PNG transparency")
+                seen_trns = True
+            if tag in (b"acTL",b"fcTL",b"fdAT"):
+                raise ValueError("PNG animation forbidden")
+            if tag == b"IDAT":
+                seen_idat = True
             pos = end
             if tag == b"IEND":
                 if count != 0 or pos != len(data):
@@ -84,8 +103,9 @@ def _header(data):
             if marker == 0 or 0xd0 <= marker <= 0xd7:
                 continue
             if marker == 0xd9:
-                if pos != len(data):
-                    raise ValueError("trailing JPEG/second image")
+                trailing = data[pos:]
+                if b"\xff\xd8" in trailing or b"\x89PNG\r\n\x1a\n" in trailing:
+                    raise ValueError("trailing second image")
                 ended = True
                 break
             if marker == 0xd8 or pos+2 > len(data):
@@ -138,7 +158,7 @@ def main():
     warnings.simplefilter("error")  # Reject malformed metadata warnings as well as bomb warnings.
     with Image.open(io.BytesIO(source),formats=("PNG","JPEG")) as image:
         require(image.format == fmt and image.mode == mode and image.size == (sw,sh),"decoded source mismatch")
-        require(getattr(image,"n_frames",1) == 1 and "transparency" not in image.info,"multiframe/transparency")
+        require(getattr(image,"n_frames",1) == 1,"multiframe image")
         exif = image.getexif()
         orientation = exif.get(274)
         if 274 in exif:
@@ -147,7 +167,14 @@ def main():
         oriented = ImageOps.exif_transpose(image)
         ow,oh = oriented.size
         source_bounds(length,ow,oh)
-        gray = oriented if mode == "L" else oriented.convert("L")
+        if mode in ("LA", "RGBA") or "transparency" in image.info:
+            rgba = oriented.convert("RGBA")
+            white = Image.new("RGBA", rgba.size, (255,255,255,255))
+            gray = Image.alpha_composite(white, rgba).convert("L")
+            alpha_policy = "composite_white"
+        else:
+            gray = oriented if mode == "L" else oriented.convert("L")
+            alpha_policy = "none"
         if policy == "exact":
             require(gray.size == (w,h),"exact geometry mismatch")
         else:
@@ -163,9 +190,10 @@ def main():
                   aspect_ratio_changed=ow*h != oh*w,canonical_sha256=sha256(pixels),
                   pillow_version=pillow_version,decoder_versions=[dict(name=decoder_name,version=version)],
                   preprocessing_version="1",decode_policy=dict(max_source_bytes=8388608,max_width=4096,
-                  max_height=4096,max_pixels=2097152,resource_strategy=RESOURCE_STRATEGY),
+                  max_height=4096,max_pixels=12000000,resource_strategy=RESOURCE_STRATEGY),
                   extensions=dict(worker_uid=os.getuid(),address_space_limit=effective,
-                                  no_new_privs=True,python_version=sys.version,hardware_descriptors_inherited=False))
+                  no_new_privs=True,python_version=sys.version,hardware_descriptors_inherited=False,
+                  alpha_policy=alpha_policy))
     metadata = json.dumps(record,separators=(",",":"),allow_nan=False).encode()
     require(len(metadata) <= MAX_RECORD_BYTES and len(pixels) == w*h,"output bounds")
     sys.stdout.buffer.write(struct.pack(">I",len(metadata))+metadata+pixels)

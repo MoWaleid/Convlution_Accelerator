@@ -1,0 +1,77 @@
+#!/bin/sh
+
+DAEMON=/usr/bin/python3
+APP=/opt/conv-lab-gui/server.py
+PIDFILE=/var/run/conv-lab-gui.pid
+LOGFILE=/var/log/conv-lab-gui.log
+TOKENFILE=/etc/conv-lab-gui.token
+BOARD_ADDRESS=${CONV_GUI_BOARD_ADDRESS:-192.168.0.3/24}
+
+configure_direct_network() {
+    IP=ip
+    for candidate in /sbin/ip /usr/sbin/ip /bin/ip /usr/bin/ip; do
+        if [ -x "$candidate" ]; then IP=$candidate; break; fi
+    done
+    INTERFACE=
+    for path in /sys/class/net/enx* /sys/class/net/eth0; do
+        [ -d "$path" ] || continue
+        INTERFACE=$(basename "$path")
+        break
+    done
+    if [ -n "$INTERFACE" ]; then
+        "$IP" link set dev "$INTERFACE" up >/dev/null 2>&1 || true
+        "$IP" address replace "$BOARD_ADDRESS" dev "$INTERFACE" >/dev/null 2>&1 || true
+    fi
+}
+
+case "$1" in
+    start)
+        if [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+            echo "conv-lab-gui already running"
+            exit 0
+        fi
+        test -r "$APP" || { echo "missing $APP" >&2; exit 1; }
+        test -r /home/petalinux/m8_cli.py || {
+            echo "missing qualified runtime /home/petalinux/m8_cli.py" >&2
+            exit 1
+        }
+        test -r /home/petalinux/profiles/m7_profiles.json || {
+            echo "missing profile catalog" >&2
+            exit 1
+        }
+        if [ ! -s "$TOKENFILE" ]; then
+            umask 077
+            /usr/bin/python3 -c 'import secrets; print(secrets.token_hex(24))' >"$TOKENFILE"
+        fi
+        chmod 0600 "$TOKENFILE"
+        mkdir -p /var/lib/conv-lab/results /var/lib/conv-lab/uploads /var/lib/conv-lab/images
+        configure_direct_network
+        echo "Starting authenticated Convolution Lab GUI on port ${CONV_GUI_PORT:-8080}"
+        start-stop-daemon -S -b -m -p "$PIDFILE" -x "$DAEMON" -- \
+            -B "$APP" >>"$LOGFILE" 2>&1
+        ;;
+    stop)
+        echo "Stopping Convolution Lab GUI"
+        start-stop-daemon -K -p "$PIDFILE" 2>/dev/null || true
+        rm -f "$PIDFILE"
+        ;;
+    restart|force-reload)
+        "$0" stop
+        sleep 1
+        "$0" start
+        ;;
+    status)
+        if [ -s "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+            echo "conv-lab-gui is running (PID $(cat "$PIDFILE"))"
+            exit 0
+        fi
+        echo "conv-lab-gui is stopped"
+        exit 3
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}" >&2
+        exit 2
+        ;;
+esac
+
+exit 0

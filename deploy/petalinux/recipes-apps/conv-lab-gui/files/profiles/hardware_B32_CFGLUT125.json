@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "platform": "zedboard_linux",
+  "profile": "B32_CFGLUT125",
+  "frozen_utc": "2026-09-14",
+  "accelerator": {
+    "build_id_hex": "45463132354b31364e33573332523031",
+    "build_id_ascii": "EF125K16N3W32R01",
+    "magic": "0x43564831",
+    "abi_version": "0x00010000",
+    "capabilities": "0x000001ff",
+    "dma_length_width": 22,
+    "kernel_n": 3,
+    "channels_k": 16,
+    "image_w": 32,
+    "image_h": 32,
+    "pixel_width": 8,
+    "weight_width": 8,
+    "bias_width": 24,
+    "output_width": 16,
+    "expected_input_bytes": 1156,
+    "expected_output_bytes": 32768,
+    "clock_mhz": 125
+  },
+  "bus": {
+    "accelerator_base": "0x43c00000",
+    "accelerator_aperture": 65536,
+    "dma_base": "0x40400000",
+    "globals_base": "0x4100"
+  },
+  "devices": {
+    "dma_uio": "/dev/uio0",
+    "accel_uio": "/dev/uio1",
+    "buffer_device": "/dev/udmabuf0",
+    "buffer_phys_addr": "0x1f100000",
+    "buffer_bytes": 4194304,
+    "buffer_sync_mode": 1
+  },
+  "layout_note": "runtime derives the approved four-guard layout via conv_lab/compute_layout from expected byte counts and the discovered buffer; the manifest deliberately carries no rx_offset (IP-07 single source of truth)",
+  "artifacts": {
+    "bitstream_sha256": "2388f249aa1ae8c4bce2b9aa0cfd612acecf11d0e4cf595f020ff8bf4b8abcdd",
+    "firmware_bin_sha256": "757595d54cef273d7975f1f7e6ce783e41e0ccafcab8702555ea4a87ddb95dea",
+    "bitstream_file": "bitstreams/b32_cfglut125_125mhz.bit",
+    "firmware_file": "bitstreams/b32_cfglut125_125mhz.bit.bin",
+    "note": "canonical routed bitstream and bootgen-generated FPGA-manager firmware bound from the frozen five-build record (AI_HANDOFF.md SS18.17); BUILT, BOARD_VALIDATION=NOT_RUN"
+  },
+  "release_status": "built-unqualified",
+  "deployable": true
+}

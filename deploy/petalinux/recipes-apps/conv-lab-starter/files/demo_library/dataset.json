@@ -1,0 +1,19 @@
+{
+  "classes": [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck"
+  ],
+  "dataset_id": "cifar10-official-demo-50",
+  "image_count": 50,
+  "images_per_class": 5,
+  "reference_catalog": "reference_catalog.json",
+  "schema_version": 1
+}

@@ -4,7 +4,7 @@ LICENSE = "CLOSED"
 SRC_URI = "file://tests/ file://evidence/ file://conv-lab-tests file://INSTALLED_SHA256SUMS.txt"
 S = "${WORKDIR}"
 inherit allarch
-RDEPENDS:${PN} = "conv-lab conv-lab-starter python3-modules"
+RDEPENDS:${PN} = "conv-lab conv-lab-starter conv-lab-gui python3-modules"
 do_configure[noexec] = "1"
 do_compile[noexec] = "1"
 do_install() {

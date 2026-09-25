@@ -1,14 +1,18 @@
 Conv Lab preserved starter candidate: provenance notice, not a license grant.
 
 This package contains the already converted m0-trained-cifar-k8/converted-1
-model and m0-cifar-cat/converted-1 dataset (one CIFAR PNG). Their bytes and
-identities are unchanged from the verified transfer and historical audit.
+model and m0-cifar-cat/converted-1 activation dataset (one CIFAR PNG). Their
+bytes and identities are unchanged from the verified transfer and historical
+audit. It also contains a compact demonstration library: official CIFAR-10
+web-page samples 1-5 for every class (50 PNGs), with source URLs, per-file
+hashes, and content-bound D640 golden output hashes in reference_catalog.json.
 It is staged solely for the user's existing internal project validation.
 
 The user approved CLOSED classification for team-owned application and test
 code. That approval is NOT applied to this starter package or its third-party
-image. The original dataset/image license and redistribution clearance, and
-full training provenance, remain unresolved. No rights are granted here.
+images. The original dataset/image license and redistribution clearance, and
+full training provenance, remain unresolved. Cite Alex Krizhevsky, Learning
+Multiple Layers of Features from Tiny Images (2009). No rights are granted here.
 Do not redistribute this candidate as a cleared starter release.
 
 LicenseRef-ConvLab-Starter-Provenance-Unresolved is an explicit local recipe

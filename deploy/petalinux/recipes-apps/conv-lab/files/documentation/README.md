@@ -83,7 +83,7 @@ A future service arrangement and its device permissions remain M2-P work.
 
 The supervisor launches the private worker using the same interpreter with -I -B, closed
 unrelated descriptors, pipe-only standard streams, a restricted environment and a new session.
-The worker checks its descriptor set, installs RLIMIT_AS at or below 134217728 bytes before
+The worker checks its descriptor set, installs RLIMIT_AS at or below 268435456 bytes before
 decoding, disables core dumps and sets no_new_privs. No hardware descriptors/mappings survive
 exec and no hardware operations exist in worker code. This is not a claim of a qualified
 deployed service sandbox.
@@ -93,7 +93,7 @@ The one-worker flock is per operating-system UID across supervisor processes, un
 forming an unbounded queue. Failure to establish the boundary rejects decoding.
 
 Source limits apply jointly: 8388608 source bytes, width/height each at most 4096, and at most
-2097152 pixels. Encoded PNG depth/color/transparency/animation and JPEG precision/components
+12000000 pixels. Encoded PNG depth/color/transparency/animation and JPEG precision/components
 are checked before full decoding. Orientation precedes grayscale and exact/explicit LANCZOS
 geometry handling. Source bounds do not independently cap compiled output dimensions:
 the latter come from the validated context and bounded DMA/output envelope.
