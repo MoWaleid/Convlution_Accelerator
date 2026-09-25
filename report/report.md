@@ -11,7 +11,7 @@ in §13. Derived values state their inputs and calculation scope.
 
 **Project links**
 
-- Source repository and reproducible release: [GitHub — Convlution Accelerator](https://github.com/MoWaleid/Convlution_Accelerator/tree/sscs-egypt-2026-submission)
+- Source repository and reproducible release: [GitHub — Convlution Accelerator](https://github.com/MoWaleid/Convlution_Accelerator)
 - Board demonstration video: [Google Drive — competition demo](https://drive.google.com/drive/folders/190LHhYTYuoAFmNcWCe7-HPHLm7nQeYk8)
 ## 1. Introduction
 

@@ -85,7 +85,7 @@ Development profiles are kept separate from the qualified runtime catalog.
 ## Competition links
 
 - [Board demonstration video](https://drive.google.com/drive/folders/190LHhYTYuoAFmNcWCe7-HPHLm7nQeYk8)
-- The exact submitted revision is tagged `sscs-egypt-2026-submission`.
+- [Source repository](https://github.com/MoWaleid/Convlution_Accelerator)
 
 The upload package is generated from `submission/` and includes the report,
 presentation, source code, expected vectors, FPGA reports, and board evidence.
