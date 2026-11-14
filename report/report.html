@@ -324,8 +324,8 @@ validates MAGIC, ABI version, capabilities, BUILD_ID, geometry and DMA
 length width against the selected release&#39;s manifest <strong>before any parameter
 write</strong> and rejects mismatches — a rule the
 platform itself enforces: a deliberately illegal access from userspace escalates to
-a PS external abort (SIGBUS), i.e. the system fails stop [recorded 2026-09-12,
-see AI_HANDOFF.md §12].</p>
+a PS external abort (SIGBUS), i.e. the system fails stop [recorded 2026-09-12;
+the quiescent-reset guard that avoids it is in <code>software/m7_switch.py</code>].</p>
 <h2>8. Verification and results</h2>
 <h3>8.1 Simulation</h3>
 <ul>
@@ -822,110 +822,7 @@ column is this release.</p>
 <td>§11, [S29]</td>
 </tr>
 </tbody></table>
-<h4>Rank 4 — C32_CFGLUT125 (N=5, K=8, 32×32)</h4>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Specification</th>
-<th>Team Result</th>
-<th>Units</th>
-<th>Comments</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Input image size</td>
-<td>≥ 32×32, grayscale</td>
-<td>32×32</td>
-<td>px</td>
-<td>N=5 25-tap kernel — beyond the 3×3 baseline</td>
-</tr>
-<tr>
-<td>Input precision</td>
-<td>unsigned fixed-point, justified</td>
-<td>unsigned 8-bit Q0.8</td>
-<td>—</td>
-<td>§6</td>
-</tr>
-<tr>
-<td>Kernel precision</td>
-<td>8-bit signed</td>
-<td>signed 8-bit weights · signed-24 bias · 5-bit shift</td>
-<td>—</td>
-<td>retrained N=5 network, 67.72%</td>
-</tr>
-<tr>
-<td>Architecture type</td>
-<td>—</td>
-<td>exact CFGLUT5 Dadda-compressor datapath, 8 parallel channels, edge-free window generation with prefetch</td>
-<td>—</td>
-<td>§3</td>
-</tr>
-<tr>
-<td>Multipliers / MACs</td>
-<td>—</td>
-<td>200 exact LUT multipliers (8 ch × 25 taps), <strong>0 DSP</strong></td>
-<td>—</td>
-<td>50-row Dadda heap per channel</td>
-</tr>
-<tr>
-<td>Pipeline stages</td>
-<td>—</td>
-<td>5 named stages (BH, S2–S5); Dadda tree adds a second registered boundary</td>
-<td>—</td>
-<td>§3.3</td>
-</tr>
-<tr>
-<td>Latency</td>
-<td>—</td>
-<td>0.124 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived)</td>
-<td>—</td>
-<td>[S26], [S27]</td>
-</tr>
-<tr>
-<td>Throughput</td>
-<td>—</td>
-<td>core: <strong>8 valid outputs/cycle</strong> (design rate); full system: <strong>3.940 valid outputs/cycle</strong> sustained — bus-limited, derated ~1.5% by disclosed edge bubbles</td>
-<td>outputs/cycle</td>
-<td>§3.3–3.4</td>
-</tr>
-<tr>
-<td>FPGA utilization</td>
-<td>—</td>
-<td>full system 14,162 LUT (26.6%), 13,934 FF, 3 BRAM, <strong>0 DSP</strong>; core 9,764 LUT, 7,688 FF</td>
-<td>—</td>
-<td>[S32]</td>
-</tr>
-<tr>
-<td>Maximum frequency</td>
-<td>—</td>
-<td>125 MHz met, WNS +0.003 ns</td>
-<td>MHz</td>
-<td>[S32]</td>
-</tr>
-<tr>
-<td>Power estimate</td>
-<td>—</td>
-<td>1.823 W full system (core block 0.065 W), Vivado vectorless</td>
-<td>W</td>
-<td>[S32]</td>
-</tr>
-<tr>
-<td>Verification status</td>
-<td>golden-model comparison</td>
-<td>bit-exact: 115 frames (3-frame single + 12 extremes + 100-frame soak), zero mismatches</td>
-<td>—</td>
-<td>[S26], [S27]</td>
-</tr>
-<tr>
-<td>FOM</td>
-<td>—</td>
-<td>accelerator core <strong>1.26×10⁻²</strong> · full system <strong>1.49×10⁻⁴</strong></td>
-<td>—</td>
-<td>§11, [S29]</td>
-</tr>
-</tbody></table>
-<h4>Rank 5 — B32_CFGLUT125 (N=3, K=16, 32×32)</h4>
+<h4>Rank 4 — B32_CFGLUT125 (N=3, K=16, 32×32)</h4>
 <table>
 <thead>
 <tr>
@@ -1024,6 +921,109 @@ column is this release.</p>
 <td>FOM</td>
 <td>—</td>
 <td>accelerator core <strong>3.95×10⁻²</strong> · full system <strong>1.71×10⁻⁴</strong></td>
+<td>—</td>
+<td>§11, [S29]</td>
+</tr>
+</tbody></table>
+<h4>Rank 5 — C32_CFGLUT125 (N=5, K=8, 32×32)</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Specification</th>
+<th>Team Result</th>
+<th>Units</th>
+<th>Comments</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Input image size</td>
+<td>≥ 32×32, grayscale</td>
+<td>32×32</td>
+<td>px</td>
+<td>N=5 25-tap kernel — beyond the 3×3 baseline</td>
+</tr>
+<tr>
+<td>Input precision</td>
+<td>unsigned fixed-point, justified</td>
+<td>unsigned 8-bit Q0.8</td>
+<td>—</td>
+<td>§6</td>
+</tr>
+<tr>
+<td>Kernel precision</td>
+<td>8-bit signed</td>
+<td>signed 8-bit weights · signed-24 bias · 5-bit shift</td>
+<td>—</td>
+<td>retrained N=5 network, 67.72%</td>
+</tr>
+<tr>
+<td>Architecture type</td>
+<td>—</td>
+<td>exact CFGLUT5 Dadda-compressor datapath, 8 parallel channels, edge-free window generation with prefetch</td>
+<td>—</td>
+<td>§3</td>
+</tr>
+<tr>
+<td>Multipliers / MACs</td>
+<td>—</td>
+<td>200 exact LUT multipliers (8 ch × 25 taps), <strong>0 DSP</strong></td>
+<td>—</td>
+<td>50-row Dadda heap per channel</td>
+</tr>
+<tr>
+<td>Pipeline stages</td>
+<td>—</td>
+<td>5 named stages (BH, S2–S5); Dadda tree adds a second registered boundary</td>
+<td>—</td>
+<td>§3.3</td>
+</tr>
+<tr>
+<td>Latency</td>
+<td>—</td>
+<td>0.124 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived)</td>
+<td>—</td>
+<td>[S26], [S27]</td>
+</tr>
+<tr>
+<td>Throughput</td>
+<td>—</td>
+<td>core: <strong>8 valid outputs/cycle</strong> (design rate); full system: <strong>3.940 valid outputs/cycle</strong> sustained — bus-limited, derated ~1.5% by disclosed edge bubbles</td>
+<td>outputs/cycle</td>
+<td>§3.3–3.4</td>
+</tr>
+<tr>
+<td>FPGA utilization</td>
+<td>—</td>
+<td>full system 14,162 LUT (26.6%), 13,934 FF, 3 BRAM, <strong>0 DSP</strong>; core 9,764 LUT, 7,688 FF</td>
+<td>—</td>
+<td>[S32]</td>
+</tr>
+<tr>
+<td>Maximum frequency</td>
+<td>—</td>
+<td>125 MHz met, WNS +0.003 ns</td>
+<td>MHz</td>
+<td>[S32]</td>
+</tr>
+<tr>
+<td>Power estimate</td>
+<td>—</td>
+<td>1.823 W full system (core block 0.065 W), Vivado vectorless</td>
+<td>W</td>
+<td>[S32]</td>
+</tr>
+<tr>
+<td>Verification status</td>
+<td>golden-model comparison</td>
+<td>bit-exact: 115 frames (3-frame single + 12 extremes + 100-frame soak), zero mismatches</td>
+<td>—</td>
+<td>[S26], [S27]</td>
+</tr>
+<tr>
+<td>FOM</td>
+<td>—</td>
+<td>accelerator core <strong>1.26×10⁻²</strong> · full system <strong>1.49×10⁻⁴</strong></td>
 <td>—</td>
 <td>§11, [S29]</td>
 </tr>
@@ -1188,9 +1188,11 @@ multi-channel output position counts as one pixel or as K pixels. We
 state our interpretation explicitly: <strong>one output pixel = one 16-bit
 channel result</strong>, so a K-channel design legally produces K valid outputs
 per cycle with its pipeline filled (16 at K=16, 8 at K=8, 4 at K=4). If a
-judge instead counts one complete K-channel position as one pixel, every
-FOM in this report scales by exactly 1/K, the ranking is unchanged, and
-no conclusion in §11 changes.</li>
+judge instead counts one complete K-channel position as one pixel, each
+release's FOM scales by exactly 1/K of its own channel count. The
+accelerator-scope ordering is unchanged, but the full-system ordering is
+not: B32 (K=16) drops below C32 (K=8), giving D640, D32, A32, C32, B32.
+The K=4 releases keep their lead in both scopes.</li>
 <li><strong>Accelerator scope.</strong> Throughput = the datapath design rate, K valid
 outputs/cycle; resources and power are the accelerator core hierarchy&#39;s
 own. Justification that the design rate is real: the B32 release measured

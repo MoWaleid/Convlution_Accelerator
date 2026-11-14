@@ -263,8 +263,8 @@ validates MAGIC, ABI version, capabilities, BUILD_ID, geometry and DMA
 length width against the selected release's manifest **before any parameter
 write** and rejects mismatches — a rule the
 platform itself enforces: a deliberately illegal access from userspace escalates to
-a PS external abort (SIGBUS), i.e. the system fails stop [recorded 2026-09-12,
-see AI_HANDOFF.md §12].
+a PS external abort (SIGBUS), i.e. the system fails stop [recorded 2026-09-12;
+the quiescent-reset guard that avoids it is in `software/m7_switch.py`].
 
 ## 8. Verification and results
 
@@ -444,25 +444,7 @@ column is this release.
 | Verification status | golden-model comparison | bit-exact: 117 frames (3-frame single + 12 extremes + 100-frame soak + 2 fault-recovery proof frames), zero mismatches | — | [S26], [S27] |
 | FOM | — | accelerator core **6.02×10⁻²** · full system **2.37×10⁻⁴** | — | §11, [S29] |
 
-#### Rank 4 — C32_CFGLUT125 (N=5, K=8, 32×32)
-
-| Parameter | Specification | Team Result | Units | Comments |
-|---|---|---|---|---|
-| Input image size | ≥ 32×32, grayscale | 32×32 | px | N=5 25-tap kernel — beyond the 3×3 baseline |
-| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 | — | §6 |
-| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | retrained N=5 network, 67.72% |
-| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 8 parallel channels, edge-free window generation with prefetch | — | §3 |
-| Multipliers / MACs | — | 200 exact LUT multipliers (8 ch × 25 taps), **0 DSP** | — | 50-row Dadda heap per channel |
-| Pipeline stages | — | 5 named stages (BH, S2–S5); Dadda tree adds a second registered boundary | — | §3.3 |
-| Latency | — | 0.124 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived) | — | [S26], [S27] |
-| Throughput | — | core: **8 valid outputs/cycle** (design rate); full system: **3.940 valid outputs/cycle** sustained — bus-limited, derated ~1.5% by disclosed edge bubbles | outputs/cycle | §3.3–3.4 |
-| FPGA utilization | — | full system 14,162 LUT (26.6%), 13,934 FF, 3 BRAM, **0 DSP**; core 9,764 LUT, 7,688 FF | — | [S32] |
-| Maximum frequency | — | 125 MHz met, WNS +0.003 ns | MHz | [S32] |
-| Power estimate | — | 1.823 W full system (core block 0.065 W), Vivado vectorless | W | [S32] |
-| Verification status | golden-model comparison | bit-exact: 115 frames (3-frame single + 12 extremes + 100-frame soak), zero mismatches | — | [S26], [S27] |
-| FOM | — | accelerator core **1.26×10⁻²** · full system **1.49×10⁻⁴** | — | §11, [S29] |
-
-#### Rank 5 — B32_CFGLUT125 (N=3, K=16, 32×32)
+#### Rank 4 — B32_CFGLUT125 (N=3, K=16, 32×32)
 
 | Parameter | Specification | Team Result | Units | Comments |
 |---|---|---|---|---|
@@ -479,6 +461,24 @@ column is this release.
 | Power estimate | — | 1.806 W full system (core block 0.049 W), Vivado vectorless | W | [S32] |
 | Verification status | golden-model comparison | bit-exact: 115 frames (3-frame single + 12 extremes + 100-frame soak), zero mismatches; native hybrid tail matched all 10 frozen-reference logits | — | [S25], [S26], [S35] |
 | FOM | — | accelerator core **3.95×10⁻²** · full system **1.71×10⁻⁴** | — | §11, [S29] |
+
+#### Rank 5 — C32_CFGLUT125 (N=5, K=8, 32×32)
+
+| Parameter | Specification | Team Result | Units | Comments |
+|---|---|---|---|---|
+| Input image size | ≥ 32×32, grayscale | 32×32 | px | N=5 25-tap kernel — beyond the 3×3 baseline |
+| Input precision | unsigned fixed-point, justified | unsigned 8-bit Q0.8 | — | §6 |
+| Kernel precision | 8-bit signed | signed 8-bit weights · signed-24 bias · 5-bit shift | — | retrained N=5 network, 67.72% |
+| Architecture type | — | exact CFGLUT5 Dadda-compressor datapath, 8 parallel channels, edge-free window generation with prefetch | — | §3 |
+| Multipliers / MACs | — | 200 exact LUT multipliers (8 ch × 25 taps), **0 DSP** | — | 50-row Dadda heap per channel |
+| Pipeline stages | — | 5 named stages (BH, S2–S5); Dadda tree adds a second registered boundary | — | §3.3 |
+| Latency | — | 0.124 ms measured frame median (host-clock, 100-frame soak); 2,048-beat streaming floor ≈ 16.38 µs (derived) | — | [S26], [S27] |
+| Throughput | — | core: **8 valid outputs/cycle** (design rate); full system: **3.940 valid outputs/cycle** sustained — bus-limited, derated ~1.5% by disclosed edge bubbles | outputs/cycle | §3.3–3.4 |
+| FPGA utilization | — | full system 14,162 LUT (26.6%), 13,934 FF, 3 BRAM, **0 DSP**; core 9,764 LUT, 7,688 FF | — | [S32] |
+| Maximum frequency | — | 125 MHz met, WNS +0.003 ns | MHz | [S32] |
+| Power estimate | — | 1.823 W full system (core block 0.065 W), Vivado vectorless | W | [S32] |
+| Verification status | golden-model comparison | bit-exact: 115 frames (3-frame single + 12 extremes + 100-frame soak), zero mismatches | — | [S26], [S27] |
+| FOM | — | accelerator core **1.26×10⁻²** · full system **1.49×10⁻⁴** | — | §11, [S29] |
 
 **Cross-release observation:** the FOM ranking is set by the K·N² LUT cost of
 the exact-compressor datapath, while the full-system ranking additionally
@@ -579,9 +579,11 @@ by the 64-bit DMA stream and is therefore reported separately.
    state our interpretation explicitly: **one output pixel = one 16-bit
    channel result**, so a K-channel design legally produces K valid outputs
    per cycle with its pipeline filled (16 at K=16, 8 at K=8, 4 at K=4). If a
-   judge instead counts one complete K-channel position as one pixel, every
-   FOM in this report scales by exactly 1/K, the ranking is unchanged, and
-   no conclusion in §11 changes.
+   judge instead counts one complete K-channel position as one pixel, each
+   release's FOM scales by exactly 1/K of its own channel count. The
+   accelerator-scope ordering is unchanged, but the full-system ordering is
+   not: B32 (K=16) drops below C32 (K=8), giving D640, D32, A32, C32, B32.
+   The K=4 releases keep their lead in both scopes.
 2. **Accelerator scope.** Throughput = the datapath design rate, K valid
    outputs/cycle; resources and power are the accelerator core hierarchy's
    own. Justification that the design rate is real: the B32 release measured
