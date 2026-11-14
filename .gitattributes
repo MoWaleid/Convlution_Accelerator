@@ -1,3 +1,8 @@
+# Checksum manifests are consumed by `sha256sum -c`, which rejects CRLF line
+# endings (including BusyBox on the board). Always check them out with LF.
+*.sha256 text eol=lf
+*SHA256SUMS*.txt text eol=lf
+
 # Simulation transcripts are cryptographic evidence. Preserve their exact
 # bytes rather than applying platform newline conversion on add/checkout.
 report/research_builds/**/simulate.log binary

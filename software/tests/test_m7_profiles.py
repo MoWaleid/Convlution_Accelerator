@@ -44,16 +44,6 @@ BUNDLE_ALIASES = {
     "C32_CFGLUT125": "C32", "D32_CFGLUT125": "D32",
     "D640_CFGLUT125": "D640",
 }
-# Frozen legacy MAC-era identities, retained here for the historical
-# generator test only (no longer in the active catalog).
-LEGACY_CASES = {
-    "A32": (32,32,3,8,"4d344e334b385733322d323630393131"),
-    "B32": (32,32,3,16,"424e334b31365733322d323630393132"),
-    "C32": (32,32,5,8,"434e354b30385733322d323630393132"),
-    "D32": (32,32,3,4,"444e334b30345733322d323630393132"),
-    "D640": (640,480,3,4,"443634304e334b30342d323630393132"),
-}
-
 
 class M7Profiles(unittest.TestCase):
     def setUp(self):
@@ -119,15 +109,6 @@ class M7Profiles(unittest.TestCase):
         ):
             with self.subTest(layout=bad), self.assertRaises(AdmissionError):
                 validate_layout(p.W,p.H,p.N,p.K,self.allocation,bad)
-
-    def test_a32_original_already_canonical_and_numerically_preserved(self):
-        old = json.loads((ROOT/"profiles/history/hardware_A32_original_20260912.json").read_bytes())
-        current = json.loads((ROOT/"software/hardware.json").read_bytes())
-        old_id = old["accelerator"]["build_id_hex"]
-        self.assertEqual(len(old_id),32)
-        # The legacy A32 identity left the active catalog at the §19.7 cutover;
-        # the historical manifest bytes must remain exactly unchanged.
-        self.assertEqual(old,current)
 
     def test_invalid_catalog_ids(self):
         original = json.loads(CATALOG.read_bytes())
@@ -218,29 +199,3 @@ class M7Profiles(unittest.TestCase):
         r.update({0x4150+4*i:(identity>>(32*i))&0xffffffff for i in range(4)})
         with self.assertRaises(AdmissionError):
             validate_discovery(p,r)
-
-    def test_render_all_configs_and_current_d640_projection(self):
-        spec = importlib.util.spec_from_file_location("prepare_profile",ROOT/"scripts/prepare_profile.py")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        template = (ROOT/"Convlution_Accelerator.srcs/sources_1/new/config_pkg.vhd").read_text()
-        # prepare_profile.py is the legacy five-profile build generator, now
-        # historical (the research release has its own isolated generator and
-        # must not be projected through this path). The legacy identities left
-        # the active catalog at the §19.7 cutover, so they are reconstructed
-        # locally from their frozen record.
-        for name,(w,h,n,k,identity) in LEGACY_CASES.items():
-            p = m7_profiles.Profile(name,W=w,H=h,N=n,K=k,build_id=identity)
-            rendered = module.render_config(template,p)
-            self.assertIn(f'CFG_PROFILE : string := "{name}"',rendered)
-            self.assertIn(f'x"{p.build_id}"',rendered)
-            for key,value in (("CFG_K",p.K),("CFG_N",p.N),
-                              ("CFG_UNPADDED_WIDTH",p.W),("CFG_UNPADDED_HEIGHT",p.H)):
-                self.assertRegex(rendered,rf"{key}\s*: integer := {value};")
-        # Rendering an already-rendered isolated snapshot must be idempotent.
-        d640 = module.render_config(template, m7_profiles.Profile(
-            "D640", W=640, H=480, N=3, K=4,
-            build_id=LEGACY_CASES["D640"][4]))
-        self.assertEqual(d640,module.render_config(d640,m7_profiles.Profile(
-            "D640", W=640, H=480, N=3, K=4,
-            build_id=LEGACY_CASES["D640"][4])))

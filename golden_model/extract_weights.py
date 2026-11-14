@@ -6,6 +6,13 @@ per-channel configuration consumed by the VHDL register bank.
 
 All channels are exported sequentially (channel 0, 1, 2, …, K-1).
 
+Status: this exporter predates the final release format.  The five qualified
+parameter bundles under ``profiles/`` use the ``canonical-flat-2`` dialect with
+a signed 24-bit bias, which is the width the RTL and the CVH1 register map
+implement.  The signed 32-bit bias described and range-checked below is the
+original export contract; check any new export against the current bundle
+contract and requalify it before use.
+
 Numeric contract
 ────────────────
     Input pixels:  uint8 Q0.8  (pixel / 256)

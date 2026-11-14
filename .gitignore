@@ -94,10 +94,21 @@ desktop.ini
 *.bda
 /Convlution_Accelerator.srcs/sources_1/bd/*/ip/
 dfx_runtime.txt
+
+# Local editor settings
+.vscode/
+
+# Competition packaging. `submission/` is an assembled copy of sources that
+# live elsewhere in this repository; only its README is described in the root
+# README and its SHA256SUMS.txt manifest is tracked. `final_upload/` holds the
+# generated upload archives.
 submission/
-/tmp/
 /final_upload/
 *.zip.sha256
+
+# Scratch space for one-off rendering and packaging work
+/tmp/
+/output/
 
 # Preserve the five qualified runtime artifacts even though generic Vivado
 # products remain ignored.

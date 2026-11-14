@@ -1,10 +1,44 @@
 # Project handoff
 
-Read [README.md](README.md) first. It is the current project map and build
-guide. The qualified design consists of five exact CFGLUT5/Dadda releases at
-125 MHz: A32, B32, C32, D32, and D640. The final submission is under
-`submission/`; compact build evidence is under `releases/`; qualified runtime
-artifacts are under `bitstreams/`.
+Project-specific context for a new AI agent or collaborator. Read
+[README.md](README.md) first for the repository map and build guide, then this
+file for implementation and operational state, then
+[GUI_ROADMAP.md](GUI_ROADMAP.md) for the GUI.
+
+## Start here
+
+The qualified design consists of five exact CFGLUT5/Dadda releases at 125 MHz:
+A32, B32, C32, D32 and D640. The submitted state is commit `fe21a14`
+(`Finalize submission links and upload package`) on branch
+`integration/m10-cfglut5`, tagged `sscs-egypt-2026-submission`. The final
+submission is under `submission/`, compact build evidence under `releases/`,
+and qualified runtime artifacts under `bitstreams/`. Check `git status` and
+`git log` before editing.
+
+1. For a task in a specific area, read its local guide before editing:
+   `software/README.md`, `software/gui/README.md`, `scripts/README.md`,
+   `deploy/petalinux/README.md`, `profiles/README.md`, or the relevant
+   qualification record under `evidence/`.
+2. Treat `bitstreams/` and the qualified profile catalog as release artifacts.
+   Preserve the profile identity and checksum gates; don't silently replace
+   qualified artifacts with a research build.
+3. Respect the frozen files listed in `README.md`. The build manifests hash the
+   exact bytes of the RTL, block design, `Zedboard-Master.xdc`,
+   `research_build.tcl` and the release specs, so even a comment edit there
+   unbinds the qualified bitstreams from their sources.
+4. The ZedBoard, Vivado and PetaLinux are external execution environments.
+   Local source inspection cannot establish that a board deployment or a
+   hardware build has passed. Check timestamped evidence and ask for access or
+   fresh measurements when a task depends on live hardware state. This file
+   records repository contents; it does not claim the physical board or an
+   external PetaLinux image still has the state described below.
+
+`docs/Convolution_Lab_Complete_Technical_Field_Guide.pdf` is a learning
+document dated 2026-09-29, not yet committed. Do not delete or overwrite it without asking.
+`final_upload/` and `submission/` are generated and intentionally untracked,
+apart from `submission/SHA256SUMS.txt`.
+
+## Graphical interface and demo library
 
 The graphical demonstration interface is implemented under `software/gui/`.
 It is a polished board-hosted web UI that selects one of the five qualified
@@ -72,6 +106,8 @@ contain bounded non-image trailer bytes, but appended JPEG/PNG signatures are
 rejected as a second image. Source admission is bounded to 8 MiB encoded,
 4096 pixels per axis, and 12 megapixels total under one 256 MiB RLIMIT_AS
 worker. Preserve these limits and the single-worker rule when changing admission.
+
+## Deployment and working rules
 
 PetaLinux source is in
 `deploy/petalinux/recipes-apps/conv-lab-gui/`; select

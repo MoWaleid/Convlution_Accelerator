@@ -1,3 +1,58 @@
+# Board software
+
+Everything that runs on the ZedBoard's ARM processing system, plus the host
+tests that exercise it without hardware. Python 3.11 or newer is required.
+
+## Entry points
+
+| Path | Role |
+|---|---|
+| `m8_cli.py` | Inference CLI: runs frames, verifies them, archives results and previews |
+| `m7_switch.py` | Release switch manager: identity checks, FPGA Manager reload, parameters, DMA frames |
+| `m4_filebackend.py` | Device layer used by the two scripts above (UIO registers, DMA buffer) |
+| `m8_import.py` | Validated import of model and dataset bundles into the board library |
+| `g5_fault_check.py` | Fault-injection and recovery check used in the final qualification |
+| `gui/` | Board-hosted browser interface; see [gui/README.md](gui/README.md) |
+| `classifier/` | Native B32 classification tail; see [classifier/README.md](classifier/README.md) |
+| `conv_lab/` | Admission, bundle, preprocessing, storage and exact-reference library described below |
+| `hardware_*_CFGLUT125.json` | Runtime manifests of the five qualified releases |
+| `tests/`, `reports/` | Host test groups and their recorded results |
+
+The `m7`/`m8` prefixes are milestone names kept for path stability: the board
+image, the PetaLinux recipes and the qualification records all refer to these
+filenames. `gui/server.py`, `gui/static/`, `m7_switch.py` and `m8_cli.py` must
+stay byte-identical to their copies under
+`deploy/petalinux/recipes-apps/conv-lab-gui/files/`.
+
+The milestone-era runners (`m3_demo.py`, `m3_filebackend.py`, `m5_qualify.py`,
+`m6_reload.py`) and the 100 MHz manifests `hardware.json` and
+`hardware_A32.json` were removed after the submission. They remain in git
+history, and the board campaigns they produced are recorded under
+`report/evidence/`.
+
+## Host tests
+
+From the repository root:
+
+```sh
+python -B software/gui/test_server.py
+python -B verification/m8_cli/mock_cli_test.py
+python -B verification/m8_import/test_import.py
+```
+
+From `software/`:
+
+```sh
+python -B -m unittest classifier.test_hybrid classifier.test_tail_bundle
+python -B -m tests.run_group A
+python -B -m tests.run_group B
+python -B -m tests.run_group C
+```
+
+Each `tests.run_group` call writes a new timestamped JSON report into
+`reports/`. Decoder-worker cases run only on Linux as an unprivileged user and
+are reported as SKIPPED elsewhere.
+
 # Conv Lab: hardware-independent exact-convolution platform
 
 Implementation added 2026-09-09; extended with explicit conversion/offline tooling.
@@ -7,18 +62,21 @@ Historical host A/B results are preserved in [reports/HOST_EVIDENCE.md](reports/
 x86-64 and the ARM board (M2/M2-P closed); this package is the qualified runtime
 beneath the board campaigns M3–M9 (file-driven inference, release/profile switching,
 CLI/run archive), with the frozen parameter library under `profiles/`
-(canonical-flat-2; conversion receipts in `profiles/history/legacy_conversion_20260914.json`)
-and the board entry points `m7_switch.py` / `m8_cli.py` / `m8_import.py`. The
-original 2026-09-09 status paragraph is retained below for provenance — at that
-time the new C tests and current-revision reruns were NOT RUN, M1/M2 were not
-declared complete, and no bundle or hardware platform was qualified:
+(canonical-flat-2; the conversion receipt `profiles/history/legacy_conversion_20260914.json`
+is archived in `recovery/legacy_history_20260920.tar.gz`)
+and the board entry points `m7_switch.py` / `m8_cli.py` / `m8_import.py`.
 
-**New C tests, current-revision A/B reruns, conversion and offline validation are NOT RUN.**
-M1/M2 are not declared complete. No bundle or hardware platform is qualified.
+The sections below are the original 2026-09-09 implementation notes, kept as
+the design record. They describe the package as delivered at that point, before
+the board campaigns. Its status line then read:
 
-This package follows the approved planning contracts in
-[C:/Users/moham/Documents/Codex/2026-09-05/referenced-chatgpt-conversation-this-is-an/contracts/M1_READINESS.md](C:/Users/moham/Documents/Codex/2026-09-05/referenced-chatgpt-conversation-this-is-an/contracts/M1_READINESS.md).
-Legacy golden_model code, saved board runners, RTL, Vivado files, assets and M0 records are untouched.
+> **New C tests, current-revision A/B reruns, conversion and offline validation are NOT RUN.**
+> M1/M2 are not declared complete. No bundle or hardware platform is qualified.
+
+This package follows the approved M1 planning contracts (`M1_READINESS` and the
+documents it names), which are kept outside this repository. Legacy
+golden_model code, saved board runners, RTL, Vivado files, assets and M0
+records were untouched by that batch.
 
 ## Structure and API boundaries
 
@@ -157,11 +215,7 @@ eligible content rejects. Full deployment, UI and backup/restore features are no
 
 ## User-run command group A
 
-Working directory on this workstation:
-D:\MyProjects\Convlution_Accelerator\software
-
-On Linux, use the software directory of the checkout/copy you actually prepared; no Ubuntu
-checkout path is assumed. For full worker evidence use Linux as an unprivileged user, with the
+Working directory: the `software` directory of the checkout or copy you actually prepared. For full worker evidence use Linux as an unprivileged user, with the
 dependency checks above satisfied.
 
 ~~~sh

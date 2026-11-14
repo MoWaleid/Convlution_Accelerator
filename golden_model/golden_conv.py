@@ -8,7 +8,8 @@ Numeric contract (same-mode convolution)
 ────────────────────────────────────────
     Input:       uint8 Q0.8 (pixel / 256), zero-padded by N//2
     Weights:     signed int8 [-127, +127]
-    Bias:        signed 32-bit integer
+    Bias:        signed integer (the model accepts 32-bit; the qualified
+                 hardware and parameter bundles use signed 24-bit)
     Accumulator: Python arbitrary-precision int  (≥ 21 bits in RTL)
     Rounding:    round-half-up  →  (acc + (1 << (shift-1))) >> shift
     Saturation:  clamp to signed int16  [-32768, +32767]
