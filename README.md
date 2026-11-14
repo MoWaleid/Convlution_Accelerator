@@ -15,6 +15,37 @@ verification suite, and the competition deliverables.
 - [Board demonstration video](https://drive.google.com/drive/folders/190LHhYTYuoAFmNcWCe7-HPHLm7nQeYk8)
 - [Source repository](https://github.com/MoWaleid/Convlution_Accelerator)
 
+## Quick start
+
+No FPGA, Vivado or board is needed to try the browser interface. It needs
+Python 3.11 or newer and Pillow:
+
+```bash
+git clone https://github.com/MoWaleid/Convlution_Accelerator.git
+cd Convlution_Accelerator
+pip install pillow
+python -B software/gui/server.py --demo --catalog profiles/m7_profiles.json --profiles profiles --image-root deploy/petalinux/recipes-apps/conv-lab-starter/files/dataset/images --results .gui-demo/results --uploads .gui-demo/uploads --bind 127.0.0.1 --port 8080
+```
+
+Then open <http://127.0.0.1:8080>. Demo mode exercises the web application
+only and never touches FPGA, DMA or firmware interfaces. To run the host test
+suites or build a release, see [Run it without hardware](#run-it-without-hardware)
+and [Build another hardware profile](#build-another-hardware-profile).
+
+## Results at a glance
+
+Routed full-system results at 125 MHz, all with zero DSP blocks and 3 BRAM
+(the DMA FIFOs). FOM is throughput divided by power times area, as defined in
+the [report](report/report.md#11-design-trade-offs-and-figure-of-merit).
+
+| Release | LUTs | Power | Throughput | Full-system FOM |
+|---|---:|---:|---:|---:|
+| `D640_CFGLUT125` | 7,679 | 1.769 W | 3.988 outputs/cycle | 2.83×10⁻⁴ |
+| `D32_CFGLUT125` | 7,273 | 1.768 W | 3.758 outputs/cycle | 2.81×10⁻⁴ |
+| `A32_CFGLUT125` | 9,145 | 1.785 W | 4.000 outputs/cycle | 2.37×10⁻⁴ |
+| `B32_CFGLUT125` | 12,670 | 1.806 W | 4.000 outputs/cycle | 1.71×10⁻⁴ |
+| `C32_CFGLUT125` | 14,162 | 1.823 W | 3.940 outputs/cycle | 1.49×10⁻⁴ |
+
 ## Qualified releases
 
 All five pass timing at 125 MHz with zero DSPs and were qualified on the
@@ -101,7 +132,8 @@ carries its own `SHA256SUMS.txt`.
 
 ## Run it without hardware
 
-Requires Python 3.11 or newer; the GUI demo and decoder tests also need Pillow.
+The quick start above launches the demo. The same command in PowerShell, using
+line continuations:
 
 ```powershell
 python -B software/gui/server.py --demo `
@@ -168,4 +200,6 @@ from the qualified runtime catalog, until they pass board qualification.
 
 The upload package is assembled in `submission/` and includes the report,
 presentation, source code, expected vectors, FPGA reports and board evidence.
-Its `SHA256SUMS.txt` covers every payload file.
+Its `SHA256SUMS.txt` covers every payload file. After editing the report, run
+`python -B scripts/packaging/refresh_submission.py` to re-sync the package and
+rebuild the upload archives.

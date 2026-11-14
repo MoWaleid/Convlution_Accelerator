@@ -38,6 +38,7 @@ alongside the RTL.
 |---|---|
 | `packaging/fom_table.py` | Regenerate the Figure-of-Merit table from the routed reports |
 | `packaging/build_deck.js` | Build the presentation deck |
+| `packaging/refresh_submission.py` | Re-sync the report and golden-model files in `submission/`, rewrite its checksum manifest and rebuild `final_upload/` |
 | `library/build_cifar10_demo.py` | Build the 50-image CIFAR-10 library and its D640 output hashes |
 
 ## Historical

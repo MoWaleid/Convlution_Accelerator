@@ -76,9 +76,9 @@ five geometries.
 
 ## Boundary
 
-The historical AI-driven collection remains preserved at
-`wrapper_glm_provisional_20260914/` and remains explicitly provisional because
-its A32/B32 Tcl wrapper exited nonzero after successful simulation.
+An earlier AI-driven collection was provisional because its A32/B32 Tcl
+wrapper exited nonzero after successful simulation; it has been removed from
+the repository and is superseded by the official run below.
 
 The official Gate-3 matrix was subsequently executed by the user with Vivado
 2025.2 from clean commit `1f68ccf3e2e20a7c228365ef8b03de72ff22f99f` using
