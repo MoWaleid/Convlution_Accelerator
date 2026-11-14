@@ -9,8 +9,9 @@ file for implementation and operational state, then
 
 The qualified design consists of five exact CFGLUT5/Dadda releases at 125 MHz:
 A32, B32, C32, D32 and D640. The submitted state is commit `fe21a14`
-(`Finalize submission links and upload package`) on branch
-`integration/m10-cfglut5`, tagged `sscs-egypt-2026-submission`. The final
+(`Finalize submission links and upload package`), tagged
+`sscs-egypt-2026-submission`. Work continues on `main`; the report corrections,
+package rebuild and repository cleanup landed after that tag. The final
 submission is under `submission/`, compact build evidence under `releases/`,
 and qualified runtime artifacts under `bitstreams/`. Check `git status` and
 `git log` before editing.
